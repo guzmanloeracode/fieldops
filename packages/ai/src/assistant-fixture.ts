@@ -57,7 +57,7 @@ export function planAssistantTools(question: string, ctx: Pick<AssistantContext,
       : null;
   const jobNumber = /\bjob-?\d{1,9}\b/i.exec(question);
   if (jobNumber) return [{ name: "get_job", input: { number: jobNumber[0] } }];
-  if (/\b(sla|at risk|risk|breach\w*|late)\b/.test(q)) {
+  if (/\b(slas?|at risk|risk|breach\w*|late)\b/.test(q)) {
     // "At risk of breaching today" means the jobs at risk now; only "due today" limits the deadline.
     return [{ name: "list_sla_risks", input: { states: null, due_by: /\bdue\b/.test(q) ? day : null } }];
   }
