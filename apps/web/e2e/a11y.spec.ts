@@ -35,6 +35,29 @@ test.describe("public pages", () => {
   }
 });
 
+// The same checks in Bahasa Indonesia (SET-05): Siti's organization reads Indonesian; signed-out pages follow the browser.
+test.describe("pages in Bahasa Indonesia", () => {
+  test.describe("signed out", () => {
+    test.use({ locale: "id-ID" });
+    for (const path of ["/", "/sign-in", "/portal/acme-teknik/sign-in"]) {
+      test(`axe (id): ${path}`, async ({ page }) => audit(page, path));
+    }
+  });
+  test.describe("as Acme Teknik's owner", () => {
+    test.use({ storageState: storageState("otherOrgOwner") });
+    for (const path of [
+      "/dashboard",
+      "/jobs",
+      "/customers",
+      "/settings/organization",
+      "/schedule",
+      "/approvals",
+    ]) {
+      test(`axe (id): ${path}`, async ({ page }) => audit(page, path));
+    }
+  });
+});
+
 test.describe("app pages as owner", () => {
   test.use({ storageState: storageState("owner") });
   let jobNumber = "";

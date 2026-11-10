@@ -1,6 +1,6 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
-import { PATH_HEADER } from "@/i18n/locales";
+import { PATH_HEADER } from "@/i18n/path-header";
 
 // Fast redirect for signed-out visitors. Real authorization happens on the server for every page,
 // action and API call; this only checks that a session cookie exists.

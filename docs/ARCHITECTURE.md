@@ -73,6 +73,26 @@ deterministic test double for E2E (`AI_PROVIDER=fixture`), otherwise "not config
 transactions with the model call between them, so no transaction waits on the model. Portal requests are drafted
 by the worker, which claims them like outbox rows. Rate limits are fixed-window counters in `rate_limit`.
 
+## Languages
+
+The web app speaks English and Bahasa Indonesia (SET-05) through next-intl. Messages live in
+`apps/web/messages/<locale>/<namespace>.json`; Indonesian is laid over English per key, so an untranslated key shows
+in English rather than as its raw key, and a unit test keeps the keys and ICU arguments of both languages in step.
+Terms follow `apps/web/messages/GLOSSARY.md`. The request config (`src/i18n/request.ts`, `src/server/locale.ts`)
+picks the language:
+
+- **The app:** the signed-in user's `user.locale`, changed in the user menu. Demo accounts are shared, so a visitor's
+  choice stays in their browser (a cookie) instead.
+- **The customer portal:** the visitor's choice (cookie), else the signed-in contact's customer `locale`, else the
+  organization's customer language (`settings.locale`).
+- **Signed-out pages:** the cookie, else `Accept-Language`, else English. New accounts start in that language.
+
+Dates follow the organization's time zone and the reader's language (`src/lib/format.ts`: day-first with a 24-hour
+clock in Indonesian), numbers and money use `Intl` with the reader's locale. Emails go out in the recipient's
+language: staff in their own, customers in their customer's or business's; `packages/email` keeps a dictionary per
+template. Domain errors and the REST API stay in English; server actions translate the messages they show
+(`src/i18n/server-messages.ts`). CSV exports keep English column names and values.
+
 ## Customer portal
 
 `/portal/<slug>` resolves the organization by slug and runs every request in that tenant's transaction, scoped to

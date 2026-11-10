@@ -10,8 +10,7 @@ export const LOCALE_COOKIE = "fieldops_locale";
 /** One year; the choice is a preference, not a session. */
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-/** Set by the proxy so the request config knows which part of the site a request belongs to. */
-export const PATH_HEADER = "x-fieldops-path";
+export { PATH_HEADER } from "./path-header";
 
 /** Each language's name in its own language, for language pickers. */
 export const LOCALE_NAMES: Record<Locale, string> = { en: "English", id: "Bahasa Indonesia" };

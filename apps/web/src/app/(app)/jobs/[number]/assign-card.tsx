@@ -87,7 +87,11 @@ export function AssignCard(props: {
       <CardContent className="space-y-3 text-sm">
         <div className="flex gap-2">
           <CalendarClock className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>{formatWindow(props.scheduledStart, props.scheduledEnd, props.timeZone, locale)}</span>
+          <span>
+            {props.scheduledStart
+              ? formatWindow(props.scheduledStart, props.scheduledEnd, props.timeZone, locale)
+              : t("unscheduled")}
+          </span>
         </div>
         <div className="flex gap-2">
           <UserRound className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
