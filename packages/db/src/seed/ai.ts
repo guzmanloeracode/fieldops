@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import * as s from "../schema";
 import { extensionFaker, type SeedContext } from "./context";
+import { demoRequestDraft, requestServiceType } from "./portal";
 import { DAY, insertBatches } from "./time";
 
 // AI intake history (AI-01, §9.7 usage log): about a month of drafts by the dispatchers, most saved as drafted
@@ -12,53 +13,37 @@ import { DAY, insertBatches } from "./time";
 const MODEL = "claude-opus-5-5";
 const HISTORY_DAYS = 30;
 
-/** Extra checks the model typically suggests, per organization language. */
-const CHECKS = {
-  en: [
-    "Check the condensate drain line",
-    "Measure supply and return temperatures",
-    "Photograph the unit's nameplate",
-    "Check the outdoor unit's capacitor",
-    "Ask the customer when the problem started",
-  ],
-  id: [
-    "Periksa saluran pembuangan air",
-    "Ukur suhu udara keluar",
-    "Foto pelat nama unit",
-    "Periksa kapasitor unit outdoor",
-    "Tanyakan sejak kapan masalahnya terjadi",
-  ],
-};
-
-const QUESTIONS = {
-  en: [
-    "Is the unit still running?",
-    "Which room is the unit in?",
-    "Is anyone home to let the technician in?",
-    "Do you know the unit's brand or model?",
-  ],
-  id: [
-    "Apakah unit masih menyala?",
-    "Unit ada di ruangan mana?",
-    "Apakah ada orang di rumah untuk membukakan pintu?",
-    "Apakah tahu merek atau tipe unitnya?",
-  ],
-};
-
+/** Why the model chose a priority: for a fault the customer is waiting on, and for planned work. */
 const PRIORITY_REASON = {
   en: {
-    urgent: "No cooling with vulnerable people or equipment at risk.",
-    high: "The unit is failing and the customer is affected now.",
-    normal: "A fault that can wait for the next open slot.",
-    low: "Routine work with no fault reported.",
+    fault: {
+      urgent: "No cooling with vulnerable people or equipment at risk.",
+      high: "The unit is failing and the customer is affected now.",
+      normal: "A fault that can wait for the next open slot.",
+      low: "A minor fault the customer can live with for now.",
+    },
+    planned: {
+      urgent: "The customer needs it done today.",
+      high: "The customer asked for the earliest visit.",
+      normal: "Planned work that can take the next open slot.",
+      low: "Routine work with no deadline.",
+    },
   },
   id: {
-    urgent: "Tidak ada pendinginan dan ada risiko bagi penghuni atau peralatan.",
-    high: "Unit bermasalah dan pelanggan terdampak sekarang.",
-    normal: "Gangguan yang bisa menunggu jadwal berikutnya.",
-    low: "Pekerjaan rutin tanpa laporan kerusakan.",
+    fault: {
+      urgent: "Tidak ada pendinginan dan ada risiko bagi penghuni atau peralatan.",
+      high: "Unit bermasalah dan pelanggan terdampak sekarang.",
+      normal: "Gangguan yang bisa menunggu jadwal berikutnya.",
+      low: "Gangguan ringan yang masih bisa ditunda.",
+    },
+    planned: {
+      urgent: "Pelanggan membutuhkannya hari ini.",
+      high: "Pelanggan minta kunjungan secepatnya.",
+      normal: "Pekerjaan terencana yang bisa mengikuti jadwal berikutnya.",
+      low: "Pekerjaan rutin tanpa tenggat.",
+    },
   },
-} satisfies Record<"en" | "id", Record<JobPriority, string>>;
+} satisfies Record<"en" | "id", Record<"fault" | "planned", Record<JobPriority, string>>>;
 
 const PRIORITIES: JobPriority[] = ["low", "normal", "high", "urgent"];
 
@@ -79,7 +64,9 @@ export async function seedAi(ctx: SeedContext): Promise<void> {
 
   /**
    * A plausible draft for a job. "edited": the dispatcher changed something before saving, so the draft differs
-   * a little. "review": a portal request still waiting for a dispatcher, with suggestions worth applying.
+   * a little. "review": a portal request still waiting for a dispatcher, with suggestions worth applying: the
+   * service type and estimate it has none of yet, extra checks and, for a fault, a higher priority. Checks and
+   * questions come from the job's service type, so a cleaning job never gets an AC check.
    */
   const draftFor = (
     j: {
@@ -92,26 +79,36 @@ export async function seedAi(ctx: SeedContext): Promise<void> {
     },
     mode: "same" | "edited" | "review",
   ): IntakeDraft => {
+    const type =
+      mode === "review"
+        ? requestServiceType(ctx, j.title)
+        : (ctx.serviceTypes.find((st) => st.id === j.serviceTypeId) ?? null);
+    const fault = type?.spec.fault ?? false;
+    const demo = mode === "review" ? demoRequestDraft(ctx, j.title) : null;
     const priority = j.priority as JobPriority;
-    const raised = PRIORITIES[Math.min(3, PRIORITIES.indexOf(priority) + 1)]!;
+    const raised = fault ? PRIORITIES[Math.min(3, PRIORITIES.indexOf(priority) + 1)]! : priority;
     const confident = f.datatype.boolean({ probability: 0.8 });
     const suggested =
       mode === "review" ? raised : mode === "edited" && f.datatype.boolean() ? raised : priority;
     return {
       language: lang,
       title:
-        mode === "edited" && f.datatype.boolean()
+        demo?.title ??
+        (mode === "edited" && f.datatype.boolean()
           ? `${j.title} ${lang === "en" ? "(repeat visit)" : "(kunjungan ulang)"}`
-          : j.title,
-      service_type_id: j.serviceTypeId,
+          : j.title),
+      service_type_id: type?.id ?? j.serviceTypeId,
       priority: suggested,
-      priority_reason: PRIORITY_REASON[lang][suggested],
-      summary: j.description ?? j.title,
-      checklist: f.helpers.arrayElements(CHECKS[lang], { min: mode === "review" ? 1 : 0, max: 2 }),
-      estimated_duration_min: j.estimatedDurationMin,
+      priority_reason: PRIORITY_REASON[lang][fault ? "fault" : "planned"][suggested],
+      summary: demo?.summary ?? j.description ?? j.title,
+      checklist: f.helpers.arrayElements(type?.spec.checks ?? [], { min: mode === "review" ? 1 : 0, max: 2 }),
+      estimated_duration_min: mode === "review" ? (type?.defaultDurationMin ?? null) : j.estimatedDurationMin,
       equipment: { type: null, brand: null, model: null },
       contact: { name: customers.get(j.customerId) ?? null, phone: null, email: null, address: null },
-      questions: f.helpers.arrayElements(QUESTIONS[lang], { min: mode === "review" ? 1 : 0, max: 2 }),
+      questions: f.helpers.arrayElements(type?.spec.questions ?? [], {
+        min: mode === "review" ? 1 : 0,
+        max: 2,
+      }),
       confidence: {
         title: confidence(confident),
         service_type: confidence(confident),

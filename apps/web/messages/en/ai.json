@@ -54,7 +54,7 @@
     "confirm": "Confirm request",
     "confirmed": "Request confirmed",
     "minutes": "{n} min",
-    "checklistNow": "Standard checklist",
+    "checklistNow": "{count, plural, one {# item} other {# items}}",
     "fields": {
       "title": "Title",
       "service_type_id": "Service type",

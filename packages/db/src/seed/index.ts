@@ -303,7 +303,7 @@ async function seedOrg(
       type: c.commercial ? "commercial" : "residential",
       name: c.name,
       tags: chance(0.35) ? f.helpers.arrayElements(spec.tags, { min: 1, max: 2 }) : [],
-      notes: chance(0.15) ? pick(spec.descriptions) : null,
+      notes: chance(0.15) ? pick(spec.customerNotes) : null,
       billingAddress: null,
       createdAt: c.createdAt,
       updatedAt: c.createdAt,
@@ -342,10 +342,17 @@ async function seedOrg(
   const jobs: GenJob[] = [];
   const busy = new Map<string, Slot[]>(); // memberId|day → slots
 
-  const titleFor = (st: (typeof serviceTypes)[number]) =>
-    pick(st.spec.titles)
-      .replace("{n}", String(f.number.int({ min: 2, max: 4 })))
-      .replace("{room}", spec.key === "acme-air" ? pick(ROOMS) : pick(ROOMS_ID));
+  // A title with the request texts written for it, so a job's description always matches its title. The random
+  // draws (title, number, room, then the description) keep their order, so the rest of the demo stays the same.
+  const titleFor = (st: (typeof serviceTypes)[number]) => {
+    const t = pick(st.spec.titles);
+    return {
+      title: t.title
+        .replace("{n}", String(f.number.int({ min: 2, max: 4 })))
+        .replace("{room}", spec.key === "acme-air" ? pick(ROOMS) : pick(ROOMS_ID)),
+      details: t.details,
+    };
+  };
   const priorityPick = () => {
     const r = f.number.float({ min: 0, max: 1 });
     return r < 0.15 ? "low" : r < 0.75 ? "normal" : r < 0.93 ? "high" : "urgent";
@@ -594,16 +601,19 @@ async function seedOrg(
         }
       }
 
+      const equipmentId = eqs.length && chance(0.6) ? pick(eqs).id : null;
+      const titled = titleFor(st);
+      const description = chance(0.7) ? pick(titled.details) : null;
       jobs.push({
         id,
         organizationId: orgId,
         number: 0,
         customerId: cust.id,
         siteId: site.id,
-        equipmentId: eqs.length && chance(0.6) ? pick(eqs).id : null,
+        equipmentId,
         serviceTypeId: st.id,
-        title: titleFor(st),
-        description: chance(0.7) ? pick(spec.descriptions) : null,
+        title: titled.title,
+        description,
         priority: priorityPick(),
         status,
         source: chance(0.25) ? "portal" : chance(0.05) ? "api" : "manual",
@@ -633,6 +643,8 @@ async function seedOrg(
     const createdAt = new Date(ctx.now.getTime() - f.number.int({ min: 20, max: 60 * 60 }) * 60_000);
     const portal = k % 4 === 0;
     const by = dispatcherUser();
+    const titled = titleFor(st);
+    const description = pick(titled.details);
     jobs.push({
       id,
       organizationId: orgId,
@@ -641,8 +653,8 @@ async function seedOrg(
       siteId: site.id,
       equipmentId: null,
       serviceTypeId: st.id,
-      title: titleFor(st),
-      description: pick(spec.descriptions),
+      title: titled.title,
+      description,
       priority: k % 5 === 0 ? "urgent" : priorityPick(),
       status: "new",
       source: portal ? "portal" : "manual",

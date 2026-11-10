@@ -1,5 +1,5 @@
 import { portal } from "@fieldops/core";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import * as s from "../schema";
 import type { SeedContext } from "./context";
 import { extensionFaker } from "./context";
@@ -19,6 +19,56 @@ const DEMO_REQUEST = {
     "AC kamar tidur utama netes air dan kurang dingin sejak kemarin\n" +
     "Unit outdoor juga bunyi agak keras. Mohon dicek minggu ini, sore hari lebih cocok. Terima kasih.",
 } as const;
+
+/** What the demo customer's request is about, and how the AI drafted it (a short title and a summary). */
+const DEMO_REQUEST_DRAFT = {
+  "acme-air": {
+    serviceType: "AC repair",
+    title: "Upstairs AC blowing warm air, outdoor unit clicking",
+    summary:
+      "The upstairs bedroom AC has blown warm air since last night, and the outdoor unit clicks when it starts. " +
+      "The customer asks for a visit this week, in the morning.",
+  },
+  "acme-teknik": {
+    serviceType: "Perbaikan AC",
+    title: "AC kamar utama bocor dan kurang dingin",
+    summary:
+      "AC kamar tidur utama meneteskan air dan kurang dingin sejak kemarin, unit outdoor berbunyi keras. " +
+      "Pelanggan minta dicek minggu ini, sore hari.",
+  },
+} as const;
+
+/** A title template ("AC tune-up, {n} units") as a pattern that matches the titles made from it. */
+const titlePattern = (template: string) =>
+  new RegExp(
+    `^${template
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      .replace("\\{n\\}", "\\d+")
+      .replace("\\{room\\}", ".+")}$`,
+  );
+
+/**
+ * The service type a portal request is about, for its AI draft. Customers don't choose one in the portal, so the
+ * seeded requests waiting for review have none, like real ones; the draft suggests it from the request.
+ */
+export function requestServiceType(
+  ctx: SeedContext,
+  title: string,
+): SeedContext["serviceTypes"][number] | null {
+  const demo = DEMO_REQUEST_DRAFT[ctx.spec.key];
+  const name =
+    title === portal.titleFromDescription(DEMO_REQUEST[ctx.spec.key])
+      ? demo.serviceType
+      : ctx.serviceTypes.find((st) => st.spec.titles.some((t) => titlePattern(t.title).test(title)))?.name;
+  return ctx.serviceTypes.find((st) => st.name === name) ?? null;
+}
+
+/** The AI's own title and summary for the demo customer's request, or null for other requests. */
+export function demoRequestDraft(ctx: SeedContext, title: string): { title: string; summary: string } | null {
+  return title === portal.titleFromDescription(DEMO_REQUEST[ctx.spec.key])
+    ? DEMO_REQUEST_DRAFT[ctx.spec.key]
+    : null;
+}
 
 const OPEN = new Set(["scheduled", "en_route", "in_progress", "on_hold"]);
 const SLOTS = [
@@ -109,8 +159,11 @@ export async function seedPortal(ctx: SeedContext): Promise<void> {
       };
     });
     // The newest request is the demo customer's, so the portal shows it waiting for review.
+    // Like a real portal request: no service type or estimate until a dispatcher reviews it.
     const patch = {
       aiStatus: "pending",
+      serviceTypeId: null,
+      estimatedDurationMin: null,
       preferredStart: windows[0]!.start,
       preferredEnd: windows[0]!.end,
       ...(i === 0
@@ -133,6 +186,19 @@ export async function seedPortal(ctx: SeedContext): Promise<void> {
         preferred_windows: windows.map((w) => ({ start: w.start.toISOString(), end: w.end.toISOString() })),
       })}::jsonb
       where organization_id = ${orgId} and job_id = ${j.id} and type = 'created'`);
+  }
+
+  // Without a service type, a request has no checklist yet (the core seed generated one from the old type).
+  if (requests.length) {
+    await tx.delete(s.checklistItem).where(
+      and(
+        eq(s.checklistItem.organizationId, orgId),
+        inArray(
+          s.checklistItem.jobId,
+          requests.map((j) => j.id),
+        ),
+      ),
+    );
   }
 
   // Every portal job names the contact who asked (the customer's primary contact).

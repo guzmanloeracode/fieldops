@@ -39,7 +39,7 @@ export async function AiReview({ jobId }: { jobId: string }) {
           priority: [PRIORITY_LABELS[job.priority], PRIORITY_LABELS[draft.priority]],
           estimated_duration_min: [minutes(job.estimatedDurationMin), minutes(draft.estimated_duration_min)],
           checklist: [
-            t("checklistNow"),
+            review.checklist.length ? t("checklistNow", { count: review.checklist.length }) : "—",
             draft.checklist
               .filter((l) => !review.checklist.some((c) => c.toLowerCase() === l.toLowerCase()))
               .join("; "),
