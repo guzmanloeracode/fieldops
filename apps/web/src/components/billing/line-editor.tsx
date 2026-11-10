@@ -8,7 +8,7 @@ import {
   type LineKind,
 } from "@fieldops/shared";
 import { Check, Loader2, PackagePlus, Plus, Trash2, Wrench } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { FieldError } from "@/components/app/field-error";
 import { NativeSelect } from "@/components/app/native-select";
@@ -178,6 +178,7 @@ export function LineEditor({
   errors?: Record<string, string>;
 }) {
   const t = useTranslations("billing.lines");
+  const locale = useLocale();
   const rate = defaultRate(taxRates);
   const update = (key: string, patch: Partial<EditorLine>) =>
     onChange(lines.map((l) => (l.key === key ? { ...l, ...patch } : l)));
@@ -204,7 +205,7 @@ export function LineEditor({
   const rateOptions = [...taxRates];
   for (const l of lines) {
     if (!rateOptions.some((r) => r.rate_bps === l.taxRateBps)) {
-      rateOptions.push({ name: percent(l.taxRateBps), rate_bps: l.taxRateBps, default: false });
+      rateOptions.push({ name: percent(l.taxRateBps, locale), rate_bps: l.taxRateBps, default: false });
     }
   }
   if (!rateOptions.some((r) => r.rate_bps === 0))
@@ -297,7 +298,7 @@ export function LineEditor({
                 {expense ? (
                   <div className="space-y-1 sm:col-span-3">
                     <Label htmlFor={id("markup")} className="text-muted-foreground text-xs">
-                      {t("markup", { cost: money(l.unitCostMinor ?? 0, currency) })}
+                      {t("markup", { cost: money(l.unitCostMinor ?? 0, currency, locale) })}
                     </Label>
                     <Input
                       id={id("markup")}
@@ -336,7 +337,7 @@ export function LineEditor({
                       <option key={`${r.name}-${r.rate_bps}`} value={r.rate_bps}>
                         {r.rate_bps === 0 && r.name === t("noTax")
                           ? r.name
-                          : `${r.name} (${percent(r.rate_bps)})`}
+                          : `${r.name} (${percent(r.rate_bps, locale)})`}
                       </option>
                     ))}
                   </NativeSelect>
@@ -344,12 +345,12 @@ export function LineEditor({
                 <div className="flex flex-col justify-end sm:col-span-2 sm:items-end">
                   <span className="text-muted-foreground text-xs">{t("amount")}</span>
                   <span className="py-2 text-sm font-medium tabular-nums" data-testid="line-net">
-                    {money(totals.lines[i]?.netMinor ?? 0, currency)}
+                    {money(totals.lines[i]?.netMinor ?? 0, currency, locale)}
                   </span>
                 </div>
                 {expense ? (
                   <p className="text-muted-foreground text-xs sm:col-span-12">
-                    {t("fromExpense", { price: money(unitPriceOf(l, currency) ?? 0, currency) })}
+                    {t("fromExpense", { price: money(unitPriceOf(l, currency) ?? 0, currency, locale) })}
                   </p>
                 ) : null}
               </li>
@@ -439,12 +440,17 @@ export function LineEditor({
           ) : null}
         </div>
         <dl className="space-y-1 text-sm sm:justify-self-end" data-testid="totals">
-          <Total label={t("subtotal")} value={money(totals.subtotalMinor, currency)} />
+          <Total label={t("subtotal")} value={money(totals.subtotalMinor, currency, locale)} />
           {totals.discountMinor ? (
-            <Total label={t("discountTotal")} value={`−${money(totals.discountMinor, currency)}`} />
+            <Total label={t("discountTotal")} value={`−${money(totals.discountMinor, currency, locale)}`} />
           ) : null}
-          <Total label={t("taxTotal")} value={money(totals.taxMinor, currency)} />
-          <Total label={t("total")} value={money(totals.totalMinor, currency)} strong testId="total" />
+          <Total label={t("taxTotal")} value={money(totals.taxMinor, currency, locale)} />
+          <Total
+            label={t("total")}
+            value={money(totals.totalMinor, currency, locale)}
+            strong
+            testId="total"
+          />
         </dl>
       </div>
     </div>

@@ -1,9 +1,10 @@
 "use client";
 import { formatMoney, parseMajor } from "@fieldops/core";
+import { intlLocale } from "@/lib/format";
 import type { Currency, ExpenseKind } from "@fieldops/shared";
 import { Camera, Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FieldError } from "@/components/app/field-error";
@@ -58,6 +59,7 @@ export function RequestExpenseDialog({
   autoApproveBelowMinor: number;
 }) {
   const t = useTranslations("expenses");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -153,7 +155,9 @@ export function RequestExpenseDialog({
         <DialogHeader>
           <DialogTitle>{t("form.title")}</DialogTitle>
           <DialogDescription>
-            {t("form.description", { amount: formatMoney({ amountMinor: autoApproveBelowMinor, currency }) })}
+            {t("form.description", {
+              amount: formatMoney({ amountMinor: autoApproveBelowMinor, currency }, intlLocale(locale)),
+            })}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -221,7 +225,7 @@ export function RequestExpenseDialog({
           <p className="text-sm" aria-live="polite">
             <span className="text-muted-foreground">{t("form.total")}: </span>
             <span className="font-semibold tabular-nums" data-testid="expense-form-total">
-              {total !== null ? formatMoney({ amountMinor: total, currency }) : "—"}
+              {total !== null ? formatMoney({ amountMinor: total, currency }, intlLocale(locale)) : "—"}
             </span>
           </p>
           <div className="space-y-1.5">

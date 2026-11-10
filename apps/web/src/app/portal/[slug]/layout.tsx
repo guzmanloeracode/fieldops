@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
 import { initials } from "@/lib/format";
@@ -69,7 +70,10 @@ export default async function PortalLayout({ children, params }: Params & { chil
         </div>
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">{children}</main>
-      <footer className="text-muted-foreground px-4 pb-6 text-center text-xs">{t("poweredBy")}</footer>
+      <footer className="text-muted-foreground flex flex-col items-center gap-2 px-4 pb-6 text-center text-xs">
+        <LanguageSwitcher />
+        <span>{t("poweredBy")}</span>
+      </footer>
     </div>
   );
 }

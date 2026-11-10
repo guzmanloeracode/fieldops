@@ -4,9 +4,12 @@ import { schema, withStore, type Tx } from "@fieldops/db";
 import type { Role } from "@fieldops/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { env } from "@/env";
+import { isLocale } from "@/i18n/locales";
+import { translateServerMessage } from "@/i18n/server-messages";
 import { auth } from "./auth";
 import { db } from "./db";
 import { files } from "./files";
@@ -112,18 +115,24 @@ export type ActionResult<T> =
       };
     };
 
-/** Wraps a server action: domain errors become typed results the form can show; anything else is logged. */
+/**
+ * Wraps a server action: domain errors become typed results the form can show, in the reader's language (SET-05);
+ * anything else is logged.
+ */
 export async function action<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     return { ok: true, data: await fn() };
   } catch (err) {
     if (err instanceof DomainError) {
+      const locale = await getLocale();
+      const say = (m: string) => translateServerMessage(m, isLocale(locale) ? locale : "en");
+      const fields = err.details?.fields as { path: string; message: string }[] | undefined;
       return {
         ok: false,
         error: {
           code: err.code,
-          message: err.message,
-          fields: (err.details?.fields as { path: string; message: string }[] | undefined) ?? undefined,
+          message: say(err.message),
+          fields: fields?.map((f) => ({ ...f, message: say(f.message) })),
           details: err.details,
         },
       };
@@ -137,7 +146,8 @@ export async function action<T>(fn: () => Promise<T>): Promise<ActionResult<T>> 
     )
       throw err;
     logger.error({ err }, "server action failed");
-    return { ok: false, error: { code: "internal", message: "Something went wrong. Please try again." } };
+    const t = await getTranslations("common.errors");
+    return { ok: false, error: { code: "internal", message: t("generic") } };
   }
 }
 

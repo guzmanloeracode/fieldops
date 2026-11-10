@@ -111,5 +111,15 @@
     "customer": "{name} (customer)",
     "requested": "requested service through the customer portal",
     "windows": "Times that suit: {windows}"
+  },
+  "errors": {
+    "noPortal": "This portal doesn't exist",
+    "email": "Enter a valid email",
+    "tooManyLinks": "Too many sign-in links were requested. Try again in an hour.",
+    "invalidLink": "This link isn't valid",
+    "expiredLink": "This link has expired or was already used",
+    "tooManyRequests": "You've sent a lot of requests today. Please call us if it's urgent.",
+    "photoFailed": "A photo couldn't be attached",
+    "photoAgain": "Upload the photo again"
   }
 }

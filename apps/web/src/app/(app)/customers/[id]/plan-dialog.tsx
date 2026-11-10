@@ -1,5 +1,5 @@
 "use client";
-import { PRIORITY_LABELS, recurrenceRules } from "@fieldops/core";
+import { recurrenceRules } from "@fieldops/core";
 import {
   JOB_PRIORITIES,
   MAX_LEAD_DAYS,
@@ -10,7 +10,7 @@ import {
 } from "@fieldops/shared";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { NativeSelect } from "@/components/app/native-select";
@@ -68,6 +68,8 @@ export function PlanDialog({
   plan?: { id: string; values: PlanFormValues };
 }) {
   const t = useTranslations("recurrences");
+  const locale = useLocale();
+  const tp = useTranslations("common.priority");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -276,7 +278,7 @@ export function PlanDialog({
               >
                 {JOB_PRIORITIES.map((p) => (
                   <option key={p} value={p}>
-                    {PRIORITY_LABELS[p]}
+                    {tp(p)}
                   </option>
                 ))}
               </NativeSelect>,
@@ -414,7 +416,7 @@ export function PlanDialog({
               <ol className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm" data-testid="plan-preview">
                 {preview.map((d) => (
                   <li key={d} className="tabular-nums">
-                    <time dateTime={d}>{formatDay(d, "long")}</time>
+                    <time dateTime={d}>{formatDay(d, "long", locale)}</time>
                   </li>
                 ))}
               </ol>

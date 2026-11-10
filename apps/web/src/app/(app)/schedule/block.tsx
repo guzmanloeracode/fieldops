@@ -1,6 +1,5 @@
 "use client";
 import { useDraggable } from "@dnd-kit/core";
-import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
 import type { JobStatus } from "@fieldops/shared";
 import { AlertTriangle, ArrowUp, ChevronsUp, Loader2, Star, Users, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -148,6 +147,7 @@ export function DraggableBlock({
 }) {
   const t = useTranslations("dispatch");
   const tsla = useTranslations("sla");
+  const tc = useTranslations("common");
   const data: DragData = { type: "job", jobId: job.id, laneId };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `job:${job.id}:${laneId}`,
@@ -167,8 +167,8 @@ export function DraggableBlock({
   // The accessible name is the visible text plus these details (WCAG 2.5.3: the label contains the text).
   const details = [
     compact ? null : job.customer,
-    STATUS_LABELS[job.status],
-    job.priority === "high" || job.priority === "urgent" ? PRIORITY_LABELS[job.priority] : null,
+    tc(`status.${job.status}`),
+    job.priority === "high" || job.priority === "urgent" ? tc(`priority.${job.priority}`) : null,
     job.sla ? tsla(`short.${job.sla.state}`) : null,
     role,
   ]

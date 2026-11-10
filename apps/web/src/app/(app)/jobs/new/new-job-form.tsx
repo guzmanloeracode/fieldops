@@ -1,5 +1,4 @@
 "use client";
-import { PRIORITY_LABELS } from "@fieldops/core";
 import {
   JOB_PRIORITIES,
   LOW_CONFIDENCE,
@@ -103,6 +102,7 @@ export function NewJobForm({
 }) {
   const t = useTranslations("jobs");
   const tai = useTranslations("ai.intake");
+  const tp = useTranslations("common.priority");
   const router = useRouter();
   const [customer, setCustomer] = useState<CustomerOption | null>(initialCustomer);
   const [sites, setSites] = useState<SiteOption[]>([]);
@@ -406,7 +406,7 @@ export function NewJobForm({
                   )}
                 >
                   <RadioGroupItem value={p} />
-                  {PRIORITY_LABELS[p]}
+                  {tp(p)}
                 </label>
               ))}
             </RadioGroup>

@@ -1,4 +1,4 @@
-import { ai, organization, PRIORITY_LABELS } from "@fieldops/core";
+import { ai, organization } from "@fieldops/core";
 import { LOW_CONFIDENCE, type AiReviewField, type IntakeConfidenceField } from "@fieldops/shared";
 import { getTranslations } from "next-intl/server";
 import { requireActor, runService } from "@/server/context";
@@ -19,6 +19,7 @@ const CONFIDENCE: Record<AiReviewField, IntakeConfidenceField | null> = {
 export async function AiReview({ jobId }: { jobId: string }) {
   const actor = await requireActor();
   const t = await getTranslations("ai.review");
+  const tp = await getTranslations("common.priority");
   const data = await runService(async (ctx) => {
     const [review, types] = await Promise.all([ai.getReview(ctx, jobId), organization.listServiceTypes(ctx)]);
     return { review, types };
@@ -36,7 +37,7 @@ export async function AiReview({ jobId }: { jobId: string }) {
         const values: Record<AiReviewField, [string, string]> = {
           title: [job.title, draft.title],
           service_type_id: [typeName(job.serviceTypeId), typeName(draft.service_type_id)],
-          priority: [PRIORITY_LABELS[job.priority], PRIORITY_LABELS[draft.priority]],
+          priority: [tp(job.priority), tp(draft.priority)],
           estimated_duration_min: [minutes(job.estimatedDurationMin), minutes(draft.estimated_duration_min)],
           checklist: [
             review.checklist.length ? t("checklistNow", { count: review.checklist.length }) : "—",

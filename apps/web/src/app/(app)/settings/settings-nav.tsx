@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function SettingsNav({ tabs }: { tabs: { href: string; label: string }[] }) {
   const pathname = usePathname();
+  const t = useTranslations("settings");
   return (
-    <nav aria-label="Settings" className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
+    <nav aria-label={t("title")} className="-mx-4 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0">
       <ul className="flex min-w-max gap-1">
         {tabs.map((tab) => {
           const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);

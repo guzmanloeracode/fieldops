@@ -1,6 +1,7 @@
 import { assistant, RateLimitedError, type RateLimitStatus } from "@fieldops/core";
 import type { AssistantStreamEvent } from "@fieldops/shared";
 import { authenticate, problemResponse } from "@/server/api/handler";
+import { resolveLocale } from "@/server/locale";
 import { ApiProblem, internalProblem, problemFromError } from "@/server/api/problem";
 import { aiGuard, assistantModel, txRunner } from "@/server/ai";
 import { logger } from "@/server/logger";
@@ -43,6 +44,8 @@ export async function POST(req: Request): Promise<Response> {
       assistantModel,
       body,
       await aiGuard(metaFromHeaders(req.headers).ip),
+      // Answers follow the question's language, else the user's app language (SET-05).
+      await resolveLocale(),
     );
     prepared = { actor, run, session };
   } catch (err) {

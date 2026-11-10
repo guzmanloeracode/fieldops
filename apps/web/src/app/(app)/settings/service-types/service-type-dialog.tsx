@@ -4,7 +4,7 @@ import { parseMajor, toMajor } from "@fieldops/core";
 import { serviceTypeInputSchema, type ChecklistTemplateItem, type Currency } from "@fieldops/shared";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { useForm, type Path } from "react-hook-form";
 import { ChecklistTemplateEditor, SkillsEditor } from "./template-editor";
@@ -28,12 +28,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { createServiceTypeAction, updateServiceTypeAction } from "./actions";
 
-const formSchema = serviceTypeInputSchema.omit({ default_price_minor: true, color: true }).extend({
-  price: z.string().trim().min(1, "Enter a price").max(20),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-});
-export type FormInput = z.input<typeof formSchema>;
-export type FormOutput = z.output<typeof formSchema>;
+const formSchema = (t: (key: string) => string) =>
+  serviceTypeInputSchema.omit({ default_price_minor: true, color: true }).extend({
+    price: z.string().trim().min(1, t("errors.price")).max(20),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  });
+export type FormInput = z.input<ReturnType<typeof formSchema>>;
+export type FormOutput = z.output<ReturnType<typeof formSchema>>;
 
 export interface ServiceTypeValues {
   id: string;
@@ -61,6 +62,7 @@ export function ServiceTypeDialog({
 }) {
   const t = useTranslations("settings.serviceTypes");
   const tb = useTranslations("billing.serviceType");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -89,7 +91,7 @@ export function ServiceTypeDialog({
         tax_rate_bps: null,
       };
   const form = useForm<FormInput, unknown, FormOutput>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema(t)),
     defaultValues: defaults,
   });
   const errors = form.formState.errors;
@@ -191,7 +193,7 @@ export function ServiceTypeDialog({
               <option value="">{tb("defaultRate")}</option>
               {taxRates.map((r) => (
                 <option key={`${r.name}-${r.rate_bps}`} value={r.rate_bps}>
-                  {r.name} ({percent(r.rate_bps)})
+                  {r.name} ({percent(r.rate_bps, locale)})
                 </option>
               ))}
             </NativeSelect>

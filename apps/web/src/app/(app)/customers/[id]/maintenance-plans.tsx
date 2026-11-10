@@ -1,6 +1,6 @@
 import { dates, organization, recurrences } from "@fieldops/core";
 import { CalendarClock, MapPin, UserRound } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PriorityBadge } from "@/components/app/badges";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDay } from "@/lib/recurrence";
@@ -32,6 +32,7 @@ export async function MaintenancePlans({
   equipment: Map<string, { id: string; type: string; brand: string | null; model: string | null }[]>;
 }) {
   const t = await getTranslations("recurrences");
+  const locale = await getLocale();
   const sites: PlanOptions["sites"] = siteRows.map((s) => ({
     id: s.id,
     label: s.label,
@@ -97,8 +98,8 @@ export async function MaintenancePlans({
                 </div>
                 <p className="text-sm">
                   {t("plans.rule", { unit: p.intervalUnit, count: p.intervalCount })} ·{" "}
-                  {t("plans.since", { date: formatDay(p.startsOn, "long") })}
-                  {p.endsOn ? ` · ${t("plans.until", { date: formatDay(p.endsOn, "long") })}` : ""}
+                  {t("plans.since", { date: formatDay(p.startsOn, "long", locale) })}
+                  {p.endsOn ? ` · ${t("plans.until", { date: formatDay(p.endsOn, "long", locale) })}` : ""}
                 </p>
                 <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
                   <li className="inline-flex items-center gap-1">
@@ -129,7 +130,7 @@ export async function MaintenancePlans({
                         {p.upcoming.map((d, i) => (
                           <span key={d}>
                             {i ? ", " : ""}
-                            <time dateTime={d}>{formatDay(d)}</time>
+                            <time dateTime={d}>{formatDay(d, "short", locale)}</time>
                           </span>
                         ))}
                       </span>

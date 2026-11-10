@@ -1,9 +1,8 @@
 "use client";
 import { SUGGESTED_SKILLS } from "@fieldops/shared";
-import { format } from "date-fns";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { fromLocalInput } from "@/lib/format";
+import { formatCalendarDate, fromLocalInput } from "@/lib/format";
 import { createTimeOffAction, deleteTimeOffAction, updateAvailabilityAction } from "../actions";
 
 type Hours = { day: number; open: string; close: string }[];
@@ -28,9 +27,10 @@ export interface TeamMember {
 
 /** Monday first. */
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
-// 15 Nov 2026 is a Sunday; day names come from the browser's locale through date-fns.
-const dayName = (day: number) => format(new Date(Date.UTC(2026, 10, 15 + day, 12)), "EEEE");
-const shortDate = (date: string) => format(new Date(`${date}T12:00:00Z`), "MMM d, yyyy");
+// 15 Nov 2026 is a Sunday; day names follow the reader's language.
+const dayName = (day: number, locale: string, style: "weekday" | "weekdayLong" = "weekdayLong") =>
+  formatCalendarDate(`2026-11-${15 + day}`, style, locale);
+const shortDate = (date: string, locale: string) => formatCalendarDate(date, "date", locale);
 
 function nextDate(date: string): string {
   const d = new Date(`${date}T00:00:00Z`);
@@ -39,11 +39,12 @@ function nextDate(date: string): string {
 }
 
 export function TeamAvailability(props: { timeZone: string; businessHours: Hours; members: TeamMember[] }) {
+  const locale = useLocale();
   const business = props.businessHours.length
     ? WEEK.filter((d) => props.businessHours.some((h) => h.day === d))
         .map((d) => {
           const h = props.businessHours.find((x) => x.day === d)!;
-          return `${dayName(d).slice(0, 3)} ${h.open}–${h.close}`;
+          return `${dayName(d, locale, "weekday")} ${h.open}–${h.close}`;
         })
         .join(", ")
     : null;
@@ -66,6 +67,7 @@ function MemberCard({
   businessText: string | null;
 }) {
   const t = useTranslations("dispatch.team");
+  const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [own, setOwn] = useState(member.workingHours !== null);
@@ -147,14 +149,14 @@ function MemberCard({
                   <div key={d} className="grid grid-cols-[8rem_1fr_1fr] items-center gap-2">
                     <label className="flex items-center gap-2 text-sm">
                       <Checkbox checked={h.on} onCheckedChange={(v) => set({ on: v === true })} />
-                      {dayName(d)}
+                      {dayName(d, locale)}
                     </label>
                     <Input
                       type="time"
                       step={900}
                       value={h.open}
                       disabled={!h.on}
-                      aria-label={`${dayName(d)}: ${t("open")}`}
+                      aria-label={`${dayName(d, locale)}: ${t("open")}`}
                       onChange={(e) => set({ open: e.target.value })}
                       className="h-8"
                     />
@@ -163,7 +165,7 @@ function MemberCard({
                       step={900}
                       value={h.close}
                       disabled={!h.on}
-                      aria-label={`${dayName(d)}: ${t("close")}`}
+                      aria-label={`${dayName(d, locale)}: ${t("close")}`}
                       onChange={(e) => set({ close: e.target.value })}
                       className="h-8"
                     />
@@ -250,6 +252,7 @@ function MemberCard({
 
 function TimeOff({ member, timeZone, idPrefix }: { member: TeamMember; timeZone: string; idPrefix: string }) {
   const t = useTranslations("dispatch.team");
+  const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [from, setFrom] = useState("");
@@ -295,7 +298,10 @@ function TimeOff({ member, timeZone, idPrefix }: { member: TeamMember; timeZone:
       {member.timeOff.length ? (
         <ul className="space-y-1.5">
           {member.timeOff.map((o) => {
-            const range = o.from === o.to ? shortDate(o.from) : `${shortDate(o.from)} – ${shortDate(o.to)}`;
+            const range =
+              o.from === o.to
+                ? shortDate(o.from, locale)
+                : `${shortDate(o.from, locale)} – ${shortDate(o.to, locale)}`;
             return (
               <li key={o.id} className="flex items-center gap-2 text-sm">
                 <span className={o.past ? "text-muted-foreground" : undefined}>

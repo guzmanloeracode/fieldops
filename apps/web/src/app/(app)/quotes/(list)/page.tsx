@@ -3,7 +3,7 @@ import { QUOTE_STATUSES, quoteListQuerySchema } from "@fieldops/shared";
 import { FileText, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
@@ -15,7 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDate } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 
-export const metadata: Metadata = { title: "Quotes" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("quotes") };
+}
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -25,6 +28,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export default async function QuotesPage({ searchParams }: { searchParams: Promise<SP> }) {
   const actor = await requireActor();
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const sp = await searchParams;
   const tz = actor.organization.timezone;
   const parsed = quoteListQuerySchema.safeParse({
@@ -121,9 +125,9 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
                       <QuoteStatusBadge status={q.status} label={t(`quoteStatus.${q.status}`)} />
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {money(q.totalMinor, q.currency)}
+                      {money(q.totalMinor, q.currency, locale)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">{dayText(q.validUntil)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{dayText(q.validUntil, locale)}</TableCell>
                     <TableCell className="whitespace-nowrap">{formatDate(q.createdAt, tz)}</TableCell>
                   </TableRow>
                 ))}

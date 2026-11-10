@@ -1,7 +1,7 @@
 import { formatJobNumber, portal } from "@fieldops/core";
 import { CalendarClock, ChevronRight, ClipboardList, Plus } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatWindow } from "@/lib/format";
@@ -14,6 +14,7 @@ export default async function PortalHomePage({ params }: { params: Promise<{ slu
   const { actor } = await requirePortal(slug);
   const org = (await getPortalOrg(slug))!;
   const t = await getTranslations("portal.home");
+  const locale = await getLocale();
   const jobs = await runPortal(slug, (ctx) => portal.listPortalJobs(ctx));
   const isOpen = (s: string) => s !== "completed" && s !== "canceled";
   const open = jobs.filter((j) => isOpen(j.status));
@@ -34,12 +35,12 @@ export default async function PortalHomePage({ params }: { params: Promise<{ slu
           <p className="font-medium">{j.title}</p>
           <p className="text-muted-foreground text-sm">
             {j.status === "completed" && j.completedAt
-              ? t("completedOn", { date: formatDate(j.completedAt, tz) })
+              ? t("completedOn", { date: formatDate(j.completedAt, tz, locale) })
               : j.scheduledStart && isOpen(j.status)
-                ? formatWindow(j.scheduledStart, j.scheduledEnd, tz)
+                ? formatWindow(j.scheduledStart, j.scheduledEnd, tz, locale)
                 : isOpen(j.status)
                   ? t("notScheduled")
-                  : t("requestedOn", { date: formatDate(j.createdAt, tz) })}
+                  : t("requestedOn", { date: formatDate(j.createdAt, tz, locale) })}
           </p>
           {j.technicianFirstName && isOpen(j.status) ? (
             <p className="text-muted-foreground text-sm">

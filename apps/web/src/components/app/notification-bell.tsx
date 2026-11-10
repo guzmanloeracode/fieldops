@@ -2,7 +2,7 @@
 import type { NotificationDto } from "@fieldops/shared";
 import { Bell, Settings } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { markNotificationsReadAction, recentNotificationsAction } from "@/app/(app)/notifications/actions";
@@ -30,6 +30,7 @@ export function NotificationBell({
   className?: string;
 }) {
   const t = useTranslations("notifications");
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationDto[] | null>(null);
@@ -50,7 +51,7 @@ export function NotificationBell({
       const first = res.data.items[0];
       // Announce a new arrival once (the toast region is polite and never takes focus).
       if (announce && first && !first.read_at && first.id !== newest.current) {
-        const text = describeNotification(t, first, timeZone);
+        const text = describeNotification(t, first, timeZone, locale);
         toast.info(text.title, {
           description: text.detail ?? undefined,
           action: { label: t("page.title"), onClick: () => setOpen(true) },
@@ -58,7 +59,7 @@ export function NotificationBell({
       }
       newest.current = first?.id ?? newest.current;
     },
-    [t, timeZone],
+    [t, timeZone, locale],
   );
 
   useLiveEvents(["notification"], (m) => {
@@ -151,7 +152,7 @@ export function NotificationBell({
           ) : (
             <ul className="divide-y">
               {items.map((n) => {
-                const text = describeNotification(t, n, timeZone);
+                const text = describeNotification(t, n, timeZone, locale);
                 return (
                   <li key={n.id}>
                     <Link
@@ -177,7 +178,7 @@ export function NotificationBell({
                           <span className="text-muted-foreground block truncate text-xs">{text.detail}</span>
                         ) : null}
                         <span className="text-muted-foreground block text-xs">
-                          {formatRelative(n.created_at)}
+                          {formatRelative(n.created_at, locale)}
                         </span>
                       </span>
                     </Link>

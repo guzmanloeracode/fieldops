@@ -1,4 +1,6 @@
 import { getRequestConfig } from "next-intl/server";
+import { resolveLocale } from "@/server/locale";
+import { mergeMessages, type Locale } from "./locales";
 import auth from "../../messages/en/auth.json";
 import common from "../../messages/en/common.json";
 import customers from "../../messages/en/customers.json";
@@ -20,35 +22,80 @@ import billing from "../../messages/en/billing.json";
 import reports from "../../messages/en/reports.json";
 import recurrences from "../../messages/en/recurrences.json";
 import assistant from "../../messages/en/assistant.json";
+import authId from "../../messages/id/auth.json";
+import commonId from "../../messages/id/common.json";
+import customersId from "../../messages/id/customers.json";
+import dashboardId from "../../messages/id/dashboard.json";
+import dispatchId from "../../messages/id/dispatch.json";
+import expensesId from "../../messages/id/expenses.json";
+import fieldworkId from "../../messages/id/fieldwork.json";
+import insightsId from "../../messages/id/insights.json";
+import jobsId from "../../messages/id/jobs.json";
+import landingId from "../../messages/id/landing.json";
+import settingsId from "../../messages/id/settings.json";
+import slaId from "../../messages/id/sla.json";
+import notificationsId from "../../messages/id/notifications.json";
+import auditId from "../../messages/id/audit.json";
+import aiId from "../../messages/id/ai.json";
+import portalId from "../../messages/id/portal.json";
+import tourId from "../../messages/id/tour.json";
+import billingId from "../../messages/id/billing.json";
+import reportsId from "../../messages/id/reports.json";
+import recurrencesId from "../../messages/id/recurrences.json";
+import assistantId from "../../messages/id/assistant.json";
 
-// English ships in 0.1; Bahasa Indonesia arrives with SET-05 in 0.4. Each namespace lives in its own file.
-const messages = {
-  en: {
-    common,
-    auth,
-    jobs,
-    customers,
-    settings,
-    landing,
-    dispatch,
-    fieldwork,
-    expenses,
-    dashboard,
-    insights,
-    sla,
-    notifications,
-    audit,
-    ai,
-    portal,
-    tour,
-    billing,
-    reports,
-    recurrences,
-    assistant,
-  },
+// One file per namespace and language. English is complete; Bahasa Indonesia (SET-05, 0.4) is laid over it, so a
+// key that isn't translated yet shows in English rather than as its raw key.
+const en = {
+  auth,
+  common,
+  customers,
+  dashboard,
+  dispatch,
+  expenses,
+  fieldwork,
+  insights,
+  jobs,
+  landing,
+  settings,
+  sla,
+  notifications,
+  audit,
+  ai,
+  portal,
+  tour,
+  billing,
+  reports,
+  recurrences,
+  assistant,
+};
+const id = {
+  auth: authId,
+  common: commonId,
+  customers: customersId,
+  dashboard: dashboardId,
+  dispatch: dispatchId,
+  expenses: expensesId,
+  fieldwork: fieldworkId,
+  insights: insightsId,
+  jobs: jobsId,
+  landing: landingId,
+  settings: settingsId,
+  sla: slaId,
+  notifications: notificationsId,
+  audit: auditId,
+  ai: aiId,
+  portal: portalId,
+  tour: tourId,
+  billing: billingId,
+  reports: reportsId,
+  recurrences: recurrencesId,
+  assistant: assistantId,
 };
 
+const messages: Record<Locale, typeof en> = { en, id: mergeMessages(en, id) };
+
 export default getRequestConfig(async () => {
-  const locale = "en";
+  const locale = await resolveLocale();
   return { locale, messages: messages[locale], timeZone: "UTC" };
 });

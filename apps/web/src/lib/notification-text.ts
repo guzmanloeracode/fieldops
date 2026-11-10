@@ -13,6 +13,7 @@ export function describeNotification(
   t: Translate,
   n: { type: NotificationEvent; payload: NotificationPayload },
   timeZone: string,
+  locale?: string,
 ): { title: string; detail: string | null } {
   const p = n.payload;
   const job = p.job_number !== undefined ? formatJobNumber(p.job_number) : t("fallback.job");
@@ -30,10 +31,13 @@ export function describeNotification(
   const about = [p.job_title, p.customer_name].filter(Boolean).join(" · ");
   let when: string | null = null;
   if ((n.type === "job_assigned" || n.type === "job_rescheduled") && p.scheduled_start) {
-    when = t("detail.starts", { when: formatDateTime(p.scheduled_start, timeZone) });
+    when = t("detail.starts", { when: formatDateTime(p.scheduled_start, timeZone, locale) });
   }
   if ((n.type === "sla_at_risk" || n.type === "sla_breached") && p.due_at) {
-    when = t("detail.due", { target: p.target ?? "resolution", when: formatDateTime(p.due_at, timeZone) });
+    when = t("detail.due", {
+      target: p.target ?? "resolution",
+      when: formatDateTime(p.due_at, timeZone, locale),
+    });
   }
   const detail = [about, when].filter(Boolean).join(" — ");
   return { title, detail: detail || null };

@@ -11,6 +11,7 @@ import { defaultStatements } from "better-auth/plugins/organization/access";
 import { and, asc, eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { env, googleConfigured } from "@/env";
+import { isLocale, LOCALE_COOKIE, negotiateLocale } from "@/i18n/locales";
 import { db } from "./db";
 import { logger } from "./logger";
 import { queueEmail } from "./mailer";
@@ -41,6 +42,19 @@ const DEMO_BLOCKED_PATHS = [
   "/organization/delete",
   "/organization/leave",
 ];
+
+/**
+ * A new account starts in the language its owner was browsing in (SET-05): the language picker's cookie, else the
+ * browser's Accept-Language, else English. They can change it later in the user menu.
+ */
+function signUpLocale(headers: Headers | undefined): string {
+  const cookie = headers
+    ?.get("cookie")
+    ?.split(";")
+    .map((c) => c.trim().split("="))
+    .find(([name]) => name === LOCALE_COOKIE)?.[1];
+  return isLocale(cookie) ? cookie : (negotiateLocale(headers?.get("accept-language")) ?? "en");
+}
 
 async function isDemoUser(userId: string | undefined): Promise<boolean> {
   if (!userId) return false;
@@ -144,7 +158,12 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
     resetPasswordTokenExpiresIn: 60 * 60,
     sendResetPassword: async ({ user, url }) => {
-      await queueEmail({ kind: "reset_password", to: user.email, props: { name: user.name, url } });
+      await queueEmail({
+        kind: "reset_password",
+        to: user.email,
+        locale: (user as { locale?: string }).locale,
+        props: { name: user.name, url },
+      });
     },
   },
   emailVerification: {
@@ -152,7 +171,12 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: 60 * 60 * 24,
     sendVerificationEmail: async ({ user, url }) => {
-      await queueEmail({ kind: "verify_email", to: user.email, props: { name: user.name, url } });
+      await queueEmail({
+        kind: "verify_email",
+        to: user.email,
+        locale: (user as { locale?: string }).locale,
+        props: { name: user.name, url },
+      });
     },
   },
   rateLimit: {
@@ -167,6 +191,13 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user, ctx) => ({
+          data: { ...user, locale: signUpLocale(ctx?.headers ?? ctx?.request?.headers) },
+        }),
+      },
+    },
     // Sign-ins and sign-outs go to the audit log (AUD-01) of the organization the session works in.
     session: {
       create: { after: async (session) => recordAuthEvent("sign_in", session) },
@@ -211,6 +242,8 @@ export const auth = betterAuth({
           {
             kind: "invitation",
             to: data.email,
+            // The invitee has no account yet: the email reads in the inviter's language.
+            locale: (data.inviter.user as { locale?: string }).locale,
             props: {
               inviterName: data.inviter.user.name,
               organizationName: data.organization.name,

@@ -1,9 +1,13 @@
 import { organization } from "@fieldops/core";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { requireActor, runService } from "@/server/context";
 import { OperationsForm } from "./operations-form";
 
-export const metadata: Metadata = { title: "Operations settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("operations") };
+}
 
 /** Approval thresholds (EXP-02) and the completion signature rule (JOB-10). Owners and admins. */
 export default async function OperationsSettingsPage() {

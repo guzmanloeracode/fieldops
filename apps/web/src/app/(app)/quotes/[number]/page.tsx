@@ -2,7 +2,7 @@ import { formatJobNumber, quotes } from "@fieldops/core";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { DocumentLines } from "@/components/billing/document-view";
 import { billingFormData } from "@/components/billing/form-data";
@@ -28,6 +28,7 @@ export default async function QuotePage({ params }: { params: Promise<{ number: 
   const { number } = await params;
   const actor = await requireActor();
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const tz = actor.organization.timezone;
   const data = await runService(async (ctx) => {
     const quote = await quotes.getQuote(ctx, decodeURIComponent(number));
@@ -140,7 +141,7 @@ export default async function QuotePage({ params }: { params: Promise<{ number: 
                     : "—"}
                 </Item>
                 <Item label={t("form.serviceType")}>{quote.serviceType?.name ?? "—"}</Item>
-                <Item label={t("form.validUntil")}>{dayText(quote.validUntil)}</Item>
+                <Item label={t("form.validUntil")}>{dayText(quote.validUntil, locale)}</Item>
                 <Item label={t("quote.sentAt")}>{formatDateTime(quote.sentAt, tz)}</Item>
                 {quote.decidedAt ? (
                   <Item label={t("quote.decidedAt")}>

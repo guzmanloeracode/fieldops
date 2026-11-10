@@ -1,12 +1,13 @@
 import { formatJobNumber, jobs, type JobView } from "@fieldops/core";
+import { useLocale } from "next-intl";
 import { addDays, format } from "date-fns";
 import { CalendarClock, ChevronRight, MapPin, Navigation } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
-import { formatWindow, inZone } from "@/lib/format";
+import { formatDay, formatWindow, inZone } from "@/lib/format";
 import { runService, type ResolvedActor } from "@/server/context";
 import { QuickAction } from "./quick-action";
 
@@ -32,6 +33,7 @@ export async function MyDay({ actor }: { actor: ResolvedActor }) {
   const t = await getTranslations("jobs");
   const tf = await getTranslations("fieldwork.myDay");
   const tz = actor.organization.timezone;
+  const locale = await getLocale();
   const now = inZone(new Date(), tz);
   const today = format(now, "yyyy-MM-dd");
   const tomorrow = format(addDays(now, 1), "yyyy-MM-dd");
@@ -66,7 +68,7 @@ export async function MyDay({ actor }: { actor: ResolvedActor }) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title={t("myDay")} description={format(now, "EEEE, MMMM d")} />
+      <PageHeader title={t("myDay")} description={formatDay(now, tz, locale)} />
       {data.next ? (
         <section aria-labelledby="next-heading" className="mb-8 space-y-3">
           <h2 id="next-heading" className="text-muted-foreground text-sm font-medium">
@@ -78,7 +80,7 @@ export async function MyDay({ actor }: { actor: ResolvedActor }) {
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold tabular-nums">
-                {formatWindow(data.next.scheduledStart, data.next.scheduledEnd, tz).split(" · ")[1]}
+                {formatWindow(data.next.scheduledStart, data.next.scheduledEnd, tz, locale).split(" · ")[1]}
               </span>
               <StatusBadge status={data.next.status} />
               {data.next.priority === "high" || data.next.priority === "urgent" ? (
@@ -168,7 +170,8 @@ function JobCard({
   timeOnly?: boolean;
   current?: boolean;
 }) {
-  const window = formatWindow(job.scheduledStart, job.scheduledEnd, timeZone);
+  const locale = useLocale();
+  const window = formatWindow(job.scheduledStart, job.scheduledEnd, timeZone, locale);
   return (
     <li data-testid="job-row">
       <Link

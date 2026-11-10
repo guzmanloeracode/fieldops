@@ -17,6 +17,8 @@ export function toExpenseRows(
     settings: OrganizationSettings;
     receipts: Record<string, { url: string; thumbUrl: string | null }>;
     canWork: (e: ExpenseView) => boolean;
+    /** The reader's language, for the request's age. */
+    locale?: string;
   },
 ): ExpenseRow[] {
   return rows.map((e) => ({
@@ -36,7 +38,7 @@ export function toExpenseRows(
     decisionComment: e.decisionComment,
     usedAt: e.usedAt?.toISOString() ?? null,
     createdAt: e.createdAt.toISOString(),
-    age: formatRelative(e.createdAt),
+    age: formatRelative(e.createdAt, opts.locale),
     receiptUrl: opts.receipts[e.id]?.url ?? null,
     receiptThumbUrl: opts.receipts[e.id]?.thumbUrl ?? null,
     job: { id: e.job.id, number: formatJobNumber(e.job.number), title: e.job.title, status: e.job.status },

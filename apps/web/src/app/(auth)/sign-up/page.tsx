@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { env, googleConfigured } from "@/env";
 import { SignUpForm } from "./sign-up-form";
 
-export const metadata: Metadata = { title: "Create an account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("signUp") };
+}
 
 export default async function SignUpPage({
   searchParams,

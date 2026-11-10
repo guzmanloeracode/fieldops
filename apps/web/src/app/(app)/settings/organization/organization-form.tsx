@@ -1,10 +1,16 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CURRENCIES, organizationUpdateSchema, type Address, type Currency } from "@fieldops/shared";
+import {
+  CURRENCIES,
+  organizationUpdateSchema,
+  type Address,
+  type Currency,
+  type Locale,
+} from "@fieldops/shared";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useState, useTransition } from "react";
 import { useFieldArray, useForm, type Path } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -15,38 +21,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LOCALE_NAMES, LOCALES } from "@/i18n/locales";
 import { countryOptions } from "@/lib/countries";
 import { AddressFields } from "../../customers/_components/address-fields";
 import { updateOrganizationAction } from "./actions";
 
-const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM");
-const formSchema = organizationUpdateSchema.omit({ business_hours: true, tax_rates: true }).extend({
-  hours: z
-    .array(
-      z
-        .object({ enabled: z.boolean(), open: hhmm, close: hhmm })
-        .refine((h) => !h.enabled || h.close > h.open, {
-          message: "Closing time must be after opening time",
-          path: ["close"],
+/** The form's schema, with its messages in the reader's language (`settings.organization.errors`). */
+function formSchema(t: (key: string) => string) {
+  const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, t("errors.time"));
+  return organizationUpdateSchema.omit({ business_hours: true, tax_rates: true }).extend({
+    hours: z
+      .array(
+        z
+          .object({ enabled: z.boolean(), open: hhmm, close: hhmm })
+          .refine((h) => !h.enabled || h.close > h.open, {
+            message: t("errors.closeAfterOpen"),
+            path: ["close"],
+          }),
+      )
+      .length(7),
+    taxes: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1, t("errors.taxName")).max(60),
+          rate: z
+            .string()
+            .trim()
+            .regex(/^\d{1,3}(\.\d{1,2})?$/, t("errors.taxRate"))
+            .refine((v) => Number(v) <= 100, t("errors.taxRateMax")),
+          default: z.boolean(),
         }),
-    )
-    .length(7),
-  taxes: z
-    .array(
-      z.object({
-        name: z.string().trim().min(1, "Name is required").max(60),
-        rate: z
-          .string()
-          .trim()
-          .regex(/^\d{1,3}(\.\d{1,2})?$/, "Enter a percentage like 8.25")
-          .refine((v) => Number(v) <= 100, "Can't be more than 100%"),
-        default: z.boolean(),
-      }),
-    )
-    .max(10),
-});
-type FormInput = z.input<typeof formSchema>;
-type FormOutput = z.output<typeof formSchema>;
+      )
+      .max(10),
+  });
+}
+type FormInput = z.input<ReturnType<typeof formSchema>>;
+type FormOutput = z.output<ReturnType<typeof formSchema>>;
 
 export interface OrganizationFormValues {
   name: string;
@@ -58,19 +68,23 @@ export interface OrganizationFormValues {
   address: Address | null;
   businessHours: { day: number; open: string; close: string }[];
   taxRates: { name: string; rate_bps: number; default: boolean }[];
+  /** The customers' language (SET-05). */
+  locale: Locale;
 }
 
 const DAYS = [1, 2, 3, 4, 5, 6, 0] as const;
 
 export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValues; timeZones: string[] }) {
   const t = useTranslations("settings.organization");
+  const locale = useLocale();
+  const schema = useMemo(() => formSchema(t), [t]);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [hasAddress, setHasAddress] = useState(Boolean(org.address));
   const zones = timeZones.includes(org.timezone) ? timeZones : [org.timezone, ...timeZones];
 
   const form = useForm<FormInput, unknown, FormOutput>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schema),
     shouldUnregister: false,
     defaultValues: {
       name: org.name,
@@ -78,6 +92,7 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
       currency: org.currency,
       country: org.country,
       brand_color: org.brandColor ?? "#0369a1",
+      locale: org.locale,
       address: org.address
         ? {
             ...org.address,
@@ -200,12 +215,25 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="org-country">{t("country")}</Label>
             <NativeSelect id="org-country" {...form.register("country")}>
-              {countryOptions().map((c) => (
+              {countryOptions(locale).map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
                 </option>
               ))}
             </NativeSelect>
+          </div>
+          <div className="space-y-1.5 sm:col-span-3">
+            <Label htmlFor="org-locale">{t("customerLocale")}</Label>
+            <NativeSelect id="org-locale" aria-describedby="org-locale-hint" {...form.register("locale")}>
+              {LOCALES.map((l) => (
+                <option key={l} value={l} lang={l}>
+                  {LOCALE_NAMES[l]}
+                </option>
+              ))}
+            </NativeSelect>
+            <p id="org-locale-hint" className="text-muted-foreground text-xs">
+              {t("customerLocaleHint")}
+            </p>
           </div>
         </CardContent>
       </Card>

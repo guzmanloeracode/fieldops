@@ -2,7 +2,7 @@
 import type { NoteVisibility } from "@fieldops/shared";
 import { Eye, Loader2, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ export function Notes({
   timeZone: string;
 }) {
   const t = useTranslations("jobs");
+  const locale = useLocale();
   const router = useRouter();
   const [body, setBody] = useState("");
   const [customerVisible, setCustomerVisible] = useState(false);
@@ -100,7 +101,7 @@ export function Notes({
               <li key={n.id} className="rounded-lg border p-3">
                 <div className="text-muted-foreground mb-1 flex flex-wrap items-center gap-x-2 text-xs">
                   <span className="text-foreground font-medium">{n.author ?? t("notes.unknown")}</span>
-                  <span>{formatDateTime(n.createdAt, timeZone)}</span>
+                  <span>{formatDateTime(n.createdAt, timeZone, locale)}</span>
                   <span className="ml-auto inline-flex items-center gap-1">
                     {n.visibility === "customer" ? (
                       <Eye className="size-3" aria-hidden />

@@ -74,6 +74,7 @@ function QueueItem({
   saving: boolean;
   onOpen: (job: BoardJob) => void;
 }) {
+  const tj = useTranslations("jobs");
   const data: DragData = { type: "queue", jobId: job.id };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `queue:${job.id}`, data });
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -107,7 +108,7 @@ function QueueItem({
         <p className="mt-1 truncate font-medium">{job.title}</p>
         <p className="text-muted-foreground truncate text-xs">
           {job.customer}
-          {job.serviceType ? ` · ${job.serviceType}` : ""} · {job.durationMin} min
+          {job.serviceType ? ` · ${job.serviceType}` : ""} · {tj("detail.minutes", { n: job.durationMin })}
         </p>
         {job.sla ? <SlaBadge state={job.sla.state} prefixed className="mt-1.5" /> : null}
       </div>
