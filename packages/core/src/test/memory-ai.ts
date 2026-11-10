@@ -66,7 +66,9 @@ export function memoryAi(
       };
     },
     async latestDraft(jobId) {
-      const i = interactions.filter((x) => x.jobId === jobId && x.output !== null).at(-1);
+      const i = interactions
+        .filter((x) => x.jobId === jobId && x.feature === "intake" && x.output !== null)
+        .at(-1);
       return i ? { ...i } : null;
     },
     async setJobStatus(jobId, status) {

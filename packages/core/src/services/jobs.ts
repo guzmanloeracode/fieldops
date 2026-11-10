@@ -17,6 +17,7 @@ import { assertCan, seesOnlyAssigned } from "../domain/permissions";
 import { assertValidWindow } from "../domain/schedule";
 import * as checklist from "./checklist";
 import * as notifications from "./notifications";
+import * as reports from "./reports";
 import { getJob, isAssigned } from "./job-access";
 import * as signatures from "./signature";
 import * as sla from "./sla";
@@ -205,7 +206,10 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       ...(input.hold_reason ? { hold_reason: input.hold_reason } : {}),
     },
   });
-  return (await ctx.store.jobs.get(job.id))!;
+  const after = (await ctx.store.jobs.get(job.id))!;
+  // The customer's service report (AI-03) starts as a draft when the job is completed.
+  if (rule.name === "complete") await reports.onJobCompleted(ctx, after);
+  return after;
 }
 
 /**

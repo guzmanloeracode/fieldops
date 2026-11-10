@@ -173,7 +173,7 @@ export async function suggestCustomers(
 // ------------------------------------------------------------------ guardrails
 
 /** AI on for the organization (SET-04) and configured on this server. */
-async function assertAiAvailable(store: Store, model: IntakeModel) {
+export async function assertAiAvailable(store: Store, model: Pick<IntakeModel, "provider">) {
   const org = await store.organization.get();
   if (!org.settings.ai.enabled) {
     throw new UnavailableError("AI features are turned off for this organization", { reason: "disabled" });
@@ -184,7 +184,7 @@ async function assertAiAvailable(store: Store, model: IntakeModel) {
   return org;
 }
 
-async function assertUnderQuota(store: Store, quota: number, now: Date) {
+export async function assertUnderQuota(store: Store, quota: number, now: Date) {
   const used = await store.ai.countSince(monthStart(now));
   if (used >= quota) {
     throw new RateLimitedError("This month's AI quota is used up", {
