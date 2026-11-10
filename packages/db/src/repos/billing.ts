@@ -642,6 +642,10 @@ export function billingRepo(tx: Tx, orgId: string): BillingRepo {
           amountPaidMinor: sql`${invoice.amountPaidMinor} + ${amountMinor}`,
           status: sql`case when ${settles} then 'paid' else ${invoice.status} end`,
           paidAt: sql`case when ${settles} then ${paidAt}::timestamptz else ${invoice.paidAt} end`,
+          // The open checkout session was for the old balance (FIN-05).
+          checkoutSessionId: null,
+          checkoutUrl: null,
+          checkoutExpiresAt: null,
           version: sql`${invoice.version} + 1`,
           updatedAt: new Date(),
         })
@@ -669,6 +673,48 @@ export function billingRepo(tx: Tx, orgId: string): BillingRepo {
         and(eq(payment.provider, provider), eq(payment.providerRef, providerRef))!,
       );
       return p ?? null;
+    },
+
+    // ---------------------------------------------------------------- online payments and the portal
+    async getCheckout(invoiceId) {
+      const [r] = await tx
+        .select({
+          sessionId: invoice.checkoutSessionId,
+          url: invoice.checkoutUrl,
+          expiresAt: invoice.checkoutExpiresAt,
+        })
+        .from(invoice)
+        .where(and(invoiceScope, eq(invoice.id, invoiceId)));
+      return r?.sessionId && r.url && r.expiresAt
+        ? { sessionId: r.sessionId, url: r.url, expiresAt: r.expiresAt }
+        : null;
+    },
+    async saveCheckout(invoiceId, checkout) {
+      // Not a change to the document: no version bump, so it never conflicts with an edit or a payment.
+      const rows = await tx
+        .update(invoice)
+        .set({
+          checkoutSessionId: checkout.sessionId,
+          checkoutUrl: checkout.url,
+          checkoutExpiresAt: checkout.expiresAt,
+        })
+        .where(and(invoiceScope, eq(invoice.id, invoiceId), inArray(invoice.status, ["sent", "overdue"])))
+        .returning({ id: invoice.id });
+      return rows.length > 0;
+    },
+    async markViewed(kind, id, at) {
+      const table = kind === "quote" ? quote : invoice;
+      await tx
+        .update(table)
+        .set({ viewedAt: at })
+        .where(
+          and(
+            eq(table.organizationId, orgId),
+            eq(table.id, id),
+            isNull(table.deletedAt),
+            isNull(table.viewedAt),
+          ),
+        );
     },
 
     // ---------------------------------------------------------------- overdue and reminders
