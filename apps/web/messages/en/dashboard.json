@@ -73,7 +73,7 @@
     "empty": "No jobs in this period.",
     "noTechnicians": "No technicians yet.",
     "downloadCsv": "Download CSV",
-    "downloadCsvLabel": "Download {report} as CSV"
+    "downloadCsvLabel": "Download CSV: {report}"
   },
   "today": {
     "scheduled": "Visits today",
@@ -104,7 +104,7 @@
     "wasDue": "{target} was due {when}",
     "viewRisk": "View in jobs",
     "downloadCsv": "Download CSV",
-    "downloadCsvLabel": "Download {report} as CSV"
+    "downloadCsvLabel": "Download CSV: {report}"
   },
   "own": {
     "title": "Your numbers",
