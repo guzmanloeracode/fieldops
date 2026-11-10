@@ -27,6 +27,7 @@ export function JobFilters({
   showTechnician: boolean;
 }) {
   const t = useTranslations("jobs");
+  const ti = useTranslations("insights.filters");
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -67,7 +68,20 @@ export function JobFilters({
     "from",
     "to",
     "q",
+    "date_field",
+    "unassigned",
+    "revisit",
   ].filter((k) => params.get(k)).length;
+
+  // Filters that dashboards and saved views set but the toolbar has no control for (DSH-03, JOB-04).
+  const dateField = params.get("date_field");
+  const extraChips = [
+    ...(dateField === "created" || dateField === "completed" || dateField === "scheduled"
+      ? [{ key: "date_field", label: ti(`dateField.${dateField}`) }]
+      : []),
+    ...(params.get("unassigned") === "true" ? [{ key: "unassigned", label: ti("unassigned") }] : []),
+    ...(params.get("revisit") === "true" ? [{ key: "revisit", label: ti("revisit") }] : []),
+  ];
 
   return (
     <div className="mb-4 space-y-3" aria-busy={pending}>
@@ -168,6 +182,26 @@ export function JobFilters({
           </Button>
         ) : null}
       </div>
+      {extraChips.length ? (
+        <div className="flex flex-wrap gap-2" data-testid="extra-filters">
+          {extraChips.map((c) => (
+            <span
+              key={c.key}
+              className="bg-secondary inline-flex items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-xs"
+            >
+              {c.label}
+              <button
+                type="button"
+                onClick={() => update({ [c.key]: null })}
+                className="hover:bg-background rounded-full p-0.5"
+                aria-label={ti("remove", { name: c.label })}
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
       {customer ? (
         <div className="flex">
           <span className="bg-secondary inline-flex items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-xs">

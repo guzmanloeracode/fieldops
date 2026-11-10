@@ -598,6 +598,7 @@ export const equipmentSchema = z
     serial: z.string().nullable(),
     install_date: z.iso.date().nullable(),
     warranty_end: z.iso.date().nullable(),
+    notes: z.string().nullable(),
   })
   .meta({ id: "Equipment" });
 export type EquipmentDto = z.infer<typeof equipmentSchema>;

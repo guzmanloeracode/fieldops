@@ -1,4 +1,13 @@
-import { can, customers, formatJobNumber, jobs, NotFoundError, organization } from "@fieldops/core";
+import {
+  can,
+  customers,
+  dates,
+  formatJobNumber,
+  jobs,
+  NotFoundError,
+  organization,
+  warrantyStatus,
+} from "@fieldops/core";
 import { jobListQuerySchema, type Address } from "@fieldops/shared";
 import { Building2, ExternalLink, KeyRound, Mail, MapPin, Phone, Plus, User } from "lucide-react";
 import type { Metadata } from "next";
@@ -12,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { EquipmentDialog } from "../_components/equipment-dialog";
+import { WarrantyBadge } from "../_components/warranty-badge";
 import { requireActor, runService } from "@/server/context";
 import { DeleteCustomerButton } from "./delete-customer-button";
 import { EditCustomerDialog } from "./edit-customer-dialog";
@@ -35,15 +46,20 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   if (!z.uuid().safeParse(id).success) notFound();
   const actor = await requireActor();
   const t = await getTranslations("customers");
+  const te = await getTranslations("insights.equipment");
   const tz = actor.organization.timezone;
+  const today = dates.localDateString(new Date(), tz);
 
   const data = await runService(async (ctx) => {
     const detail = await customers.getCustomerDetail(ctx, id);
-    const [recent, org] = await Promise.all([
+    const [recent, org, units] = await Promise.all([
       jobs.listJobs(ctx, jobListQuerySchema.parse({ customer: id, sort: "-created_at", limit: 8 })),
       organization.getOrganization(ctx),
+      // Equipment per site (CUS-03): same visibility as the sites listed here.
+      Promise.all(detail.sites.map((s) => ctx.store.equipment.listBySite(s.id))),
     ]);
-    return { ...detail, recent: recent.rows, country: org.country };
+    const equipment = new Map(detail.sites.map((s, i) => [s.id, units[i]!]));
+    return { ...detail, recent: recent.rows, country: org.country, equipment };
   }, actor).catch((err) => {
     if (err instanceof NotFoundError) notFound();
     throw err;
@@ -174,6 +190,45 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                             {t("detail.openMap")} <ExternalLink aria-hidden className="size-3" />
                           </a>
                         ) : null}
+                        <div className="mt-2 space-y-1" data-testid="site-equipment">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-muted-foreground text-xs font-medium">{te("title")}</p>
+                            {canUpdate ? (
+                              <EquipmentDialog customerId={customer.id} siteId={s.id} siteLabel={s.label} />
+                            ) : null}
+                          </div>
+                          {(data.equipment.get(s.id) ?? []).length === 0 ? (
+                            <p className="text-muted-foreground text-xs">{te("none")}</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {(data.equipment.get(s.id) ?? []).map((u) => {
+                                const w = warrantyStatus(u.warrantyEnd, today);
+                                return (
+                                  <li
+                                    key={u.id}
+                                    className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
+                                  >
+                                    <Link href={`/equipment/${u.id}`} className="font-medium hover:underline">
+                                      {u.type}
+                                    </Link>
+                                    <span className="text-muted-foreground text-xs">
+                                      {[u.brand, u.model].filter(Boolean).join(" ") || "—"}
+                                    </span>
+                                    <WarrantyBadge status={w} label={te(`warranty.${w}`)} />
+                                    {canUpdate ? (
+                                      <EquipmentDialog
+                                        customerId={customer.id}
+                                        siteId={s.id}
+                                        siteLabel={s.label}
+                                        unit={{ ...u, notes: u.notes ?? null }}
+                                      />
+                                    ) : null}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
                       </div>
                       {canUpdate ? (
                         <SiteDialog

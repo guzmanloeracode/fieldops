@@ -1,5 +1,6 @@
 import type { Role } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
+import { insightsMemory } from "./memory-insights";
 import type {
   AssigneeRef,
   AttachmentRecord,
@@ -83,6 +84,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     ...seed,
   };
 
+  const insights = insightsMemory(data); // 0.2 insights repositories
   const memberName = (memberId: string) => data.members.find((m) => m.id === memberId);
   const userName = (userId: string | null) => data.members.find((m) => m.userId === userId)?.name;
 
@@ -209,6 +211,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
       },
     },
     equipment: {
+      ...insights.equipment,
       async get(id) {
         return data.equipment.find((e) => e.id === id) ?? null;
       },
@@ -390,6 +393,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         return data.org;
       },
     },
+    ...insights.repos,
   };
   return { store, data };
 }

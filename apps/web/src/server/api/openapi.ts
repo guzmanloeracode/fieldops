@@ -9,7 +9,9 @@ import {
   customerSchema,
   customerSummarySchema,
   customerUpdateSchema,
+  equipmentCreateSchema,
   equipmentSchema,
+  equipmentUpdateSchema,
   jobAssignmentSchema,
   jobCreateSchema,
   jobDetailSchema,
@@ -363,6 +365,26 @@ export function openApiDocument() {
           operationId: "listSiteEquipment",
           requestParams: { path: uuidParam("Site") },
           responses: { "200": json(list(equipmentSchema, "EquipmentPage"), "Equipment"), ...errors(404) },
+        }),
+        post: op("Customers", "Add equipment to a site", {
+          operationId: "createEquipment",
+          description: "Owners, admins and dispatchers.",
+          requestParams: { path: uuidParam("Site"), header: idempotencyHeader },
+          requestBody: body(equipmentCreateSchema),
+          responses: { "201": json(equipmentSchema, "The new unit"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/equipment/{id}": {
+        get: op("Customers", "Get a unit of equipment", {
+          operationId: "getEquipment",
+          requestParams: { path: uuidParam("Equipment") },
+          responses: { "200": json(equipmentSchema, "The unit"), ...errors(404) },
+        }),
+        patch: op("Customers", "Update a unit of equipment", {
+          operationId: "updateEquipment",
+          requestParams: { path: uuidParam("Equipment") },
+          requestBody: body(equipmentUpdateSchema),
+          responses: { "200": json(equipmentSchema, "The updated unit"), ...errors(404, 415, 422) },
         }),
       },
       "/me": {

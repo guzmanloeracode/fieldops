@@ -5,15 +5,17 @@ import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
+  type RowSelectionState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, Inbox } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, Download, Inbox } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -24,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, formatWindow } from "@/lib/format";
+import { BulkBar } from "./bulk-bar";
 
 export interface JobRow {
   id: string;
@@ -52,18 +55,32 @@ const SORTABLE: Record<string, string> = {
 };
 const STORAGE_KEY = "fieldops.jobs.columns";
 
+/** Office-only bulk tools (JOB-04): row selection, bulk actions and CSV export. */
+export interface BulkOptions {
+  members: { id: string; name: string }[];
+  /** Export of every job matching the current filters. */
+  exportHref: string;
+}
+
 export function JobsTable({
   rows,
   sort,
   timeZone,
   sortable,
+  bulk,
 }: {
   rows: JobRow[];
   sort: string;
   timeZone: string;
   sortable: boolean;
+  bulk?: BulkOptions;
 }) {
   const t = useTranslations("jobs");
+  const tb = useTranslations("insights.bulk");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const rowKey = rows.map((r) => r.id).join(",");
+  // A new page or new filters start with nothing selected.
+  useEffect(() => setRowSelection({}), [rowKey]);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -90,6 +107,36 @@ export function JobsTable({
 
   const columns = useMemo<ColumnDef<JobRow>[]>(
     () => [
+      ...(bulk
+        ? [
+            {
+              id: "select",
+              header: ({ table }) => (
+                <Checkbox
+                  aria-label={tb("selectAll")}
+                  data-testid="select-all"
+                  checked={
+                    table.getIsAllPageRowsSelected()
+                      ? true
+                      : table.getIsSomePageRowsSelected()
+                        ? "indeterminate"
+                        : false
+                  }
+                  onCheckedChange={(v) => table.toggleAllPageRowsSelected(v === true)}
+                />
+              ),
+              cell: ({ row }) => (
+                <Checkbox
+                  aria-label={tb("selectRow", { number: row.original.number })}
+                  data-testid="select-row"
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(v) => row.toggleSelected(v === true)}
+                />
+              ),
+              enableHiding: false,
+            } satisfies ColumnDef<JobRow>,
+          ]
+        : []),
       {
         id: "number",
         header: t("col.number"),
@@ -180,14 +227,17 @@ export function JobsTable({
         ),
       },
     ],
-    [t, timeZone],
+    [t, tb, timeZone, bulk],
   );
 
   const table = useReactTable({
     data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    state: { columnVisibility: visibility },
+    getRowId: (r) => r.id,
+    enableRowSelection: Boolean(bulk),
+    onRowSelectionChange: setRowSelection,
+    state: { columnVisibility: visibility, rowSelection },
     onColumnVisibilityChange: (updater) => {
       setVisibility((prev) => {
         const next = typeof updater === "function" ? updater(prev) : updater;
@@ -214,9 +264,19 @@ export function JobsTable({
     return current === field ? "ascending" : current === `-${field}` ? "descending" : "none";
   };
 
+  const selected = Object.keys(rowSelection).filter((id) => rowSelection[id]);
+
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
+      {bulk ? <BulkBar ids={selected} members={bulk.members} onClear={() => setRowSelection({})} /> : null}
+      <div className="flex justify-end gap-1">
+        {bulk ? (
+          <Button variant="ghost" size="sm" asChild>
+            <a href={bulk.exportHref} download title={tb("exportAllHint")} data-testid="export-all">
+              <Download /> {tb("exportAll")}
+            </a>
+          </Button>
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -274,7 +334,11 @@ export function JobsTable({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-testid="job-row">
+              <TableRow
+                key={row.id}
+                data-testid="job-row"
+                data-state={row.getIsSelected() ? "selected" : undefined}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="py-2.5">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

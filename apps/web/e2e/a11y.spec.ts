@@ -46,6 +46,7 @@ test.describe("app pages as owner", () => {
 
   for (const path of [
     "/dashboard",
+    "/dashboard?tab=today",
     "/jobs",
     "/jobs/new",
     "/customers",
@@ -59,6 +60,31 @@ test.describe("app pages as owner", () => {
   }
   test("axe: job detail", async ({ page }) => audit(page, `/jobs/${jobNumber}`));
   test("axe: customer detail", async ({ page }) => audit(page, `/customers/${customerId}`));
+  test("axe: equipment detail", async ({ page }) => {
+    const client = await api("owner");
+    const jobs = await json<{ data: { equipment_id: string | null }[] }>(
+      await client.get("/api/v1/jobs?limit=50&status=completed"),
+    );
+    await client.dispose();
+    await audit(page, `/equipment/${jobs.data.find((j) => j.equipment_id)!.equipment_id}`);
+  });
+  test("axe: command palette", async ({ page }) => {
+    await page.goto("/jobs");
+    await page.keyboard.press("ControlOrMeta+k");
+    await page.getByTestId("palette-input").fill("ac");
+    await page.waitForLoadState("networkidle");
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[role=dialog]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+  });
+});
+
+test.describe("technician home", () => {
+  test.use({ storageState: storageState("technician") });
+  test("axe: dashboard", async ({ page }) => audit(page, "/dashboard"));
 });
 
 test.describe("technician view", () => {

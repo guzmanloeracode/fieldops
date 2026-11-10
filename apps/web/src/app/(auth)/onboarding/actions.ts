@@ -18,6 +18,8 @@ export async function createOrganizationAction(
 ): Promise<{ ok: false; message: string; fields?: Record<string, string> }> {
   const session = await getSession();
   if (!session) redirect("/sign-in");
+  // Shared demo accounts can't create organizations: every visitor signs in as the same people.
+  if (session.user.isDemo) return { ok: false, message: "This action is disabled for demo accounts" };
   const parsed = organizationCreateSchema.safeParse(input);
   if (!parsed.success) {
     return {
