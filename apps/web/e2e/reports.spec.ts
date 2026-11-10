@@ -141,6 +141,16 @@ test.describe("service reports", () => {
       await client.get(`/api/v1/jobs/${job.id}/events`),
     );
     expect(events.data.some((e) => e.type === "report_sent")).toBe(true);
+
+    // The endpoints are documented (the release checks that the document builds).
+    const doc = await json<{ paths: Record<string, unknown> }>(await client.get("/api/v1/openapi.json"));
+    for (const path of [
+      "/jobs/{id}/report",
+      "/jobs/{id}/report-draft",
+      "/jobs/{id}/report/send",
+      "/jobs/{id}/report/pdf",
+    ])
+      expect(doc.paths[path], path).toBeDefined();
     await client.dispose();
 
     // Another organization doesn't see it.
