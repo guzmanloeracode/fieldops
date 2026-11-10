@@ -122,6 +122,11 @@ test.describe("Acme Teknik", () => {
     await page.goto("/settings/organization");
     await expect(page.getByLabel("Bahasa untuk pelanggan")).toHaveValue("id");
 
+    // Invoices (0.4): Indonesian labels and rupiah amounts.
+    await page.goto("/invoices");
+    await expect(page.getByRole("heading", { level: 1, name: "Faktur" })).toBeVisible();
+    await expect(page.locator("main")).toContainText(/Rp\s?[\d.]+/);
+
     // Visit windows in the jobs list use the 24-hour clock.
     await page.goto("/jobs?status=scheduled");
     await expect(page.locator("main")).toContainText(/\d{2}\.\d{2} – \d{2}\.\d{2}/);

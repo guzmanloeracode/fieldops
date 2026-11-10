@@ -53,6 +53,9 @@ test.describe("pages in Bahasa Indonesia", () => {
       "/settings/organization",
       "/schedule",
       "/approvals",
+      "/quotes",
+      "/invoices",
+      "/settings/catalog",
     ]) {
       test(`axe (id): ${path}`, async ({ page }) => audit(page, path));
     }
