@@ -138,6 +138,8 @@ test.describe("technician and dispatcher (J2 for 0.1)", () => {
     await page.getByLabel("Add note").fill("Replaced the fan motor.");
     await page.getByRole("button", { name: "Add note" }).click();
     await expect(page.getByText("Replaced the fan motor.")).toBeVisible();
+    // The form clears itself once the first note is saved; wait for that before typing the next one.
+    await expect(page.getByLabel("Add note")).toHaveValue("");
     await page.getByLabel("Add note").fill("Your unit is cooling normally again.");
     await page.getByRole("switch").click();
     await page.getByRole("button", { name: "Add note" }).click();

@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { devices, expect, test, type Page } from "@playwright/test";
+import { devices, expect, test, type Browser, type Page } from "@playwright/test";
 import { jobForTom, PNG, signViaApi, uploadToJob } from "./fieldwork-helpers";
 import { api, expectStatus, json, storageState, uniq } from "./fixtures";
 
@@ -8,7 +8,22 @@ import { api, expectStatus, json, storageState, uniq } from "./fixtures";
 
 const PHONE = { ...devices["Pixel 7"], storageState: storageState("technician") };
 
+/** A phone browser. The Next.js dev indicator (development only) would cover the bottom action bar. */
+async function phone(browser: Browser) {
+  const context = await browser.newContext(PHONE);
+  await context.addInitScript(() => {
+    addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = "nextjs-portal{display:none!important}";
+      document.head.append(style);
+    });
+  });
+  return context;
+}
+
 async function axe(page: Page) {
+  // Toasts fade in and out; check the page once they're gone.
+  await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 15_000 });
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .exclude("nextjs-portal")
@@ -31,7 +46,7 @@ test.describe("technician on a phone (J2)", () => {
   });
 
   test("works the checklist, records time, signs and completes", async ({ browser }) => {
-    const context = await browser.newContext(PHONE);
+    const context = await phone(browser);
     const page = await context.newPage();
     await page.goto(`/jobs/${jobNumber}`);
     await expectStatus(page, "Scheduled");
@@ -109,7 +124,7 @@ test.describe("technician on a phone (J2)", () => {
     }
     await tech.dispose();
 
-    const context = await browser.newContext(PHONE);
+    const context = await phone(browser);
     const page = await context.newPage();
     await page.goto(`/jobs/${job.number}`);
     const time = page.getByTestId("time-entries");
@@ -140,7 +155,7 @@ test.describe("technician on a phone (J2)", () => {
   });
 
   test("My day highlights the next visit with one-tap actions", async ({ browser }) => {
-    const context = await browser.newContext(PHONE);
+    const context = await phone(browser);
     const page = await context.newPage();
     await page.goto("/jobs?view=my-day");
     await expect(page.getByRole("heading", { name: "My day" })).toBeVisible();

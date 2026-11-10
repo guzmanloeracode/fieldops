@@ -129,6 +129,7 @@ export function Attachments({
               multiple
               className="sr-only"
               id="attachment-input"
+              aria-label={t("attachments.add")}
               onChange={(e) => e.target.files?.length && void upload(e.target.files)}
             />
             {/* Phones: open the camera directly (TEC-03). */}
@@ -139,7 +140,7 @@ export function Attachments({
               capture="environment"
               className="sr-only"
               tabIndex={-1}
-              aria-hidden
+              aria-label={tf("camera")}
               onChange={(e) => e.target.files?.length && void upload(e.target.files)}
             />
             <Button
