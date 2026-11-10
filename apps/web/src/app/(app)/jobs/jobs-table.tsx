@@ -169,7 +169,12 @@ export function JobsTable({
                 {row.original.customer} · {row.original.city}
               </span>
               {row.original.recurring ? (
-                <RecurringBadge href={row.original.recurring.href} title={row.original.recurring.title} />
+                // Kept clear of the title link above, so both stay easy to tap (WCAG 2.5.8).
+                <RecurringBadge
+                  href={row.original.recurring.href}
+                  title={row.original.recurring.title}
+                  className="mt-1"
+                />
               ) : null}
               {row.original.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">

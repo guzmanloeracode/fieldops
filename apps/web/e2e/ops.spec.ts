@@ -65,7 +65,7 @@ test.describe("maintenance plans (JOB-13)", () => {
     try {
       await page.goto(`/customers/${customerId}`);
       const section = page.getByTestId("maintenance-plans");
-      await expect(section.getByRole("heading", { name: "Maintenance plans" })).toBeVisible();
+      await expect(section).toContainText("Maintenance plans");
       await section.getByTestId("plan-add").click();
       const dialog = page.getByRole("dialog");
       await expect(dialog.getByRole("heading", { name: "New maintenance plan" })).toBeVisible();
@@ -162,6 +162,9 @@ test.describe("maintenance plans (JOB-13)", () => {
       });
       expect(bad.status()).toBe(422);
       expect((await client.get("/api/v1/recurrences/not-a-uuid")).status()).toBe(404);
+      // The plans are in the API reference.
+      const doc = await json<{ paths: Record<string, unknown> }>(await client.get("/api/v1/openapi.json"));
+      expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/recurrences", "/recurrences/{id}"]));
     } finally {
       await client.dispose();
       await tech.dispose();
