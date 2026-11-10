@@ -199,6 +199,7 @@ export function toServiceTypeDto(s: ServiceTypeRecord): z.infer<typeof serviceTy
       unit: i.unit ?? null,
       required: i.required,
     })),
+    tax_rate_bps: s.taxRateBps ?? null,
   };
 }
 

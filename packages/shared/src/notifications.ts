@@ -18,9 +18,17 @@ export const notificationPayloadSchema = z
     scheduled_start: z.string().optional(),
     expense_id: z.uuid().optional(),
     item: z.string().optional(),
-    decision: z.enum(["approved", "rejected"]).optional(),
+    /** "declined" is a customer's answer to a quote (0.4). */
+    decision: z.enum(["approved", "rejected", "declined"]).optional(),
     target: z.enum(SLA_TARGETS).optional(),
     due_at: z.string().optional(),
+    // 0.4 billing: quote_decided and payment_received.
+    quote_id: z.uuid().optional(),
+    quote_number: z.string().optional(),
+    invoice_id: z.uuid().optional(),
+    invoice_number: z.string().optional(),
+    /** Already formatted in the document's currency, e.g. "$1,250.00". */
+    amount: z.string().optional(),
   })
   .meta({ id: "NotificationPayload" });
 export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
@@ -37,6 +45,8 @@ export const NOTIFICATION_EVENTS_BY_ROLE: Record<Role, readonly NotificationEven
     "expense_requested",
     "expense_decided",
     "daily_digest",
+    "quote_decided",
+    "payment_received",
   ],
   admin: [
     "portal_request",
@@ -44,9 +54,17 @@ export const NOTIFICATION_EVENTS_BY_ROLE: Record<Role, readonly NotificationEven
     "sla_breached",
     "expense_requested",
     "expense_decided",
+    "quote_decided",
     "daily_digest",
   ],
-  dispatcher: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided"],
+  dispatcher: [
+    "portal_request",
+    "sla_at_risk",
+    "sla_breached",
+    "expense_requested",
+    "expense_decided",
+    "quote_decided",
+  ],
   technician: ["job_assigned", "job_rescheduled", "expense_decided"],
 };
 

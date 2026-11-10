@@ -80,7 +80,8 @@
     "manual": "Entered by staff",
     "portal": "Customer portal",
     "ai_intake": "AI intake",
-    "api": "API"
+    "api": "API",
+    "quote": "Approved quote"
   },
   "detail": {
     "details": "Details",

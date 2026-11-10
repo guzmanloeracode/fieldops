@@ -3,10 +3,12 @@ import { createElement } from "react";
 import { NotificationEmail, notificationCopy, type NotificationEmailProps } from "./notification";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
 import { PortalSignIn } from "./portal";
+import { BillingEmail, billingCopy, type BillingEmailProps } from "./billing";
 import { DailyDigestEmail, digestSubject, type DailyDigestProps } from "./digest";
 import { JobCompletedEmail, jobCompletedSubject, type JobCompletedEmailProps } from "./report";
 
 export { notificationCopy, type NotificationEmailEvent, type NotificationEmailProps } from "./notification";
+export { billingCopy, type BillingEmailProps } from "./billing";
 export { digestDay, digestSubject, type DailyDigestProps } from "./digest";
 export { formatEmailDate, type JobCompletedEmailProps } from "./report";
 
@@ -25,7 +27,9 @@ export type EmailMessage =
     }
   | { kind: "notification"; to: string; props: NotificationEmailProps }
   | { kind: "daily_digest"; to: string; props: DailyDigestProps }
-  | { kind: "report.job_completed"; to: string; props: JobCompletedEmailProps };
+  | { kind: "report.job_completed"; to: string; props: JobCompletedEmailProps }
+  /** Quotes, invoices, receipts and reminders to a customer's contact (0.4). */
+  | { kind: "billing"; to: string; props: BillingEmailProps };
 
 export interface RenderedEmail {
   subject: string;
@@ -64,6 +68,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "report.job_completed":
       subject = jobCompletedSubject(message.props);
       element = createElement(JobCompletedEmail, message.props);
+      break;
+    case "billing":
+      subject = billingCopy(message.props).subject;
+      element = createElement(BillingEmail, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);

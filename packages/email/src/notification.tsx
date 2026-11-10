@@ -120,19 +120,34 @@ export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payl
         body: `${x.actor_name ?? "An approver"} ${x.decision ?? "decided"} ${x.item ?? "your request"} for ${title}.`,
         cta: "Open the job",
       };
-    // 0.4: the billing slice refines these.
-    case "quote_decided":
+    // 0.4 billing (FIN-02, FIN-05).
+    case "quote_decided": {
+      const quote = x.quote_number ? `quote ${x.quote_number}` : "a quote";
+      const who = x.customer_name ?? "The customer";
+      const recorded = x.actor_name ? ` ${x.actor_name} recorded the decision.` : "";
+      if (x.decision === "declined") {
+        return {
+          subject: `Declined: ${x.quote_number ?? "a quote"}${customer}`,
+          heading: "A quote was declined",
+          body: `${who} declined ${quote}.${recorded}`,
+          cta: "Open the quote",
+        };
+      }
       return {
-        subject: `Quote ${x.quote_number ?? ""} ${x.decision ?? "decided"}`.replace("  ", " "),
-        heading: x.decision === "declined" ? "A quote was declined" : "A quote was approved",
-        body: `${x.customer_name ?? "The customer"} ${x.decision ?? "decided on"} quote ${x.quote_number ?? ""}.`,
+        subject: `Approved: ${x.quote_number ?? "a quote"}${customer}`,
+        heading: "A quote was approved",
+        body: `${who} approved ${quote}.${x.job_number !== undefined ? ` It's now ${job}, ready to schedule.` : ""}${recorded}`,
         cta: "Open the quote",
       };
+    }
     case "payment_received":
       return {
-        subject: `Payment received: ${x.invoice_number ?? "an invoice"}`,
+        subject: `Payment received: ${x.amount ?? "a payment"} on ${x.invoice_number ?? "an invoice"}`,
         heading: "A payment arrived",
-        body: `${x.customer_name ?? "A customer"} paid ${x.amount ?? "an invoice"}${x.invoice_number ? ` on ${x.invoice_number}` : ""}.`,
+        body: `${x.customer_name ?? "A customer"} paid ${x.amount ?? "an amount"} on invoice ${x.invoice_number ?? ""}.${x.actor_name ? ` Recorded by ${x.actor_name}.` : ""}`.replace(
+          " .",
+          ".",
+        ),
         cta: "Open the invoice",
       };
     case "daily_digest":

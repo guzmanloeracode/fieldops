@@ -63,6 +63,7 @@ import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponse
 import { env } from "@/env";
 import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
 import { reportPaths } from "./openapi-reports";
+import { billingPaths, billingTags } from "./openapi-billing";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
@@ -204,6 +205,7 @@ export function openApiDocument() {
         description: "The signed-in user's notifications, their settings, and the live event stream",
       },
       { name: "Organization", description: "The current user, members and service types" },
+      ...billingTags,
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
       RECURRENCES_TAG,
     ],
@@ -738,6 +740,17 @@ export function openApiDocument() {
           },
         }),
       },
+      ...billingPaths({
+        op,
+        json,
+        body,
+        errors,
+        list,
+        etagHeader,
+        idempotencyHeader,
+        ifMatchHeader,
+        uuidParam,
+      }),
     },
   });
   return cached;

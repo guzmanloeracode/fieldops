@@ -354,6 +354,81 @@ describe("demo seed", () => {
     }
   });
 
+  it("seeds the catalog, quotes in every state and invoices with payments, the same each time (FIN)", async () => {
+    const summary = (db: Database) =>
+      db
+        .execute<{ row: string }>(
+          sql`
+          select concat_ws('|', o.slug, i.number, i.status, i.total_minor, i.amount_paid_minor, i.issue_date,
+                 i.due_date, j.number, (select count(*) from invoice_reminder r where r.invoice_id = i.id)) as row
+          from invoice i join organization o on o.id = i.organization_id left join job j on j.id = i.job_id
+          order by o.slug, coalesce(i.number, ''), i.created_at, i.total_minor`,
+        )
+        .then((r) => r.rows.map((x) => x.row));
+    const [a, b] = await Promise.all([summary(first.owner), summary(second.owner)]);
+    expect(a).toEqual(b);
+    expect(a.length).toBeGreaterThan(100);
+
+    const db = first.owner;
+    const one = async (query: ReturnType<typeof sql>) =>
+      (await db.execute<Record<string, unknown>>(query)).rows[0]!;
+    const perOrg = await db.execute<{ slug: string; items: number; states: string[] }>(sql`
+      select o.slug,
+        (select count(*)::int from catalog_item c where c.organization_id = o.id) as items,
+        (select array_agg(distinct q.status order by q.status) from quote q where q.organization_id = o.id) as states
+      from organization o order by o.slug`);
+    for (const r of perOrg.rows) {
+      expect(r.items).toBeGreaterThanOrEqual(8);
+      expect(r.items).toBeLessThanOrEqual(12);
+      expect(r.states).toEqual(["approved", "declined", "draft", "expired", "sent"]);
+    }
+    // Numbers are gap-free per organization and year, and the counters continue after them.
+    const gaps = await one(sql`
+      select count(*)::int as n from (
+        select organization_id, 'invoice:' || substr(number, 5, 4) as counter, count(*) as c,
+               max(right(number, 4)::int) as top
+          from invoice where number is not null group by 1, 2
+        union all
+        select organization_id, 'quote:' || substr(number, 5, 4), count(*), max(right(number, 4)::int)
+          from quote group by 1, 2
+      ) x left join org_counter oc on oc.organization_id = x.organization_id and oc.name = x.counter
+      where x.c <> x.top or oc.value is distinct from x.top`);
+    expect(gaps.n).toBe(0);
+    const consistency = await one(sql`
+      select
+        (select count(*)::int from invoice i where i.amount_paid_minor <>
+           coalesce((select sum(p.amount_minor) from payment p where p.invoice_id = i.id), 0)) as paid_mismatch,
+        (select count(*)::int from invoice where status = 'paid' and amount_paid_minor <> total_minor) as unsettled,
+        (select count(*)::int from invoice where status = 'overdue'
+           and (due_date >= '2026-11-10' or amount_paid_minor >= total_minor)) as bad_overdue,
+        (select count(*)::int from invoice where status = 'sent' and due_date < '2026-11-09') as stale_sent,
+        (select count(*)::int from payment where paid_at > ${NOW}) as future_payments,
+        (select count(*)::int from (
+           select il.expense_request_id from invoice_line il join invoice i on i.id = il.invoice_id
+            where il.expense_request_id is not null and i.status <> 'void'
+            group by 1 having count(*) > 1) d) as billed_twice,
+        (select count(*)::int from quote q left join job j on j.id = q.job_id
+          where q.status = 'approved' and (j.id is null or j.source <> 'quote')) as unlinked`);
+    expect(consistency).toEqual({
+      paid_mismatch: 0,
+      unsettled: 0,
+      bad_overdue: 0,
+      stale_sent: 0,
+      future_payments: 0,
+      billed_twice: 0,
+      unlinked: 0,
+    });
+    // The demo portal customers have a quote to approve and an invoice to pay (POR-04).
+    const portal = await db.execute<{ email: string; quotes: number; unpaid: number }>(sql`
+      select c.email,
+        (select count(*)::int from quote q where q.customer_id = c.customer_id and q.status = 'sent') as quotes,
+        (select count(*)::int from invoice i where i.customer_id = c.customer_id and i.status in ('sent', 'overdue'))
+          as unpaid
+      from contact c where c.email in ('jamie.rivera@example.com', 'dewi.lestari@example.com')`);
+    expect(portal.rows).toHaveLength(2);
+    expect(portal.rows.every((r) => r.quotes > 0 && r.unpaid > 0)).toBe(true);
+  });
+
   it("wipes everything before a reset", async () => {
     await wipeAll(second.owner);
     const r = await second.owner.execute<{ n: number }>(

@@ -1,4 +1,12 @@
-import { can, dashboard, formatJobNumber, PRIORITY_LABELS, STATUS_LABELS, toMajor } from "@fieldops/core";
+import {
+  can,
+  dashboard,
+  formatJobNumber,
+  PRIORITY_LABELS,
+  revenue,
+  STATUS_LABELS,
+  toMajor,
+} from "@fieldops/core";
 import { JOB_STATUSES, type Currency } from "@fieldops/shared";
 import { format } from "date-fns";
 import { csvRow } from "@/lib/csv";
@@ -22,6 +30,9 @@ const REPORTS = [
   "unassigned",
   "at_risk",
   "approvals",
+  // 0.4: revenue (DSH-01, DSH-02), owners and admins.
+  "revenue_kpis",
+  "revenue",
 ] as const;
 type Report = (typeof REPORTS)[number];
 type Cell = string | number | null | undefined;
@@ -105,6 +116,35 @@ async function overviewTable(actor: ResolvedActor, report: Report, url: URL): Pr
   }
 }
 
+async function revenueTable(actor: ResolvedActor, report: Report, url: URL): Promise<Cell[][]> {
+  const q = (k: string) => url.searchParams.get(k) || undefined;
+  const data = await runService(
+    (ctx) => revenue.getRevenue(ctx, { range: q("range"), from: q("from"), to: q("to") }),
+    actor,
+  );
+  const major = (minor: number | null) => (minor === null ? "" : toMajor(minor, data.currency));
+  const period = `${data.range.from} – ${data.range.to}`;
+  const previous = `${data.range.prevFrom} – ${data.range.prevTo}`;
+  if (report === "revenue_kpis") {
+    const k = data.kpis;
+    return [
+      ["KPI", "Value", "Previous period", "Currency", "Period", "Previous"],
+      ...(
+        [
+          ["Revenue invoiced", k.invoiced],
+          ["Revenue collected", k.collected],
+          ["Receivables at the end of the period", k.receivables],
+          ["Overdue at the end of the period", k.overdue],
+        ] as const
+      ).map(([label, c]) => [label, major(c.value), major(c.previous), data.currency, period, previous]),
+    ];
+  }
+  return [
+    ["Period start", "Invoiced", "Collected", "Currency"],
+    ...data.series.map((r) => [r.bucket, major(r.invoicedMinor), major(r.collectedMinor), data.currency]),
+  ];
+}
+
 async function todayTable(actor: ResolvedActor, report: Report): Promise<Cell[][]> {
   const tz = actor.organization.timezone;
   const at = (d: Date | null) => (d ? format(inZone(d, tz), "yyyy-MM-dd HH:mm") : "");
@@ -183,7 +223,14 @@ export async function GET(req: Request) {
     return problem(400, `\`report\` must be one of: ${REPORTS.join(", ")}`);
   }
   const overview = ["kpis", "status", "sla", "service_types", "workload"].includes(report);
-  const table = overview ? await overviewTable(actor, report, url) : await todayTable(actor, report);
+  const money = report === "revenue_kpis" || report === "revenue";
+  if (money && !can(actor, "dashboard.financial"))
+    return problem(403, "Only owners and admins can export revenue");
+  const table = money
+    ? await revenueTable(actor, report, url)
+    : overview
+      ? await overviewTable(actor, report, url)
+      : await todayTable(actor, report);
   const csv = BOM + table.map(csvRow).join("");
   const today = format(inZone(new Date(), actor.organization.timezone), "yyyy-MM-dd");
   return new Response(csv, {

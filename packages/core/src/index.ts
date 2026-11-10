@@ -12,6 +12,7 @@ export * as dates from "./domain/date-range";
 export * from "./domain/sla";
 export * from "./domain/equipment";
 export * as recurrenceRules from "./domain/recurrence";
+export * from "./domain/billing";
 export * from "./services/types";
 export * from "./services/expense-types";
 export * from "./services/insights-types";
@@ -52,3 +53,10 @@ export * as recurrences from "./services/recurrences";
 export * as digest from "./services/digest";
 export * as assistant from "./services/assistant";
 export * as assistantTools from "./services/assistant-tools";
+// 0.4 billing (FIN-01–07, EXP-04, DSH revenue)
+export * as catalog from "./services/catalog";
+export * as quotes from "./services/quotes";
+export * as invoices from "./services/invoices";
+export * as revenue from "./services/revenue";
+export * as billingPass from "./services/billing-daily";
+export { customerLocale, dateText, moneyText, portalPath } from "./services/billing-common";

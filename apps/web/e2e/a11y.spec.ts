@@ -122,6 +122,43 @@ test.describe("app pages as owner", () => {
   });
 });
 
+test.describe("billing pages as owner (FIN)", () => {
+  test.use({ storageState: storageState("owner") });
+  for (const path of [
+    "/quotes",
+    "/quotes/new",
+    "/invoices",
+    "/invoices?status=overdue",
+    "/invoices/new",
+    "/settings/catalog",
+    "/settings/billing",
+  ]) {
+    test(`axe: ${path}`, async ({ page }) => audit(page, path));
+  }
+  const first = async <T>(path: string) => {
+    const client = await api("owner");
+    const page = await json<{ data: T[] }>(await client.get(path));
+    await client.dispose();
+    return page.data[0];
+  };
+  test("axe: sent quote", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=sent");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: draft quote with the line editor", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=draft");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: overdue invoice", async ({ page }) => {
+    const i = await first<{ id: string }>("/api/v1/invoices?limit=1&status=overdue");
+    await audit(page, `/invoices/${i!.id}`);
+  });
+  test("axe: new invoice for a completed job", async ({ page }) => {
+    const j = await first<{ number: string }>("/api/v1/jobs?limit=1&status=completed");
+    await audit(page, `/invoices/new?job=${j!.number}`);
+  });
+});
+
 test.describe("customer portal", () => {
   test("axe: portal home, request form and job", async ({ page }) => {
     await page.goto("/portal/acme-air/sign-in");

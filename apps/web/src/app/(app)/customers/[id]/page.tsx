@@ -28,6 +28,7 @@ import { DeleteCustomerButton } from "./delete-customer-button";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { SiteDialog } from "./site-dialog";
 import { MaintenancePlans } from "./maintenance-plans";
+import { CustomerBilling } from "./billing";
 
 export const metadata: Metadata = { title: "Customer" };
 
@@ -305,6 +306,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
               )}
             </CardContent>
           </Card>
+
+          <CustomerBilling customerId={customer.id} />
         </div>
 
         <div className="space-y-6">
