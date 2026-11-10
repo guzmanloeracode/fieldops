@@ -20,6 +20,7 @@ import billing from "../../messages/en/billing.json";
 import reports from "../../messages/en/reports.json";
 import recurrences from "../../messages/en/recurrences.json";
 import assistant from "../../messages/en/assistant.json";
+import pay from "../../messages/en/pay.json";
 
 // English ships in 0.1; Bahasa Indonesia arrives with SET-05 in 0.4. Each namespace lives in its own file.
 const messages = {
@@ -45,6 +46,7 @@ const messages = {
     reports,
     recurrences,
     assistant,
+    pay,
   },
 };
 

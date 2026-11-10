@@ -7,6 +7,7 @@ import { env } from "@/env";
 import { initials } from "@/lib/format";
 import { getPortalActor, getPortalOrg } from "@/server/portal/session";
 import { portalSignOutAction } from "./actions";
+import { PortalNav } from "./portal-nav";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -67,6 +68,7 @@ export default async function PortalLayout({ children, params }: Params & { chil
             </form>
           ) : null}
         </div>
+        {actor ? <PortalNav slug={org.slug} /> : null}
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">{children}</main>
       <footer className="text-muted-foreground px-4 pb-6 text-center text-xs">{t("poweredBy")}</footer>

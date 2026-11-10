@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatWindow } from "@/lib/format";
 import { getPortalOrg, requirePortal, runPortal } from "@/server/portal/session";
 import { PortalStatus } from "../status";
+import { PortalBillingSummary } from "./billing-summary";
 
 /** The customer's jobs (POR-03): open ones with their visit window and technician, then the past ones. */
 export default async function PortalHomePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -70,6 +71,7 @@ export default async function PortalHomePage({ params }: { params: Promise<{ slu
           </Link>
         </Button>
       </div>
+      <PortalBillingSummary slug={slug} />
       <section aria-labelledby="open-jobs" className="space-y-3">
         <h2 id="open-jobs" className="flex items-center gap-2 text-base font-semibold">
           <CalendarClock aria-hidden className="size-4" /> {t("open")}

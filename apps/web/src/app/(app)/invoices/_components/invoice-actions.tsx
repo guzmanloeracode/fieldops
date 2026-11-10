@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { fromLocalInput } from "@/lib/format";
 import { recordPaymentAction, sendInvoiceAction, voidInvoiceAction } from "../actions";
+import { PaymentLinkButton } from "./payment-link";
 
 type Contact = { id: string; name: string; email: string };
 type Result<T> =
@@ -40,6 +41,7 @@ export function InvoiceActions({
   contactId,
   today,
   timeZone,
+  onlinePayments = false,
 }: {
   id: string;
   number: string | null;
@@ -53,6 +55,8 @@ export function InvoiceActions({
   /** Today in the organization's time zone. */
   today: string;
   timeZone: string;
+  /** A payment provider is set up (FIN-05): offer "Copy payment link". */
+  onlinePayments?: boolean;
 }) {
   const t = useTranslations("billing.invoice");
   const router = useRouter();
@@ -82,6 +86,15 @@ export function InvoiceActions({
         <Button onClick={() => setDialog("pay")} disabled={pending} data-testid="record-payment">
           <Banknote /> {t("recordPayment")}
         </Button>
+      ) : null}
+      {open && onlinePayments && balanceMinor > 0 ? (
+        <PaymentLinkButton
+          id={id}
+          number={number}
+          balanceMinor={balanceMinor}
+          currency={currency}
+          timeZone={timeZone}
+        />
       ) : null}
       {status === "draft" || open ? (
         <Button

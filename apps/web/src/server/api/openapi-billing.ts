@@ -1,6 +1,7 @@
 import "server-only";
 import {
   catalogItemSchema,
+  checkoutSessionSchema,
   catalogQuerySchema,
   documentSendSchema,
   invoiceCreateSchema,
@@ -212,6 +213,19 @@ export function billingPaths(h: Helpers): ZodOpenApiPathsObject {
         responses: {
           "201": h.json(invoiceSchema, "The invoice with the payment"),
           ...h.errors(404, 409, 415, 422),
+        },
+      }),
+    },
+    "/invoices/{id}/checkout": {
+      post: h.op(T, "Get a payment link", {
+        operationId: "createInvoiceCheckout",
+        description:
+          "A hosted checkout link (Stripe Checkout, or the simulated test checkout in the demo) that pays the balance of a sent or overdue invoice. The customer comes back to the invoice in the customer portal, and the payment is recorded when the provider confirms it. An open session is reused (200) until it is about to expire; otherwise a new one is created (201). 503 when online payments aren't set up.",
+        requestParams: { path: h.uuidParam("Invoice") },
+        responses: {
+          "200": h.json(checkoutSessionSchema, "The open session, reused"),
+          "201": h.json(checkoutSessionSchema, "A new session"),
+          ...h.errors(404, 409, 503),
         },
       }),
     },

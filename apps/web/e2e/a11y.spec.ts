@@ -184,6 +184,31 @@ test.describe("service report for customers (POR-04)", () => {
   test("axe: an invalid report link", async ({ page }) => audit(page, "/share/reports/not.valid"));
 });
 
+test.describe("portal quotes, invoices and the test checkout (POR-04, FIN-05)", () => {
+  test("axe: quotes, a quote, invoices, an invoice and the test checkout", async ({ page }) => {
+    await page.goto("/portal/acme-air/sign-in");
+    await page.getByTestId("portal-demo-sign-in").click();
+    await expect(page).toHaveURL(/\/portal\/acme-air$/);
+    await audit(page, "/portal/acme-air/quotes");
+    const quote = await page.getByTestId("portal-quote").first().getAttribute("href");
+    await audit(page, quote!);
+    await audit(page, "/portal/acme-air/invoices");
+    const invoice = await page.getByTestId("portal-invoice").first().getAttribute("href");
+    await audit(page, invoice!);
+
+    const client = await api("owner");
+    const open = await json<{ data: { id: string }[] }>(
+      await client.get("/api/v1/invoices?limit=1&status=sent,overdue"),
+    );
+    const link = await json<{ url: string }>(
+      await client.post(`/api/v1/invoices/${open.data[0]!.id}/checkout`),
+    );
+    await client.dispose();
+    await audit(page, new URL(link.url).pathname);
+    await expect(page.getByTestId("test-checkout-pay")).toBeVisible();
+  });
+});
+
 test.describe("technician home", () => {
   test.use({ storageState: storageState("technician") });
   test("axe: dashboard", async ({ page }) => audit(page, "/dashboard"));

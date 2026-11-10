@@ -23,6 +23,9 @@ import type { Address } from "@fieldops/shared";
 // PDF view models for quotes and invoices (FIN-04), built in one place so the API routes, the customer portal and
 // the documents slice share them. Renderers (`renderQuotePdf`, `renderInvoicePdf`) only see these plain objects.
 
+/** Staff routes pass their service context; the customer portal passes its own store and clock. */
+type DocumentContext = Pick<ServiceContext, "store" | "now">;
+
 function addressLines(a: Address | null | undefined): string[] {
   if (!a) return [];
   return [
@@ -70,7 +73,7 @@ const lines = (rows: readonly QuoteLineRecord[]): DocumentLine[] =>
     netMinor: l.netMinor,
   }));
 
-export async function quoteDocument(ctx: ServiceContext, quote: QuoteView): Promise<QuoteDocument> {
+export async function quoteDocument(ctx: DocumentContext, quote: QuoteView): Promise<QuoteDocument> {
   const org = await ctx.store.organization.get();
   const customer = await ctx.store.customers.get(quote.customerId);
   const p = parties(quote, customer?.billingAddress ?? null);
@@ -95,7 +98,7 @@ export async function quoteDocument(ctx: ServiceContext, quote: QuoteView): Prom
   };
 }
 
-export async function invoiceDocument(ctx: ServiceContext, invoice: InvoiceView): Promise<InvoiceDocument> {
+export async function invoiceDocument(ctx: DocumentContext, invoice: InvoiceView): Promise<InvoiceDocument> {
   const org = await ctx.store.organization.get();
   const customer = await ctx.store.customers.get(invoice.customerId);
   const p = parties(invoice, customer?.billingAddress ?? null);
