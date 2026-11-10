@@ -17,6 +17,7 @@ import type {
 } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
 import type { ExpenseRepo } from "./expense-types";
+import type { DashboardRepo, EquipmentHistoryRow, SavedViewRepo, SearchRepo } from "./insights-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -72,6 +73,8 @@ export interface EquipmentRecord {
   serial: string | null;
   installDate: string | null;
   warrantyEnd: string | null;
+  /** Free-text notes (optional so older fixtures stay valid). */
+  notes?: string | null;
 }
 
 export interface ServiceTypeRecord {
@@ -284,6 +287,11 @@ export interface SiteRepo {
 export interface EquipmentRepo {
   get(id: string): Promise<EquipmentRecord | null>;
   listBySite(siteId: string): Promise<EquipmentRecord[]>;
+  create(siteId: string, data: Omit<EquipmentRecord, "id" | "siteId">): Promise<EquipmentRecord>;
+  update(id: string, patch: Partial<Omit<EquipmentRecord, "id" | "siteId">>): Promise<EquipmentRecord | null>;
+  softDelete(id: string): Promise<boolean>;
+  /** Jobs that serviced this unit, newest first (CUS-03). */
+  history(id: string, opts: { assignedMemberId?: string; limit: number }): Promise<EquipmentHistoryRow[]>;
 }
 
 export interface ServiceTypeRepo {
@@ -379,6 +387,11 @@ export interface Store {
   members: MemberRepo;
   organization: OrganizationRepo;
   expenses: ExpenseRepo;
+
+  // 0.2 insights (DSH, JOB-04, JOB-11)
+  dashboard: DashboardRepo;
+  savedViews: SavedViewRepo;
+  search: SearchRepo;
 }
 
 export interface FileStorage {

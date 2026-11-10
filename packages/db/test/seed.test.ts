@@ -49,7 +49,8 @@ describe("demo seed", () => {
     expect(a.counts).toMatchObject({
       orgs: 2,
       users: 19,
-      members: 19,
+      // Olivia (Acme Air owner) is also an admin of Acme Teknik (AUTH-06).
+      members: 20,
       customers: 420,
       sites: 530,
       equipment: 680,
@@ -141,24 +142,46 @@ describe("demo seed", () => {
     const emails = Object.values(DEMO_LOGINS).flatMap((o) => Object.values(o));
     const r = await first.owner.execute<{
       email: string;
+      org: string;
       role: string;
       verified: boolean;
       has_password: boolean;
       is_demo: boolean;
     }>(sql`
-      select u.email, m.role, u.email_verified as verified, a.password is not null as has_password, u.is_demo
+      select u.email, o.slug as org, m.role, u.email_verified as verified, a.password is not null as has_password, u.is_demo
       from "user" u join member m on m.user_id = u.id
+      join organization o on o.id = m.organization_id
       join account a on a.user_id = u.id and a.provider_id = 'credential'
       where u.email = any(${sql.raw(`array[${emails.map((e) => `'${e}'`).join(",")}]`)})`);
-    expect(r.rows).toHaveLength(6);
+    // Six demo logins, plus Olivia's second membership (admin of Acme Teknik, AUTH-06).
+    expect(r.rows).toHaveLength(7);
     for (const [org, logins] of Object.entries(DEMO_LOGINS)) {
       for (const [role, email] of Object.entries(logins)) {
         expect(
-          r.rows.find((x) => x.email === email),
+          r.rows.find((x) => x.email === email && x.org === org),
           `${org} ${role}`,
         ).toMatchObject({ role, verified: true, has_password: true, is_demo: true });
       }
     }
+    expect(
+      r.rows.find((x) => x.email === DEMO_LOGINS["acme-air"].owner && x.org === "acme-teknik"),
+    ).toMatchObject({
+      role: "admin",
+    });
+  });
+
+  it("keeps the demo owner's first organization as the default and seeds shared views", async () => {
+    const r = await first.owner.execute<{ slug: string }>(sql`
+      select o.slug from member m join "user" u on u.id = m.user_id join organization o on o.id = m.organization_id
+      where u.email = ${DEMO_LOGINS["acme-air"].owner} order by m.created_at limit 1`);
+    expect(r.rows[0]!.slug).toBe("acme-air");
+    const views = await first.owner.execute<{ slug: string; n: number }>(sql`
+      select o.slug, count(*)::int as n from saved_view v join organization o on o.id = v.organization_id
+      where v.shared group by o.slug order by o.slug`);
+    expect(views.rows).toEqual([
+      { slug: "acme-air", n: 4 },
+      { slug: "acme-teknik", n: 4 },
+    ]);
   });
 
   it("wipes everything before a reset", async () => {

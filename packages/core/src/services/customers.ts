@@ -1,16 +1,18 @@
 import {
   customerCreateSchema,
   customerUpdateSchema,
+  equipmentCreateSchema,
+  equipmentUpdateSchema,
   siteCreateSchema,
   siteUpdateSchema,
   type CustomerCreateInput,
   type CustomerListQuery,
 } from "@fieldops/shared";
 import { normalizeEmail, normalizePhone } from "../domain/contact";
-import { NotFoundError } from "../domain/errors";
+import { NotFoundError, ValidationError } from "../domain/errors";
 import { assertCan, seesOnlyAssigned } from "../domain/permissions";
 import { parseInput } from "./validate";
-import type { ContactRecord, CustomerRecord, ServiceContext, SiteRecord } from "./types";
+import type { ContactRecord, CustomerRecord, EquipmentRecord, ServiceContext, SiteRecord } from "./types";
 
 export async function listCustomers(ctx: ServiceContext, query: CustomerListQuery) {
   assertCan(ctx.actor, "customers.view", { assigned: true });
@@ -163,6 +165,83 @@ export async function updateSite(ctx: ServiceContext, id: string, raw: unknown) 
   });
   if (!updated) throw new NotFoundError("Site");
   return updated;
+}
+
+// ------------------------------------------------------------------ equipment (CUS-03)
+
+/** A unit the actor may see; access follows its site (technicians: sites of their assigned jobs). */
+export async function getEquipment(ctx: ServiceContext, id: string): Promise<EquipmentRecord> {
+  const unit = await ctx.store.equipment.get(id);
+  if (!unit) throw new NotFoundError("Equipment");
+  await getSite(ctx, unit.siteId).catch((err: unknown) => {
+    throw err instanceof NotFoundError ? new NotFoundError("Equipment") : err;
+  });
+  return unit;
+}
+
+/** The unit, its site and customer, and its service history (jobs that worked on it, newest first). */
+export async function getEquipmentDetail(ctx: ServiceContext, id: string) {
+  const equipment = await getEquipment(ctx, id);
+  const site = (await ctx.store.sites.get(equipment.siteId))!;
+  const [customer, history] = await Promise.all([
+    ctx.store.customers.get(site.customerId),
+    ctx.store.equipment.history(equipment.id, {
+      limit: 100,
+      ...(seesOnlyAssigned(ctx.actor) ? { assignedMemberId: ctx.actor.memberId } : {}),
+    }),
+  ]);
+  return { equipment, site, customer: customer!, history };
+}
+
+function assertWarrantyAfterInstall(install: string | null | undefined, warranty: string | null | undefined) {
+  if (install && warranty && warranty < install) {
+    throw new ValidationError("Warranty can't end before the install date", [
+      { path: "warranty_end", message: "Must be on or after the install date" },
+    ]);
+  }
+}
+
+export async function createEquipment(ctx: ServiceContext, siteId: string, raw: unknown) {
+  assertCan(ctx.actor, "customers.update");
+  const input = parseInput(equipmentCreateSchema, raw);
+  if (!(await ctx.store.sites.get(siteId))) throw new NotFoundError("Site");
+  assertWarrantyAfterInstall(input.install_date, input.warranty_end);
+  return ctx.store.equipment.create(siteId, {
+    type: input.type,
+    brand: input.brand ?? null,
+    model: input.model ?? null,
+    serial: input.serial ?? null,
+    installDate: input.install_date ?? null,
+    warrantyEnd: input.warranty_end ?? null,
+    notes: input.notes ?? null,
+  });
+}
+
+export async function updateEquipment(ctx: ServiceContext, id: string, raw: unknown) {
+  assertCan(ctx.actor, "customers.update");
+  const input = parseInput(equipmentUpdateSchema, raw);
+  const current = await ctx.store.equipment.get(id);
+  if (!current) throw new NotFoundError("Equipment");
+  assertWarrantyAfterInstall(
+    input.install_date !== undefined ? input.install_date : current.installDate,
+    input.warranty_end !== undefined ? input.warranty_end : current.warrantyEnd,
+  );
+  const updated = await ctx.store.equipment.update(id, {
+    ...(input.type !== undefined && { type: input.type }),
+    ...(input.brand !== undefined && { brand: input.brand ?? null }),
+    ...(input.model !== undefined && { model: input.model ?? null }),
+    ...(input.serial !== undefined && { serial: input.serial ?? null }),
+    ...(input.install_date !== undefined && { installDate: input.install_date ?? null }),
+    ...(input.warranty_end !== undefined && { warrantyEnd: input.warranty_end ?? null }),
+    ...(input.notes !== undefined && { notes: input.notes ?? null }),
+  });
+  return updated!;
+}
+
+/** Soft delete: past jobs keep their link to the unit. */
+export async function deleteEquipment(ctx: ServiceContext, id: string) {
+  assertCan(ctx.actor, "customers.update");
+  if (!(await ctx.store.equipment.softDelete(id))) throw new NotFoundError("Equipment");
 }
 
 function dedupe(tags: string[]): string[] {

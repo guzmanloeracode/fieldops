@@ -2,6 +2,9 @@ import type { Store } from "@fieldops/core";
 import { withTenant, type Database, type Tx } from "./client";
 import { customerRepo } from "./repos/customers";
 import { expenseRepo } from "./repos/expenses";
+import { dashboardRepo } from "./repos/dashboard";
+import { searchRepo } from "./repos/search";
+import { savedViewRepo } from "./repos/views";
 import { jobRepo } from "./repos/jobs";
 import { attachmentRepo, noteRepo } from "./repos/notes";
 import { memberRepo, organizationRepo, serviceTypeRepo } from "./repos/organization";
@@ -21,6 +24,10 @@ export function createStore(tx: Tx, organizationId: string): Store {
     members: memberRepo(tx, organizationId),
     organization: organizationRepo(tx, organizationId),
     expenses: expenseRepo(tx, organizationId),
+    // 0.2 insights
+    dashboard: dashboardRepo(tx, organizationId),
+    savedViews: savedViewRepo(tx, organizationId),
+    search: searchRepo(tx, organizationId),
   };
 }
 

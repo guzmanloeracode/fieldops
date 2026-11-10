@@ -134,6 +134,7 @@ export function toEquipmentDto(e: EquipmentRecord): EquipmentDto {
     serial: e.serial,
     install_date: e.installDate,
     warranty_end: e.warrantyEnd,
+    notes: e.notes ?? null,
   };
 }
 

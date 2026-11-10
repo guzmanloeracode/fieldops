@@ -14,7 +14,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/scripts/migrate.ts",
     "seed": "tsx src/scripts/seed.ts",
-    "test:int": "vitest run --config vitest.int.config.ts"
+    "test:int": "vitest run --config vitest.int.config.ts",
+    "bench:dashboard": "tsx src/scripts/bench-dashboard.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^10.6.0",

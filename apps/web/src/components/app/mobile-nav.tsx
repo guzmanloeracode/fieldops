@@ -9,10 +9,12 @@ export function MobileNav({
   role,
   header,
   counts,
+  footer,
 }: {
   role: string;
   header: ReactNode;
   counts?: Record<string, number>;
+  footer?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -22,10 +24,11 @@ export function MobileNav({
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="bg-sidebar w-72 p-4">
+      <SheetContent side="left" className="bg-sidebar flex w-72 flex-col p-4">
         <SheetTitle className="sr-only">Menu</SheetTitle>
         <div className="mb-6">{header}</div>
         <Nav role={role} counts={counts} onNavigate={() => setOpen(false)} />
+        {footer ? <div className="mt-4">{footer}</div> : null}
       </SheetContent>
     </Sheet>
   );

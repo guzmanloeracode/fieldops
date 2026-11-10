@@ -520,7 +520,17 @@ export const serviceTypeSchema = z
     currency: currencySchema,
     active: z.boolean(),
     required_skills: z.array(z.string()),
-    checklist_template: z.array(checklistTemplateItemSchema),
+    // Output shape without the input transforms: zod-openapi rejects transforms in response schemas.
+    checklist_template: z.array(
+      z
+        .object({
+          label: z.string(),
+          kind: z.enum(CHECKLIST_ITEM_KINDS),
+          unit: z.string().nullable(),
+          required: z.boolean(),
+        })
+        .meta({ id: "ChecklistTemplateItemOut" }),
+    ),
   })
   .meta({ id: "ServiceType" });
 
@@ -598,6 +608,7 @@ export const equipmentSchema = z
     serial: z.string().nullable(),
     install_date: z.iso.date().nullable(),
     warranty_end: z.iso.date().nullable(),
+    notes: z.string().nullable(),
   })
   .meta({ id: "Equipment" });
 export type EquipmentDto = z.infer<typeof equipmentSchema>;
