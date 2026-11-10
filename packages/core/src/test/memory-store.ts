@@ -26,6 +26,10 @@ import { memoryExpenses } from "./memory-expenses";
 import type { TimeOffRecord } from "../services/dispatch-types";
 import { memoryDispatch } from "./memory-dispatch";
 import { memoryAutomate, type MemoryAutomate } from "./memory-automate";
+import { memoryBilling } from "./memory-billing";
+import { memoryReports } from "./memory-reports";
+import { memoryOps } from "./memory-ops";
+import { memoryAssistant } from "./memory-assistant";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -76,6 +80,16 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         approval: { autoApproveBelowMinor: 5000, dispatcherLimitMinor: 25000 },
         requireSignature: false,
         ai: { enabled: true, monthlyQuota: 500 },
+        billing: {
+          paymentTermsDays: 14,
+          quoteValidityDays: 30,
+          laborRateMinor: 9500,
+          invoicePrefix: "INV",
+          quotePrefix: "QUO",
+          remindersEnabled: true,
+          paymentInstructions: null,
+        },
+        locale: "en",
       },
       isDemo: false,
     },
@@ -283,7 +297,11 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
           resolutionAtRiskAt: null,
           slaResponseState: null,
           slaResolutionState: null,
+          recurrenceId: null,
+          occurrenceDate: null,
           ...input,
+          slaPausedAt: null,
+          slaPausedMinutes: 0,
           id: uuid(),
           status: "new",
           holdReason: null,
@@ -421,6 +439,11 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     ...insights.repos,
     ...fieldworkRepos(data, uuid),
     ...memoryAutomate(data, uuid),
+    // 0.4: one file per slice.
+    ...memoryBilling(data, uuid),
+    ...memoryReports(data, uuid),
+    ...memoryOps(data, uuid),
+    ...memoryAssistant(data, uuid),
   };
   return { store, data };
 }

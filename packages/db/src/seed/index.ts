@@ -14,6 +14,10 @@ import { seedAudit } from "./audit";
 import { seedNotifications } from "./notifications";
 import { seedPortal } from "./portal";
 import { seedSla } from "./sla";
+import { seedBilling } from "./billing";
+import { seedReports } from "./reports";
+import { seedRecurrences } from "./recurrences";
+import { seedAssistant } from "./assistant";
 import type { SeedContext } from "./context";
 import { DAY, insertBatches, localDate, zoned } from "./time";
 export { DEMO_LOGINS, ORGS, type DemoOrg, type DemoRole } from "./data";
@@ -41,6 +45,8 @@ const SEED = 20261110;
 /** Removes all data. Used by the nightly demo reset before seeding again (DEM-04). */
 export async function wipeAll(db: Database) {
   await db.execute(sql`truncate table
+    "daily_digest", "assistant_message", "assistant_conversation", "invoice_reminder", "payment", "invoice_line",
+    "invoice", "quote_line", "quote", "catalog_item", "service_report", "job_recurrence",
     "audit_log", "notification", "notification_preference", "sla_alert", "ai_interaction", "portal_token",
     "portal_session", "rate_limit", "sla_policy",
     "email_outbox", "idempotency_key", "saved_view", "expense_request", "time_entry", "time_off",
@@ -750,6 +756,12 @@ async function seedOrg(
   await seedSla(ext);
   await seedPortal(ext);
   await seedAi(ext);
+  // 0.4 extensions: maintenance plans, then quotes, invoices and payments, service reports on completed jobs,
+  // and example assistant conversations. Notifications and the audit history come last as before.
+  await seedRecurrences(ext);
+  await seedBilling(ext);
+  await seedReports(ext);
+  await seedAssistant(ext);
   await seedNotifications(ext);
   await seedAudit(ext);
 

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 // Live updates (NOT-05, SCH-06): one EventSource per tab on /api/v1/stream, shared by every component that wants
 // to react to changes. Events carry ids only; components refetch through the usual pages and actions.
 
-export type LiveKind = "job" | "time_off" | "expense" | "notification" | "resync";
+export type LiveKind = "job" | "time_off" | "expense" | "notification" | "quote" | "invoice" | "resync";
 export interface LiveMessage {
   kind: LiveKind;
   id: string | null;

@@ -5,7 +5,9 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
+  FileText,
   LayoutDashboard,
+  Receipt,
   Settings,
   Users,
   Wrench,
@@ -32,6 +34,8 @@ const ITEMS: Item[] = [
   { href: "/schedule", label: "Dispatch board", icon: CalendarDays, office: true },
   { href: "/approvals", label: "Approvals", icon: BadgeCheck, office: true },
   { href: "/customers", label: "Customers", icon: Building2 },
+  { href: "/quotes", label: "Quotes", icon: FileText, office: true },
+  { href: "/invoices", label: "Invoices", icon: Receipt, office: true },
 ];
 const SETTINGS: Item[] = [
   { href: "/settings/organization", label: "Organization", icon: Settings, managers: true },

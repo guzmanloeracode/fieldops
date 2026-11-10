@@ -7,7 +7,7 @@ import { logger } from "./logger";
 // channel when a change commits (migration 0003). Each web process holds ONE listening connection and fans the
 // messages out to its server-sent-event streams, which filter them per organization and user.
 
-export const LIVE_KINDS = ["job", "time_off", "expense", "notification"] as const;
+export const LIVE_KINDS = ["job", "time_off", "expense", "notification", "quote", "invoice"] as const;
 export type LiveKind = (typeof LIVE_KINDS)[number];
 
 export interface LiveEvent {

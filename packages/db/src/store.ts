@@ -16,6 +16,10 @@ import { auditRepo } from "./repos/audit";
 import { notificationRepo } from "./repos/notifications";
 import { portalRepo } from "./repos/portal";
 import { slaRepo } from "./repos/sla";
+import { billingRepo } from "./repos/billing";
+import { reportRepo } from "./repos/reports";
+import { digestRepo, recurrenceRepo } from "./repos/recurrences";
+import { assistantRepo } from "./repos/assistant";
 
 /** Builds the repositories for one organization on top of an open transaction. */
 export function createStore(tx: Tx, organizationId: string): Store {
@@ -45,6 +49,12 @@ export function createStore(tx: Tx, organizationId: string): Store {
     audit: auditRepo(tx, organizationId),
     portal: portalRepo(tx, organizationId),
     ai: aiRepo(tx, organizationId),
+    // 0.4 get paid
+    billing: billingRepo(tx, organizationId),
+    reports: reportRepo(tx, organizationId),
+    recurrences: recurrenceRepo(tx, organizationId),
+    digest: digestRepo(tx, organizationId),
+    assistant: assistantRepo(tx, organizationId),
   };
 }
 

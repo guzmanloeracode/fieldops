@@ -10,6 +10,10 @@ import type {
 import {
   DEFAULT_AI_SETTINGS,
   DEFAULT_APPROVAL_THRESHOLDS,
+  DEFAULT_BILLING_SETTINGS,
+  DEFAULT_LOCALE,
+  LOCALES,
+  type Locale,
   type Address,
   type ChecklistTemplateItem,
   type Currency,
@@ -24,6 +28,16 @@ interface StoredSettings {
   approval?: { auto_approve_below_minor?: number; dispatcher_limit_minor?: number };
   require_signature?: boolean;
   ai?: { enabled?: boolean; monthly_quota?: number };
+  billing?: {
+    payment_terms_days?: number;
+    quote_validity_days?: number;
+    labor_rate_minor?: number;
+    invoice_prefix?: string;
+    quote_prefix?: string;
+    reminders_enabled?: boolean;
+    payment_instructions?: string | null;
+  };
+  locale?: string;
   [key: string]: unknown;
 }
 
@@ -31,6 +45,7 @@ interface StoredSettings {
 export function toSettings(raw: unknown, currency: Currency): OrganizationSettings {
   const s = (raw ?? {}) as StoredSettings;
   const d = DEFAULT_APPROVAL_THRESHOLDS[currency] ?? DEFAULT_APPROVAL_THRESHOLDS.USD;
+  const b = DEFAULT_BILLING_SETTINGS[currency] ?? DEFAULT_BILLING_SETTINGS.USD;
   return {
     approval: {
       autoApproveBelowMinor: s.approval?.auto_approve_below_minor ?? d.autoApproveBelowMinor,
@@ -41,6 +56,16 @@ export function toSettings(raw: unknown, currency: Currency): OrganizationSettin
       enabled: s.ai?.enabled ?? DEFAULT_AI_SETTINGS.enabled,
       monthlyQuota: s.ai?.monthly_quota ?? DEFAULT_AI_SETTINGS.monthlyQuota,
     },
+    billing: {
+      paymentTermsDays: s.billing?.payment_terms_days ?? b.paymentTermsDays,
+      quoteValidityDays: s.billing?.quote_validity_days ?? b.quoteValidityDays,
+      laborRateMinor: s.billing?.labor_rate_minor ?? b.laborRateMinor,
+      invoicePrefix: s.billing?.invoice_prefix ?? b.invoicePrefix,
+      quotePrefix: s.billing?.quote_prefix ?? b.quotePrefix,
+      remindersEnabled: s.billing?.reminders_enabled ?? b.remindersEnabled,
+      paymentInstructions: s.billing?.payment_instructions ?? null,
+    },
+    locale: LOCALES.includes(s.locale as Locale) ? (s.locale as Locale) : DEFAULT_LOCALE,
   };
 }
 
@@ -53,6 +78,16 @@ function fromSettings(settings: OrganizationSettings, existing: unknown): Stored
     },
     require_signature: settings.requireSignature,
     ai: { enabled: settings.ai.enabled, monthly_quota: settings.ai.monthlyQuota },
+    billing: {
+      payment_terms_days: settings.billing.paymentTermsDays,
+      quote_validity_days: settings.billing.quoteValidityDays,
+      labor_rate_minor: settings.billing.laborRateMinor,
+      invoice_prefix: settings.billing.invoicePrefix,
+      quote_prefix: settings.billing.quotePrefix,
+      reminders_enabled: settings.billing.remindersEnabled,
+      payment_instructions: settings.billing.paymentInstructions,
+    },
+    locale: settings.locale,
   };
 }
 
@@ -168,6 +203,7 @@ function toServiceType(r: typeof serviceType.$inferSelect): ServiceTypeRecord {
     active: r.active,
     requiredSkills: r.requiredSkills,
     checklistTemplate: (r.checklistTemplate as ChecklistTemplateItem[]) ?? [],
+    taxRateBps: r.taxRateBps,
   };
 }
 

@@ -16,6 +16,7 @@ import type {
   Role,
   SlaState,
   AiStatus,
+  Locale,
 } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
 import type { ExpenseRepo } from "./expense-types";
@@ -27,6 +28,10 @@ import type { NotificationMailer, NotificationRepo } from "./notification-types"
 import type { AuditRepo } from "./audit-types";
 import type { PortalRepo } from "./portal-types";
 import type { AiRepo } from "./ai-types";
+import type { BillingRepo } from "./billing-types";
+import type { ReportRepo } from "./report-types";
+import type { DigestRepo, RecurrenceRepo } from "./recurrence-types";
+import type { AssistantRepo } from "./assistant-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -38,6 +43,8 @@ export interface CustomerRecord {
   billingAddress: Address | null;
   tags: string[];
   notes: string | null;
+  /** Language of the customer's documents and emails (SET-05); null uses the organization's default. */
+  locale?: Locale | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,6 +106,8 @@ export interface ServiceTypeRecord {
   requiredSkills: string[];
   /** Copied into each new job's checklist (JOB-08). */
   checklistTemplate: ChecklistTemplateItem[];
+  /** Tax on the service (FIN-01); null or missing uses the organization's default rate. */
+  taxRateBps?: number | null;
 }
 
 export interface JobRecord {
@@ -137,6 +146,13 @@ export interface JobRecord {
   resolutionAtRiskAt: Date | null;
   slaResponseState: SlaState | null;
   slaResolutionState: SlaState | null;
+  /** Set while the job is on hold waiting for the customer: the resolution clock is paused (SLA-04). */
+  slaPausedAt: Date | null;
+  /** Total minutes the resolution clock has been paused. */
+  slaPausedMinutes: number;
+  /** The maintenance plan that generated the job and the occurrence date (JOB-13). */
+  recurrenceId: string | null;
+  occurrenceDate: string | null;
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -228,6 +244,20 @@ export interface OrganizationSettings {
   requireSignature: boolean;
   /** AI features on or off and the monthly number of AI calls allowed (SET-04). */
   ai: { enabled: boolean; monthlyQuota: number };
+  /** Quotes and invoices (FIN-02, FIN-03, FIN-06). Defaults per currency in DEFAULT_BILLING_SETTINGS. */
+  billing: {
+    paymentTermsDays: number;
+    quoteValidityDays: number;
+    /** Labor billed per hour of recorded work time. */
+    laborRateMinor: number;
+    invoicePrefix: string;
+    quotePrefix: string;
+    remindersEnabled: boolean;
+    /** Printed on invoices, e.g. bank transfer details. */
+    paymentInstructions: string | null;
+  };
+  /** Language for customers without their own (SET-05). */
+  locale: Locale;
 }
 
 export interface OrganizationRecord {
@@ -354,8 +384,12 @@ export interface JobRepo {
       | "revisit"
       | JobSlaField
       | "aiStatus"
+      | "slaPausedAt"
+      | "slaPausedMinutes"
+      | "recurrenceId"
+      | "occurrenceDate"
     > &
-      Partial<Pick<JobRecord, JobSlaField | "aiStatus">>,
+      Partial<Pick<JobRecord, JobSlaField | "aiStatus" | "recurrenceId" | "occurrenceDate">>,
   ): Promise<JobRecord>;
   /** Applies the patch and bumps the version. With `expectedVersion`, returns null on a version mismatch. */
   update(
@@ -437,6 +471,12 @@ export interface Store {
   audit: AuditRepo;
   portal: PortalRepo;
   ai: AiRepo;
+  // 0.4 get paid
+  billing: BillingRepo;
+  reports: ReportRepo;
+  recurrences: RecurrenceRepo;
+  digest: DigestRepo;
+  assistant: AssistantRepo;
 }
 
 export interface FileStorage {

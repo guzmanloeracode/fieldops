@@ -11,7 +11,10 @@ export type NotificationEmailEvent =
   | "sla_at_risk"
   | "sla_breached"
   | "expense_requested"
-  | "expense_decided";
+  | "expense_decided"
+  | "quote_decided"
+  | "payment_received"
+  | "daily_digest";
 
 export interface NotificationEmailProps {
   event: NotificationEmailEvent;
@@ -22,7 +25,12 @@ export interface NotificationEmailProps {
     actor_name?: string;
     scheduled_start?: string;
     item?: string;
-    decision?: "approved" | "rejected";
+    decision?: "approved" | "rejected" | "declined";
+    /** QUO-2026-0001 / INV-2026-0001 (0.4). */
+    quote_number?: string;
+    invoice_number?: string;
+    /** Already formatted in the document's currency, e.g. "$1,250.00". */
+    amount?: string;
     target?: "response" | "resolution";
     due_at?: string;
   };
@@ -111,6 +119,28 @@ export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payl
         heading: x.decision === "rejected" ? "Your request was rejected" : "Your request was approved",
         body: `${x.actor_name ?? "An approver"} ${x.decision ?? "decided"} ${x.item ?? "your request"} for ${title}.`,
         cta: "Open the job",
+      };
+    // 0.4: the billing slice refines these.
+    case "quote_decided":
+      return {
+        subject: `Quote ${x.quote_number ?? ""} ${x.decision ?? "decided"}`.replace("  ", " "),
+        heading: x.decision === "declined" ? "A quote was declined" : "A quote was approved",
+        body: `${x.customer_name ?? "The customer"} ${x.decision ?? "decided on"} quote ${x.quote_number ?? ""}.`,
+        cta: "Open the quote",
+      };
+    case "payment_received":
+      return {
+        subject: `Payment received: ${x.invoice_number ?? "an invoice"}`,
+        heading: "A payment arrived",
+        body: `${x.customer_name ?? "A customer"} paid ${x.amount ?? "an invoice"}${x.invoice_number ? ` on ${x.invoice_number}` : ""}.`,
+        cta: "Open the invoice",
+      };
+    case "daily_digest":
+      return {
+        subject: "Your daily summary",
+        heading: "Your daily summary",
+        body: "Yesterday's numbers, overdue jobs and pending approvals.",
+        cta: "Open FieldOps",
       };
   }
 }

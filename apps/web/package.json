@@ -21,6 +21,7 @@
     "@fieldops/ai": "workspace:*",
     "@fieldops/core": "workspace:*",
     "@fieldops/db": "workspace:*",
+    "@fieldops/documents": "workspace:*",
     "@fieldops/email": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.5",

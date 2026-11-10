@@ -5,6 +5,8 @@
     "organization": "Organization",
     "members": "Members",
     "serviceTypes": "Service types",
+    "catalog": "Catalog",
+    "billing": "Billing",
     "demoOutbox": "Demo outbox",
     "sla": "SLA policies",
     "ai": "AI",

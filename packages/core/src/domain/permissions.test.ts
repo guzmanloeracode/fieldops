@@ -45,6 +45,11 @@ const MATRIX: Record<Action, Expect> = {
   "ai.manage": { owner: true, admin: true, dispatcher: false, technician: false },
   "sla.manage": { owner: true, admin: true, dispatcher: false, technician: false },
   "demoOutbox.view": { owner: true, admin: true, dispatcher: false, technician: false },
+  "catalog.manage": { owner: true, admin: true, dispatcher: false, technician: false },
+  "billing.settings": { owner: true, admin: true, dispatcher: false, technician: false },
+  "reports.write": { owner: true, admin: true, dispatcher: true, technician: "assigned" },
+  "recurrences.manage": { owner: true, admin: true, dispatcher: true, technician: false },
+  "assistant.use": { owner: true, admin: true, dispatcher: true, technician: true },
 };
 
 describe("permission matrix", () => {

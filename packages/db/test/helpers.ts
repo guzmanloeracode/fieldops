@@ -246,6 +246,94 @@ export async function createOrgWithData(db: Database, label: string) {
     name: "Urgent",
     query: "priority=urgent",
   });
+  // 0.4 tables.
+  const catalogItemId = id();
+  await db.insert(s.catalogItem).values({
+    id: catalogItemId,
+    organizationId: orgId,
+    name: `Capacitor ${label}`,
+    unitPriceMinor: 2500,
+    currency: "USD",
+  });
+  const quoteId = id();
+  await db.insert(s.quote).values({
+    id: quoteId,
+    organizationId: orgId,
+    number: "QUO-2026-0001",
+    customerId: ids.customer,
+    siteId: ids.site,
+    contactId: ids.contact,
+    title: "Replace condenser fan",
+    currency: "USD",
+  });
+  await db.insert(s.quoteLine).values({
+    organizationId: orgId,
+    quoteId,
+    kind: "part",
+    catalogItemId,
+    description: "Capacitor",
+    quantity: 1,
+    unitPriceMinor: 2500,
+    netMinor: 2500,
+  });
+  const invoiceId = id();
+  await db.insert(s.invoice).values({
+    id: invoiceId,
+    organizationId: orgId,
+    number: "INV-2026-0001",
+    customerId: ids.customer,
+    jobId: ids.job,
+    contactId: ids.contact,
+    status: "sent",
+    currency: "USD",
+    totalMinor: 2500,
+    issueDate: "2026-11-10",
+    dueDate: "2026-11-24",
+  });
+  await db.insert(s.invoiceLine).values({
+    organizationId: orgId,
+    invoiceId,
+    kind: "part",
+    description: "Capacitor",
+    quantity: 1,
+    unitPriceMinor: 2500,
+    netMinor: 2500,
+  });
+  await db.insert(s.payment).values({
+    organizationId: orgId,
+    invoiceId,
+    amountMinor: 1000,
+    currency: "USD",
+    method: "cash",
+    paidAt: new Date("2026-11-12T10:00:00Z"),
+  });
+  await db.insert(s.invoiceReminder).values({ organizationId: orgId, invoiceId, stage: 3 });
+  await db
+    .insert(s.serviceReport)
+    .values({ organizationId: orgId, jobId: ids.job, workPerformed: "Cleaned coils" });
+  await db.insert(s.jobRecurrence).values({
+    organizationId: orgId,
+    customerId: ids.customer,
+    siteId: ids.site,
+    title: "Quarterly AC service",
+    intervalUnit: "month",
+    intervalCount: 3,
+    startsOn: "2026-11-01",
+    nextOn: "2027-02-01",
+  });
+  const conversationId = id();
+  await db
+    .insert(s.assistantConversation)
+    .values({ id: conversationId, organizationId: orgId, userId: users.dispatcher, title: "SLA risks" });
+  await db.insert(s.assistantMessage).values({
+    organizationId: orgId,
+    conversationId,
+    role: "user",
+    content: "Which jobs are at risk today?",
+  });
+  await db
+    .insert(s.dailyDigest)
+    .values({ organizationId: orgId, userId: users.owner, digestDate: "2026-11-10" });
   return { orgId, users, members, ids };
 }
 

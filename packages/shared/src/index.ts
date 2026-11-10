@@ -10,3 +10,7 @@ export * from "./sla";
 export * from "./audit";
 export * from "./portal";
 export * from "./ai";
+export * from "./billing";
+export * from "./reports";
+export * from "./recurrences";
+export * from "./assistant";

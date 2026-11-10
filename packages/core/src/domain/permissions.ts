@@ -48,7 +48,12 @@ export type Action =
   | "ai.use"
   | "ai.manage"
   | "sla.manage"
-  | "demoOutbox.view";
+  | "demoOutbox.view"
+  | "catalog.manage"
+  | "billing.settings"
+  | "reports.write"
+  | "recurrences.manage"
+  | "assistant.use";
 
 /**
  * Optional facts about the resource being accessed.
@@ -113,6 +118,16 @@ const RULES: Record<Action, Rule> = {
   // SLA policies (SLA-01, SET-03).
   "sla.manage": MANAGERS,
   "demoOutbox.view": MANAGERS,
+  // 0.4. Quotes, invoices and payments use "billing.manage" (office roles, PRD §5.2).
+  // Parts and fees catalog (FIN-01) and billing settings: payment terms, labor rate, prefixes (FIN-03).
+  "catalog.manage": MANAGERS,
+  "billing.settings": MANAGERS,
+  // Service reports (AI-03): edited and sent by the office or a technician assigned to the job.
+  "reports.write": officeOrAssigned,
+  // Maintenance plans that generate recurring jobs (JOB-13).
+  "recurrences.manage": OFFICE,
+  // Ask FieldOps (AI-02). Every role; the tools filter by role, and technicians only reach their own jobs.
+  "assistant.use": ["owner", "admin", "dispatcher", "technician"],
 };
 
 export function can(actor: Pick<Actor, "role">, action: Action, scope: Scope = {}): boolean {

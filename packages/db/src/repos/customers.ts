@@ -6,7 +6,7 @@ import type {
   Page,
 } from "@fieldops/core";
 import { decodeCursor, encodeCursor } from "@fieldops/core";
-import type { Address, CustomerType } from "@fieldops/shared";
+import type { Address, CustomerType, Locale } from "@fieldops/shared";
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { Tx } from "../client";
 import { contact, customer, job, jobAssignment, site } from "../schema";
@@ -22,6 +22,7 @@ export function toCustomer(r: CustomerRow): CustomerRecord {
     billingAddress: (r.billingAddress as Address | null) ?? null,
     tags: r.tags,
     notes: r.notes,
+    locale: (r.locale as Locale | null) ?? null,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
@@ -143,6 +144,7 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
           billingAddress: data.billingAddress,
           tags: data.tags,
           notes: data.notes,
+          locale: data.locale ?? null,
         })
         .returning();
       return toCustomer(r!);

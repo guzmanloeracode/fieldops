@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from "../domain/errors";
 import { iso, world } from "../test/fixtures";
 import type { MemoryExpenseRepo } from "../test/memory-expenses";
-import { fakeFiles, uuid } from "../test/memory-store";
+import { createMemoryStore, fakeFiles, uuid } from "../test/memory-store";
 import * as expenses from "./expenses";
 import * as jobs from "./jobs";
 import * as org from "./organization";
@@ -69,6 +69,8 @@ describe("expenseTotal, canDecideExpense, summarizeExpenses", () => {
       approval: { autoApproveBelowMinor: 5000, dispatcherLimitMinor: 25000 },
       requireSignature: false,
       ai: { enabled: true, monthlyQuota: 500 },
+      billing: createMemoryStore().data.org.settings.billing,
+      locale: "en" as const,
     };
     expect(expenses.canDecideExpense({ role: "dispatcher" }, { totalMinor: 24999 }, settings)).toBe(true);
     expect(expenses.canDecideExpense({ role: "dispatcher" }, { totalMinor: 25000 }, settings)).toBe(false);

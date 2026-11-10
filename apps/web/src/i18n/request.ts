@@ -16,6 +16,10 @@ import audit from "../../messages/en/audit.json";
 import ai from "../../messages/en/ai.json";
 import portal from "../../messages/en/portal.json";
 import tour from "../../messages/en/tour.json";
+import billing from "../../messages/en/billing.json";
+import reports from "../../messages/en/reports.json";
+import recurrences from "../../messages/en/recurrences.json";
+import assistant from "../../messages/en/assistant.json";
 
 // English ships in 0.1; Bahasa Indonesia arrives with SET-05 in 0.4. Each namespace lives in its own file.
 const messages = {
@@ -37,6 +41,10 @@ const messages = {
     ai,
     portal,
     tour,
+    billing,
+    reports,
+    recurrences,
+    assistant,
   },
 };
 

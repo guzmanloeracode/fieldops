@@ -21,8 +21,10 @@ const config: NextConfig = {
     "@fieldops/db",
     "@fieldops/email",
     "@fieldops/ai",
+    "@fieldops/documents",
   ],
-  serverExternalPackages: ["pg", "pino"],
+  // @react-pdf/renderer runs in Node only (FIN-04 PDFs are rendered on the server).
+  serverExternalPackages: ["pg", "pino", "@react-pdf/renderer"],
   poweredByHeader: false,
   typedRoutes: false,
   agentRules: false,

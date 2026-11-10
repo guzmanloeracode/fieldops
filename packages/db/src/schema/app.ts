@@ -17,6 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { member, organization, user } from "./auth";
 import { slaPolicy } from "./automate";
+import { jobRecurrence } from "./paid";
 
 // Tenant-scoped tables. Every one carries organization_id, every index starts with it, and row-level
 // security (migration 0001) limits rows to the organization set in `app.org_id` (ADR 003).
@@ -67,6 +68,8 @@ export const serviceType = pgTable(
       .default(sql`'[]'::jsonb`),
     color: text("color"),
     active: boolean("active").notNull().default(true),
+    /** Tax on this service (FIN-01). Null uses the organization's default tax rate. */
+    taxRateBps: integer("tax_rate_bps"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -87,6 +90,8 @@ export const customer = pgTable(
       .default(sql`'{}'::text[]`),
     notes: text("notes"),
     source: text("source").notNull().default("manual"),
+    /** Language of the customer's documents and emails (SET-05). Null uses the organization's default. */
+    locale: text("locale"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     deletedAt: deletedAt(),
@@ -217,6 +222,13 @@ export const job = pgTable(
     /** on_track | at_risk | breached | met (SLA-02). Updated on status changes and by the SLA monitor. */
     slaResponseState: text("sla_response_state"),
     slaResolutionState: text("sla_resolution_state"),
+    /** While on hold waiting for the customer, the resolution clock is paused (SLA-04). */
+    slaPausedAt: timestamp("sla_paused_at", { withTimezone: true }),
+    /** Total minutes the resolution clock has been paused, in the policy's time basis. */
+    slaPausedMinutes: integer("sla_paused_minutes").notNull().default(0),
+    /** The maintenance plan that generated the job, and which occurrence (JOB-13). */
+    recurrenceId: uuid("recurrence_id").references(() => jobRecurrence.id, { onDelete: "set null" }),
+    occurrenceDate: date("occurrence_date"),
     createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
     version: integer("version").notNull().default(1),
     createdAt: createdAt(),
@@ -237,6 +249,9 @@ export const job = pgTable(
     index("job_org_ai_status_idx")
       .on(t.organizationId, t.aiStatus)
       .where(sql`ai_status = 'pending'`),
+    uniqueIndex("job_org_recurrence_occurrence_uq")
+      .on(t.organizationId, t.recurrenceId, t.occurrenceDate)
+      .where(sql`recurrence_id is not null`),
   ],
 );
 
@@ -519,4 +534,17 @@ export const TENANT_TABLES = [
   "portal_token",
   "portal_session",
   "ai_interaction",
+  // 0.4 (schema/paid.ts)
+  "catalog_item",
+  "quote",
+  "quote_line",
+  "invoice",
+  "invoice_line",
+  "payment",
+  "invoice_reminder",
+  "service_report",
+  "job_recurrence",
+  "assistant_conversation",
+  "assistant_message",
+  "daily_digest",
 ] as const;
