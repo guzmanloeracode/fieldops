@@ -24,6 +24,8 @@ test.describe("service reports", () => {
     page,
     browser,
   }) => {
+    // A long journey across the office, the outbox, a signed link and the portal.
+    test.slow();
     const title = `E2E report ${uniq()}`;
     const job = await completedJobForJamie(title);
 
