@@ -185,13 +185,21 @@ test.describe("service report for customers (POR-04)", () => {
 });
 
 test.describe("portal quotes, invoices and the test checkout (POR-04, FIN-05)", () => {
-  test("axe: quotes, a quote, invoices, an invoice and the test checkout", async ({ page }) => {
+  // Each test opens pages that compile on first use under `next dev`.
+  test.slow();
+  test.beforeEach(async ({ page }) => {
     await page.goto("/portal/acme-air/sign-in");
     await page.getByTestId("portal-demo-sign-in").click();
     await expect(page).toHaveURL(/\/portal\/acme-air$/);
+  });
+
+  test("axe: quotes and a quote", async ({ page }) => {
     await audit(page, "/portal/acme-air/quotes");
     const quote = await page.getByTestId("portal-quote").first().getAttribute("href");
     await audit(page, quote!);
+  });
+
+  test("axe: invoices, an invoice and the test checkout", async ({ page }) => {
     await audit(page, "/portal/acme-air/invoices");
     const invoice = await page.getByTestId("portal-invoice").first().getAttribute("href");
     await audit(page, invoice!);
