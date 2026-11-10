@@ -428,6 +428,11 @@ export const jobSchema = z
     resolution_due_at: ts.nullable().meta({ description: "SLA: complete by this time" }),
     sla_response_state: slaStateSchema.nullable(),
     sla_resolution_state: slaStateSchema.nullable(),
+    sla_paused_at: ts
+      .nullable()
+      .meta({ description: "SLA-04: the resolution clock is paused while on hold for the customer" }),
+    recurrence_id: z.uuid().nullable().meta({ description: "The maintenance plan that generated the job" }),
+    occurrence_date: z.string().nullable().meta({ format: "date", description: "The plan's visit date" }),
     version: z.number().int().meta({ description: "Increments on every change. Sent as the ETag." }),
     created_at: ts,
     updated_at: ts,

@@ -25,6 +25,7 @@ import { JobExpenses } from "./expenses";
 import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
+import { JobRecurrence } from "./recurrence-badge";
 import { SignatureCard } from "./signature-card";
 import { SlaCard } from "./sla-card";
 import { SiteMap } from "./site-map";
@@ -127,6 +128,7 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                 <StatusBadge status={job.status} />
               </span>
               <PriorityBadge priority={job.priority} />
+              <JobRecurrence job={job} actor={actor} />
               {job.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
                   <Inbox className="size-3" aria-hidden /> {t("needsReview")}
