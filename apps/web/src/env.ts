@@ -24,6 +24,14 @@ const schema = z.object({
   APP_VERSION: z.string().default("dev"),
   APP_COMMIT: z.string().default("local"),
   GITHUB_URL: z.string().default("https://github.com/guzmanloeracode/fieldops"),
+  // AI (§9.7). Without a key AI features say they aren't configured; "fixture" is the E2E test double.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  AI_PROVIDER: z.enum(["anthropic", "fixture"]).optional(),
+  AI_MODEL_INTAKE: z.string().optional(),
+  /** Rate limits for AI routes (PLT-04, DEM-05). 0 turns a limit off. */
+  AI_USER_HOURLY_LIMIT: z.coerce.number().int().min(0).default(20),
+  AI_VISITOR_DAILY_LIMIT: z.coerce.number().int().min(0).default(15),
+  AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(300),
 });
 
 export const env = schema.parse(process.env);

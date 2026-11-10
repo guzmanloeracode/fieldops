@@ -26,7 +26,7 @@ docker run --rm --network "$NAME" -e MIGRATION_DATABASE_URL="$DB_URL" -e DEMO_PA
   "fieldops-worker:$TAG" node dist/index.js reset >/dev/null
 
 docker run -d --name "$NAME-web" --network "$NAME" --memory 512m -p "127.0.0.1:$PORT:3000" \
-  -e APP_URL="http://localhost:$PORT" -e DEMO_MODE=true -e DEMO_PASSWORD="$PASSWORD" \
+  -e APP_URL="http://localhost:$PORT" -e DEMO_MODE=true -e DEMO_PASSWORD="$PASSWORD" -e AI_PROVIDER=fixture \
   -e DATABASE_URL="postgres://fieldops_app:app-e2e@$NAME-db:5432/fieldops" \
   -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" "fieldops-web:$TAG" >/dev/null
 for i in $(seq 1 60); do curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1 && break; [ "$i" = 60 ] && { echo "web did not start"; exit 1; }; sleep 1; done

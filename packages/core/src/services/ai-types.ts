@@ -1,4 +1,5 @@
 import type { AiFeature, AiImageType, AiOutcome, AiStatus, Currency } from "@fieldops/shared";
+import type { ServiceContext, Store } from "./types";
 
 // AI usage logging (§9.7) and smart intake (AI-01). The model sits behind the `IntakeModel` port: the
 // Anthropic implementation and the deterministic fixture live in packages/ai, so the core stays framework-free
@@ -131,3 +132,8 @@ export interface RateLimitStatus {
   remaining: number;
   resetAt: Date;
 }
+
+/** Runs a function in its own tenant transaction, as the signed-in member. */
+export type TxRunner = <T>(fn: (ctx: ServiceContext) => Promise<T>) => Promise<T>;
+/** Runs a function in its own tenant transaction without a member (the worker). */
+export type StoreRunner = <T>(fn: (store: Store) => Promise<T>) => Promise<T>;

@@ -1,6 +1,7 @@
-import { createDb, runMigrations, schema } from "@fieldops/db";
+import { createDb, releaseStuckAiDrafts, runMigrations, schema } from "@fieldops/db";
 import { count } from "drizzle-orm";
 import { PgBoss } from "pg-boss";
+import { draftPending, intakeModel } from "./ai";
 import { resetDemo } from "./demo";
 import { drainOutbox, releaseStuck } from "./email";
 import { env } from "./env";
@@ -45,6 +46,7 @@ async function run() {
     await pool.query(`delete from idempotency_key where created_at < now() - interval '24 hours'`);
     await pool.query(`delete from verification where expires_at < now() - interval '1 day'`);
     await pool.query(`delete from session where expires_at < now()`);
+    await pool.query(`delete from rate_limit where window_start < now() - interval '2 days'`);
     log.info("maintenance done");
   });
 
@@ -70,8 +72,21 @@ async function run() {
       await new Promise((r) => setTimeout(r, 5_000));
     }
   };
-  const looping = loop();
-  log.info({ demo: env.demoMode }, "worker started");
+  // AI drafts for portal requests (AI-01): a short poll like the outbox; a slow model only delays this loop.
+  const aiLoop = async () => {
+    let ticks = 0;
+    while (!stopping) {
+      try {
+        if (ticks++ % 20 === 0) await releaseStuckAiDrafts(db);
+        await draftPending(db);
+      } catch (err) {
+        log.error({ err }, "ai loop failed");
+      }
+      await new Promise((r) => setTimeout(r, 3_000));
+    }
+  };
+  const looping = Promise.all([loop(), aiLoop()]);
+  log.info({ demo: env.demoMode, ai: intakeModel.provider }, "worker started");
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, "shutting down");

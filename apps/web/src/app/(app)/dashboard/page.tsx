@@ -90,10 +90,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const { today, review } = await runService(async (ctx) => {
       const [today, review] = await Promise.all([
         dashboard.getToday(ctx),
-        // Portal requests waiting for a dispatcher to confirm (needs_review).
+        // Portal requests waiting for a dispatcher to confirm (needs_review, AI-01).
         jobs
-          .listJobs(ctx, { limit: 100, sort: "-created_at", status: ["new"] })
-          .then((p) => p.rows.filter((j) => j.needsReview).length),
+          .listJobs(ctx, { limit: 1, page: 1, sort: "-created_at", needs_review: true })
+          .then((p) => p.total ?? 0),
       ]);
       return { today, review };
     }, actor);

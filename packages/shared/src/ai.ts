@@ -119,8 +119,12 @@ export const aiQuotaSchema = z
 
 export const aiIntakeResponseSchema = z
   .object({
-    interaction_id: z.uuid(),
-    draft: intakeDraftSchema,
+    status: z.enum(["drafted", "refused", "failed"]).meta({
+      description:
+        "`drafted`: `draft` is set. `refused` or `failed`: the model gave no usable draft; fill in the job by hand.",
+    }),
+    interaction_id: z.uuid().meta({ description: "The logged AI call (§9.7)" }),
+    draft: intakeDraftSchema.nullable(),
     customer_suggestions: z.array(aiCustomerSuggestionSchema),
     model: z.string(),
     quota: aiQuotaSchema,

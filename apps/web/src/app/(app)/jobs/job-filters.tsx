@@ -1,7 +1,7 @@
 "use client";
 import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
 import { JOB_PRIORITIES, JOB_STATUSES } from "@fieldops/shared";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Inbox, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
@@ -28,6 +28,7 @@ export function JobFilters({
 }) {
   const t = useTranslations("jobs");
   const ti = useTranslations("insights.filters");
+  const ta = useTranslations("ai.filters");
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -71,7 +72,9 @@ export function JobFilters({
     "date_field",
     "unassigned",
     "revisit",
+    "needs_review",
   ].filter((k) => params.get(k)).length;
+  const needsReview = params.get("needs_review") === "true";
 
   // Filters that dashboards and saved views set but the toolbar has no control for (DSH-03, JOB-04).
   const dateField = params.get("date_field");
@@ -146,6 +149,18 @@ export function JobFilters({
             ))}
           </SelectContent>
         </Select>
+        {/* Portal requests waiting for a dispatcher (AI-01). Office roles; technicians never get them. */}
+        {showTechnician ? (
+          <Button
+            type="button"
+            variant={needsReview ? "secondary" : "outline"}
+            aria-pressed={needsReview}
+            onClick={() => update({ needs_review: needsReview ? null : "true" })}
+            data-testid="filter-needs-review"
+          >
+            <Inbox aria-hidden /> {ta("needsReview")}
+          </Button>
+        ) : null}
         <div className="flex items-center gap-1.5">
           <Label htmlFor="from" className="sr-only">
             {t("from")}

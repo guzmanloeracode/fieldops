@@ -1,3 +1,4 @@
+import { intakeDraftSchema } from "@fieldops/shared";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "../src/client";
@@ -203,6 +204,32 @@ describe("demo seed", () => {
       { slug: "acme-air", n: 4 },
       { slug: "acme-teknik", n: 4 },
     ]);
+  });
+
+  it("drafts the portal requests waiting for review and logs a month of AI use (AI-01)", async () => {
+    const r = await first.owner.execute<{
+      waiting: number;
+      drafted: number;
+      with_draft: number;
+      calls: number;
+      ai_jobs: number;
+    }>(sql`select
+      (select count(*)::int from job where needs_review) as waiting,
+      (select count(*)::int from job where needs_review and ai_status = 'drafted') as drafted,
+      (select count(*)::int from job j where j.needs_review and exists (
+        select 1 from ai_interaction i where i.job_id = j.id and i.output is not null and i.outcome = 'drafted')) as with_draft,
+      (select count(*)::int from ai_interaction) as calls,
+      (select count(*)::int from job where source = 'ai_intake' and ai_drafted) as ai_jobs`);
+    const c = r.rows[0]!;
+    expect(c.waiting).toBeGreaterThan(0);
+    expect(c.drafted).toBe(c.waiting);
+    expect(c.with_draft).toBe(c.waiting);
+    expect(c.calls).toBeGreaterThan(20);
+    expect(c.ai_jobs).toBeGreaterThan(0);
+    const drafts = await first.owner.execute<{ output: unknown }>(
+      sql`select output from ai_interaction where output is not null`,
+    );
+    for (const d of drafts.rows) expect(intakeDraftSchema.safeParse(d.output).success).toBe(true);
   });
 
   it("wipes everything before a reset", async () => {

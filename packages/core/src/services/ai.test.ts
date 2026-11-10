@@ -10,7 +10,15 @@ import {
 } from "../domain/errors";
 import { world } from "../test/fixtures";
 import { ctxFor, actorFor, uuid } from "../test/memory-store";
-import type { AiLimits, IntakeCatalog, IntakeModel, IntakeModelInput, IntakeModelResult } from "./ai-types";
+import type {
+  AiLimits,
+  IntakeCatalog,
+  IntakeModel,
+  IntakeModelInput,
+  IntakeModelResult,
+  StoreRunner,
+  TxRunner,
+} from "./ai-types";
 import * as ai from "./ai";
 import * as jobs from "./jobs";
 import type { ServiceContext, Store } from "./types";
@@ -78,11 +86,11 @@ const drafted = (o: unknown): IntakeModelResult => ({
 
 /** Runs each transaction against the same memory store as `member`. */
 const runner =
-  (w: World, m = w.dispatcher, extra: Partial<ServiceContext> = {}): ai.TxRunner =>
+  (w: World, m = w.dispatcher, extra: Partial<ServiceContext> = {}): TxRunner =>
   (fn) =>
     fn(w.ctx(m, extra));
 const storeRunner =
-  (w: World): ai.StoreRunner =>
+  (w: World): StoreRunner =>
   (fn) =>
     fn(w.store);
 
@@ -326,10 +334,9 @@ describe("draftIntake", () => {
     ).rejects.toMatchObject({ details: { scope: "visitor" } });
     await ai.draftIntake(runner(w, w.admin), model, raw, guard({ perVisitorPerDay: 1 }));
     await ai.draftIntake(runner(w, w.admin), model, raw, guard({ globalPerDay: 1 }));
-    const err = await ai
-      .draftIntake(runner(w, w.admin), model, raw, guard({ globalPerDay: 1 }))
-      .catch((e: RateLimitedError) => e);
-    expect(err.message).toMatch(/budget for today/);
+    await expect(ai.draftIntake(runner(w, w.admin), model, raw, guard({ globalPerDay: 1 }))).rejects.toThrow(
+      /budget for today/,
+    );
   });
 
   it("reports the tightest limit", async () => {
@@ -547,6 +554,10 @@ describe("portal requests", () => {
       estimatedDurationMin: 95,
     };
     expect(ai.reviewChanges(d, job)).toEqual(["service_type_id", "priority", "checklist"]);
+    expect(ai.reviewChanges(d, job, ["check the drain line", "Inspect the pump"])).toEqual([
+      "service_type_id",
+      "priority",
+    ]);
     expect(
       ai.reviewChanges(
         { ...d, service_type_id: null, estimated_duration_min: null, checklist: [] },
@@ -643,6 +654,27 @@ describe("portal requests", () => {
       apply: ai.reviewChanges((await ai.getReview(w.ctx(w.owner), all.id)).draft!, job),
     });
     expect(w.data.automate!.aiInteractions.at(-1)!.outcome).toBe("accepted");
+  });
+});
+
+describe("intakeStatus", () => {
+  it("says whether the form can offer a draft, and why not", async () => {
+    const w = world();
+    expect(await ai.intakeStatus(w.ctx(w.dispatcher), "anthropic")).toEqual({
+      available: true,
+      reason: null,
+      used: 0,
+      limit: 500,
+    });
+    expect(await ai.intakeStatus(w.ctx(w.tom), "anthropic")).toMatchObject({
+      available: false,
+      reason: null,
+    });
+    expect((await ai.intakeStatus(w.ctx(w.owner), "unavailable")).reason).toBe("not_configured");
+    w.data.org.settings.ai.monthlyQuota = 0;
+    expect((await ai.intakeStatus(w.ctx(w.owner), "fixture")).reason).toBe("quota");
+    w.data.org.settings.ai.enabled = false;
+    expect((await ai.intakeStatus(w.ctx(w.owner), "fixture")).reason).toBe("disabled");
   });
 });
 

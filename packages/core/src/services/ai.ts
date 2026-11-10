@@ -23,7 +23,7 @@ import {
   UnavailableError,
   ValidationError,
 } from "../domain/errors";
-import { assertCan } from "../domain/permissions";
+import { assertCan, can } from "../domain/permissions";
 import type {
   AiLimits,
   IntakeCatalog,
@@ -31,6 +31,8 @@ import type {
   IntakeModelResult,
   IntakePhoto,
   RateLimitStatus,
+  StoreRunner,
+  TxRunner,
 } from "./ai-types";
 import { getJob } from "./job-access";
 import * as jobs from "./jobs";
@@ -44,11 +46,6 @@ import { parseInput } from "./validate";
 // connection: the first checks permissions, settings, the monthly quota and the rate limits and reads the
 // catalog; the second validates the output, looks up matching customers and logs the call. Model output never
 // changes a job until a person confirms it.
-
-/** Runs a function in its own tenant transaction, as the signed-in member. */
-export type TxRunner = <T>(fn: (ctx: ServiceContext) => Promise<T>) => Promise<T>;
-/** Runs a function in its own tenant transaction without a member (the worker). */
-export type StoreRunner = <T>(fn: (store: Store) => Promise<T>) => Promise<T>;
 
 const HOUR = 3600;
 const DAY = 24 * HOUR;
@@ -463,13 +460,18 @@ export async function draftPortalJob(
 export async function getReview(ctx: ServiceContext, jobId: string) {
   assertCan(ctx.actor, "jobs.update");
   const job = await getJob(ctx, jobId);
-  const latest = await ctx.store.ai.latestDraft(job.id);
+  const [latest, items] = await Promise.all([
+    ctx.store.ai.latestDraft(job.id),
+    ctx.store.checklist.list(job.id),
+  ]);
   const parsed = latest ? intakeDraftSchema.safeParse(latest.output) : null;
   return {
     job,
     interactionId: latest?.id ?? null,
     outcome: latest?.outcome ?? null,
     draft: parsed?.success ? parsed.data : null,
+    /** The job's current checklist labels: suggestions already on it aren't offered again. */
+    checklist: items.map((i) => i.label),
   };
 }
 
@@ -482,7 +484,9 @@ export function reviewChanges(
     priority: JobPriority;
     estimatedDurationMin: number | null;
   },
+  checklist: string[] = [],
 ): AiReviewField[] {
+  const existing = new Set(checklist.map((l) => l.toLowerCase()));
   return AI_REVIEW_FIELDS.filter((f) => {
     switch (f) {
       case "title":
@@ -496,7 +500,7 @@ export function reviewChanges(
           draft.estimated_duration_min !== null && draft.estimated_duration_min !== job.estimatedDurationMin
         );
       case "checklist":
-        return draft.checklist.length > 0;
+        return draft.checklist.some((l) => !existing.has(l.toLowerCase()));
     }
   });
 }
@@ -515,7 +519,7 @@ export async function reviewJob(ctx: ServiceContext, jobId: string, raw: unknown
   if (input.apply.length && !review.draft) {
     throw new ValidationError("There is no AI draft to apply", [{ path: "apply", message: "No AI draft" }]);
   }
-  const offered = review.draft ? reviewChanges(review.draft, job) : [];
+  const offered = review.draft ? reviewChanges(review.draft, job, review.checklist) : [];
   const applied = input.apply.filter((f) => offered.includes(f));
   const draft = review.draft;
   if (draft && applied.length) {
@@ -548,6 +552,26 @@ export async function reviewJob(ctx: ServiceContext, jobId: string, raw: unknown
     await ctx.store.ai.setOutcome(review.interactionId, outcome);
   }
   return { job: await getJob(ctx, job.id), applied };
+}
+
+/**
+ * Whether the new job form can offer an AI draft, and why not otherwise, with this month's quota. For office
+ * roles; others get `available: false` without a reason.
+ */
+export async function intakeStatus(ctx: ServiceContext, provider: IntakeModel["provider"]) {
+  const org = await ctx.store.organization.get();
+  const limit = org.settings.ai.monthlyQuota;
+  const allowed = can(ctx.actor, "jobs.create") && can(ctx.actor, "ai.use");
+  if (!allowed) return { available: false, reason: null, used: 0, limit };
+  const used = await ctx.store.ai.countSince(monthStart(ctx.now));
+  const reason = !org.settings.ai.enabled
+    ? ("disabled" as const)
+    : provider === "unavailable"
+      ? ("not_configured" as const)
+      : used >= limit
+        ? ("quota" as const)
+        : null;
+  return { available: reason === null, reason, used, limit };
 }
 
 // ------------------------------------------------------------------ settings (SET-04)

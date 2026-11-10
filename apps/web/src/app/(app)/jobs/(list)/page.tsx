@@ -42,6 +42,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     date_field: one(sp.date_field) || undefined,
     unassigned: one(sp.unassigned) || undefined,
     revisit: one(sp.revisit) || undefined,
+    needs_review: one(sp.needs_review) || undefined,
     sort: myDay ? "scheduled_start" : one(sp.sort) || undefined,
     limit: one(sp.limit) || 25,
     page: one(sp.page) || 1,
@@ -112,7 +113,8 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     query.from ||
     query.to ||
     query.unassigned ||
-    query.revisit,
+    query.revisit ||
+    query.needs_review,
   );
 
   return (
