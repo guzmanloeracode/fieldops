@@ -125,7 +125,8 @@
     "email": "Enter a valid email",
     "url": "Enter a valid link",
     "format": "Check the format",
-    "choose": "Choose one of the options"
+    "choose": "Choose one of the options",
+    "invalid": "Invalid value"
   },
   "close": "Close",
   "notifications": "Notifications"

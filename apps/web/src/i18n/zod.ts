@@ -1,15 +1,14 @@
-import { z } from "zod";
-import type { Locale } from "./locales";
+import type { z } from "zod";
 
 /** A translator for the `common.validation` namespace (next-intl, server or client). */
 type Translate = (key: string, values?: Record<string, string | number>) => string;
 
 /**
  * Plain-language messages for Zod's built-in checks, in the reader's language (SET-05). Messages written in a schema
- * still win; anything not covered here falls back to Zod's own locale.
+ * still win; anything else reads "Invalid value". Zod's own locale bundle isn't used: in the browser it would add
+ * every language Zod ships to the page.
  */
-export function zodErrorMap(t: Translate, locale: Locale): z.core.$ZodErrorMap {
-  const fallback = (locale === "id" ? z.locales.id() : z.locales.en()).localeError;
+export function zodErrorMap(t: Translate): z.core.$ZodErrorMap {
   return (issue) => {
     switch (issue.code) {
       case "invalid_type":
@@ -38,6 +37,6 @@ export function zodErrorMap(t: Translate, locale: Locale): z.core.$ZodErrorMap {
       case "invalid_value":
         return t("choose");
     }
-    return fallback(issue);
+    return t("invalid");
   };
 }

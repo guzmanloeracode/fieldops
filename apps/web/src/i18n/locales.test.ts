@@ -76,8 +76,8 @@ describe("zodErrorMap", () => {
     missing: z.string(),
     flag: z.boolean(),
   });
-  const messages = (input: unknown, locale: "en" | "id" = "en") => {
-    const r = schema.safeParse(input, { error: zodErrorMap(t, locale) });
+  const messages = (input: unknown) => {
+    const r = schema.safeParse(input, { error: zodErrorMap(t) });
     return Object.fromEntries((r.error?.issues ?? []).map((i) => [i.path.join("."), i.message]));
   };
 
@@ -116,9 +116,7 @@ describe("zodErrorMap", () => {
     });
   });
 
-  it("falls back to Zod's own locale for anything else", () => {
-    expect(messages({ flag: "yes" }, "en").flag).toMatch(/expected boolean/i);
-    expect(messages({ flag: "yes" }, "id").flag).toMatch(/boolean/);
-    expect(messages({ flag: "yes" }, "id").flag).not.toBe(messages({ flag: "yes" }, "en").flag);
+  it("says the value is invalid for anything else", () => {
+    expect(messages({ flag: "yes" }).flag).toBe("invalid");
   });
 });

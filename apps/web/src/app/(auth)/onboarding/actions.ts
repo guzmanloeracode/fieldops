@@ -2,9 +2,8 @@
 import { schema, withStore } from "@fieldops/db";
 import { organizationCreateSchema } from "@fieldops/shared";
 import { headers } from "next/headers";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { isLocale } from "@/i18n/locales";
 import { zodErrorMap } from "@/i18n/zod";
 import { auth } from "@/server/auth";
 import { getSession } from "@/server/context";
@@ -25,9 +24,8 @@ export async function createOrganizationAction(
   const t = await getTranslations("auth");
   // Shared demo accounts can't create organizations: every visitor signs in as the same people.
   if (session.user.isDemo) return { ok: false, message: t("errors.demoDisabled") };
-  const locale = await getLocale();
   const parsed = organizationCreateSchema.safeParse(input, {
-    error: zodErrorMap(await getTranslations("common.validation"), isLocale(locale) ? locale : "en"),
+    error: zodErrorMap(await getTranslations("common.validation")),
   });
   if (!parsed.success) {
     return {

@@ -125,7 +125,8 @@
     "email": "Masukkan email yang valid",
     "url": "Masukkan tautan yang valid",
     "format": "Periksa formatnya",
-    "choose": "Pilih salah satu opsi"
+    "choose": "Pilih salah satu opsi",
+    "invalid": "Nilai tidak valid"
   },
   "close": "Tutup",
   "notifications": "Notifikasi"
