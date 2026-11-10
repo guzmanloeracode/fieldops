@@ -388,6 +388,9 @@ async function seedOrg(
     return undefined;
   }
 
+  // About 5% of past completed jobs needed a second visit (PRD §19): the first visit was put on hold for parts
+  // and rescheduled. Chosen by a counter, not the random stream, so the rest of the seed stays the same.
+  let pastCompleted = 0;
   let carry = 0;
   for (const { offset, w } of weights) {
     const exact = (w / totalW) * scheduledTarget + carry;
@@ -431,6 +434,20 @@ async function seedOrg(
         status = "scheduled";
       }
 
+      // First visit of a job that needed a second one: same time of day, two or three days before the final visit.
+      const callback =
+        status === "completed" && offset < 0 && pastCompleted++ % 10 === 3
+          ? new Date(placed.start.getTime() - (2 + (pastCompleted % 2)) * DAY)
+          : null;
+      const firstVisit =
+        callback && callback.getTime() - createdAt.getTime() > 3 * 3600_000
+          ? {
+              start: callback,
+              end: new Date(callback.getTime() + (placed.end.getTime() - placed.start.getTime())),
+            }
+          : null;
+      const visit = firstVisit ?? placed;
+
       const by = dispatcherUser();
       const events: GenJob["events"] = [
         {
@@ -447,7 +464,7 @@ async function seedOrg(
       const assignedAt = new Date(
         Math.min(
           createdAt.getTime() + f.number.int({ min: 10, max: 180 }) * 60_000,
-          placed.start.getTime() - 3600_000,
+          visit.start.getTime() - 3600_000,
         ),
       );
       events.push({
@@ -460,8 +477,8 @@ async function seedOrg(
         payload: {
           member_ids: assignees.map((a) => a.memberId),
           lead_member_id: placed.tech.id,
-          scheduled_start: placed.start.toISOString(),
-          scheduled_end: placed.end.toISOString(),
+          scheduled_start: visit.start.toISOString(),
+          scheduled_end: visit.end.toISOString(),
         },
         createdAt: assignedAt < createdAt ? createdAt : assignedAt,
       });
@@ -505,6 +522,30 @@ async function seedOrg(
           },
           by,
         );
+      }
+      if (firstVisit) {
+        const at = (min: number) => new Date(firstVisit.start.getTime() + min * 60_000);
+        ev("scheduled", "en_route", at(-25), "depart");
+        ev("en_route", "in_progress", firstVisit.start, "start");
+        ev("in_progress", "on_hold", at(40), "hold", {
+          reason: spec.holdNotes[pastCompleted % spec.holdNotes.length],
+          hold_reason: "parts",
+        });
+        events.push({
+          organizationId: orgId,
+          jobId: id,
+          type: "assigned",
+          fromStatus: "on_hold",
+          toStatus: "scheduled",
+          actorUserId: by,
+          payload: {
+            member_ids: assignees.map((a) => a.memberId),
+            lead_member_id: placed.tech.id,
+            scheduled_start: placed.start.toISOString(),
+            scheduled_end: placed.end.toISOString(),
+          },
+          createdAt: at(180),
+        });
       }
       if (["en_route", "in_progress", "on_hold", "completed"].includes(status))
         ev("scheduled", "en_route", departAt, "depart");
@@ -659,7 +700,8 @@ async function seedOrg(
   await tx.execute(sql`
     update job j set revisit = true
     where j.organization_id = ${orgId} and exists (
-      select 1 from job_event e where e.organization_id = ${orgId} and e.job_id = j.id and e.type = 'status_changed'
+      select 1 from job_event e where e.organization_id = ${orgId} and e.job_id = j.id
+        and e.type in ('status_changed', 'assigned')
         and ((e.from_status = 'on_hold' and e.to_status = 'scheduled') or (e.from_status = 'completed' and e.to_status = 'in_progress')))`);
 
   // 0.2 extensions, each with its own deterministic random stream so they don't shift each other.

@@ -138,6 +138,27 @@ describe("demo seed", () => {
     expect(new Date(created.rows[0]!.max).getTime()).toBeLessThanOrEqual(NOW.getTime());
   });
 
+  it("gives about 5% of past completed jobs a second visit, with a consistent timeline (DSH-01)", async () => {
+    const r = await first.owner.execute<{
+      slug: string;
+      completed: number;
+      revisits: number;
+      bad: number;
+    }>(sql`
+      select o.slug,
+        count(*) filter (where j.status = 'completed')::int as completed,
+        count(*) filter (where j.status = 'completed' and j.revisit)::int as revisits,
+        count(*) filter (where j.revisit and not (j.first_scheduled_at < j.scheduled_start
+          and exists (select 1 from job_event e where e.job_id = j.id and e.type = 'assigned'
+            and e.from_status = 'on_hold' and e.to_status = 'scheduled' and e.created_at < j.scheduled_start)))::int as bad
+      from job j join organization o on o.id = j.organization_id group by o.slug order by o.slug`);
+    for (const row of r.rows) {
+      expect(row.revisits / row.completed).toBeGreaterThan(0.02);
+      expect(row.revisits / row.completed).toBeLessThan(0.08);
+      expect(row.bad).toBe(0);
+    }
+  });
+
   it("creates the one-click demo accounts with verified emails and credentials", async () => {
     const emails = Object.values(DEMO_LOGINS).flatMap((o) => Object.values(o));
     const r = await first.owner.execute<{
