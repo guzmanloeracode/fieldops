@@ -23,7 +23,7 @@ export const intakeModel: IntakeModel = createIntakeModel({
 const MAX_PHOTO_BYTES = 3_500_000;
 
 let s3: S3Client | null = null;
-async function readObject(key: string): Promise<Buffer> {
+export async function readObject(key: string): Promise<Buffer> {
   const { endpoint, bucket, accessKeyId, secretAccessKey, region } = env.s3;
   if (endpoint && bucket && accessKeyId && secretAccessKey) {
     s3 ??= new S3Client({
