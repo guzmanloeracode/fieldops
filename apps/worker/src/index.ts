@@ -1,4 +1,5 @@
 import { createDb, releaseStuckAiDrafts, runMigrations, schema } from "@fieldops/db";
+import { deleteExpiredConversations } from "@fieldops/db";
 import { count } from "drizzle-orm";
 import { PgBoss } from "pg-boss";
 import { draftPending, intakeModel } from "./ai";
@@ -56,6 +57,8 @@ async function run() {
       `delete from notification where (read_at is not null and created_at < now() - interval '90 days')
          or created_at < now() - interval '365 days'`,
     );
+    // Ask FieldOps conversations are kept 30 days after their last message (AI-02).
+    await deleteExpiredConversations(db);
     log.info("maintenance done");
   });
 

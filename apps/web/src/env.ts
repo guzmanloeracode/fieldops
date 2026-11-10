@@ -28,6 +28,7 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_PROVIDER: z.enum(["anthropic", "fixture"]).optional(),
   AI_MODEL_INTAKE: z.string().optional(),
+  AI_MODEL_ASSISTANT: z.string().optional(),
   /** Rate limits for AI routes (PLT-04, DEM-05). 0 turns a limit off. */
   AI_USER_HOURLY_LIMIT: z.coerce.number().int().min(0).default(20),
   AI_VISITOR_DAILY_LIMIT: z.coerce.number().int().min(0).default(15),

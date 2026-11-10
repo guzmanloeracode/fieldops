@@ -1,5 +1,5 @@
 import "server-only";
-import { createIntakeModel } from "@fieldops/ai";
+import { createAssistantModel, createIntakeModel } from "@fieldops/ai";
 import type { AiLimits, TxRunner } from "@fieldops/core";
 import { env } from "@/env";
 import { runService, type ResolvedActor } from "./context";
@@ -12,6 +12,13 @@ export const intakeModel = createIntakeModel({
   apiKey: env.ANTHROPIC_API_KEY,
   provider: env.AI_PROVIDER,
   intakeModel: env.AI_MODEL_INTAKE,
+});
+
+/** Ask FieldOps (AI-02): Claude with read-only tools, the fixture for E2E, or "not configured". */
+export const assistantModel = createAssistantModel({
+  apiKey: env.ANTHROPIC_API_KEY,
+  provider: env.AI_PROVIDER,
+  assistantModel: env.AI_MODEL_ASSISTANT,
 });
 
 export const aiLimits: AiLimits = {

@@ -117,7 +117,7 @@ export const assistantToolRunSchema = z
   .object({
     name: z.enum(ASSISTANT_TOOL_NAMES),
     summary: z.string().meta({ example: "Looked up 12 jobs" }),
-    count: z.number().int().meta({ description: "Records returned" }),
+    count: z.number().int().meta({ description: "Records found (lists can show fewer)" }),
     ok: z.boolean().meta({ description: "False when the tool failed or wasn't allowed" }),
     refs: z.array(assistantRecordRefSchema),
   })

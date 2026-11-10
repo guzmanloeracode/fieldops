@@ -221,7 +221,7 @@ async function searchJobs(
   if (total > rows.length) notes.push(`Showing ${rows.length} of ${total} jobs.`);
   return {
     summary: `Looked up ${plural(total, "job")}`,
-    count: rows.length,
+    count: total,
     refs: rows.map(jobRef),
     data: { total, shown: rows.length, jobs: rows.map((j) => jobRow(j, org.timezone)), notes },
   };
@@ -289,7 +289,7 @@ async function listSlaRisks(
   const shown = rows.slice(0, ASSISTANT_MAX_ROWS);
   return {
     summary: `Checked SLAs: ${plural(rows.length, "job")} at risk or breached`,
-    count: shown.length,
+    count: rows.length,
     refs: shown.map((r) => jobRef(r.job)),
     data: {
       total: rows.length,
@@ -584,7 +584,7 @@ async function customerHistory(
   const last = completed.rows[0];
   return {
     summary: `Opened ${c.name}'s history`,
-    count: 1 + jobs.rows.length + (invoices?.length ?? 0),
+    count: 1,
     refs: uniqueRefs([customerRef(c), ...jobs.rows.map(jobRef), ...(invoices ?? []).map(invoiceRef)]),
     data: {
       customer: { name: c.name, type: c.type, customer_since: localDateOf(c.createdAt, org.timezone) },
@@ -645,7 +645,7 @@ async function pendingApprovals(
   );
   return {
     summary: `Found ${plural(mine.length, "pending request")}`,
-    count: shown.length,
+    count: mine.length,
     refs,
     data: {
       total: mine.length,
