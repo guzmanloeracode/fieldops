@@ -61,6 +61,12 @@ describe("createJob", () => {
     expect(await newJob(w, { source: "ai_intake" })).toMatchObject({ needsReview: false, aiDrafted: true });
   });
 
+  it("leaves the quote and recurring sources to approved quotes and maintenance plans", async () => {
+    const w = world();
+    await expect(newJob(w, { source: "quote" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(newJob(w, { source: "recurring" })).rejects.toBeInstanceOf(ValidationError);
+  });
+
   it("checks that the site, equipment and service type belong together", async () => {
     const w = world();
     await expect(newJob(w, { site_id: w.otherSiteId })).rejects.toMatchObject({
