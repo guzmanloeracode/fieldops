@@ -65,7 +65,10 @@ export function Checklist({
           aria-valuemax={items.length}
           aria-valuenow={done}
         >
-          <div className="bg-primary h-full transition-all" style={{ width: `${(done / items.length) * 100}%` }} />
+          <div
+            className="bg-primary h-full transition-all"
+            style={{ width: `${(done / items.length) * 100}%` }}
+          />
         </div>
       </CardHeader>
       <CardContent>
@@ -147,7 +150,10 @@ function Row({
   }
 
   const status = isDone ? (
-    <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-green-700 dark:text-green-500" aria-label={t("done")} />
+    <CheckCircle2
+      className="mt-0.5 size-6 shrink-0 text-green-700 dark:text-green-500"
+      aria-label={t("done")}
+    />
   ) : (
     <Circle className="text-muted-foreground mt-0.5 size-6 shrink-0" aria-label={t("notDone")} />
   );
@@ -164,7 +170,15 @@ function Row({
           {meta}
         </div>
         {item.kind === "photo" ? (
-          <PhotoAnswer jobId={jobId} item={item} photos={photos} canEdit={canEdit} inputId={id} save={save} pending={pending} />
+          <PhotoAnswer
+            jobId={jobId}
+            item={item}
+            photos={photos}
+            canEdit={canEdit}
+            inputId={id}
+            save={save}
+            pending={pending}
+          />
         ) : (
           <ValueAnswer item={item} canEdit={canEdit} inputId={id} save={save} pending={pending} />
         )}
@@ -335,7 +349,13 @@ function PhotoAnswer({
             </NativeSelect>
           ) : null}
           {item.doneAt ? (
-            <Button type="button" variant="ghost" className="h-11" disabled={pending} onClick={() => save(null)}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11"
+              disabled={pending}
+              onClick={() => save(null)}
+            >
               <X /> {t("clear")}
             </Button>
           ) : null}

@@ -20,7 +20,10 @@ export interface SignatureState {
 }
 
 /** Renders the signature as a PNG: the drawing, or the typed name in a handwriting-style font. */
-export async function signatureBlob(state: SignatureState, canvas: HTMLCanvasElement | null): Promise<Blob | null> {
+export async function signatureBlob(
+  state: SignatureState,
+  canvas: HTMLCanvasElement | null,
+): Promise<Blob | null> {
   let source = canvas;
   if (state.mode === "type") {
     source = document.createElement("canvas");
@@ -80,7 +83,10 @@ export function SignaturePad({
 
   const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    return { x: ((e.clientX - rect.left) / rect.width) * WIDTH, y: ((e.clientY - rect.top) / rect.height) * HEIGHT };
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * WIDTH,
+      y: ((e.clientY - rect.top) / rect.height) * HEIGHT,
+    };
   };
   const stroke = (from: { x: number; y: number }, to: { x: number; y: number }) => {
     const ctx = canvasRef.current?.getContext("2d");
@@ -114,7 +120,10 @@ export function SignaturePad({
         aria-label={t("modeLabel")}
       >
         {(["draw", "type"] as const).map((m) => (
-          <label key={m} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+          <label
+            key={m}
+            className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+          >
             <RadioGroupItem value={m} /> {t(`mode.${m}`)}
           </label>
         ))}

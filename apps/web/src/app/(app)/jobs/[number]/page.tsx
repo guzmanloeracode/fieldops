@@ -66,18 +66,18 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
       time,
       org,
     ] = await Promise.all([
-        jobs.getJobActions(ctx, job),
-        jobs.listNotes(ctx, job.id),
-        jobs.listJobEvents(ctx, job.id),
-        jobs.listAttachments(ctx, job.id),
-        office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
-        office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
-        ctx.store.customers.contacts(job.customerId),
-        job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
-        checklists.getChecklist(ctx, job.id),
-        timeEntries.listTimeEntries(ctx, job.id),
-        ctx.store.organization.get(),
-      ]);
+      jobs.getJobActions(ctx, job),
+      jobs.listNotes(ctx, job.id),
+      jobs.listJobEvents(ctx, job.id),
+      jobs.listAttachments(ctx, job.id),
+      office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
+      office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
+      ctx.store.customers.contacts(job.customerId),
+      job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
+      checklists.getChecklist(ctx, job.id),
+      timeEntries.listTimeEntries(ctx, job.id),
+      ctx.store.organization.get(),
+    ]);
     return {
       job,
       actions,
@@ -166,7 +166,9 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                 completion={{
                   requireSignature: data.requireSignature,
                   signedBy: signature ? (signature.caption ?? primary?.name ?? "—") : null,
-                  missingItems: data.checklistItems.filter((i) => i.required && !i.doneAt).map((i) => i.label),
+                  missingItems: data.checklistItems
+                    .filter((i) => i.required && !i.doneAt)
+                    .map((i) => i.label),
                   suggestedSigner: primary?.name ?? null,
                 }}
               />

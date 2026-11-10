@@ -78,7 +78,10 @@ export function TimeEntries({
   const [editing, setEditing] = useState<TimeEntryView | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const byMember = new Map<string, { name: string; travel: number; work: number; running: TimeEntryKind | null }>();
+  const byMember = new Map<
+    string,
+    { name: string; travel: number; work: number; running: TimeEntryKind | null }
+  >();
   for (const e of entries) {
     const m = byMember.get(e.memberId) ?? { name: e.memberName, travel: 0, work: 0, running: null };
     if (e.kind === "travel") m.travel += minutesOf(e, now);
@@ -277,7 +280,11 @@ function EntryDialog({
               ) : null}
               <div className="space-y-1.5">
                 <Label htmlFor="te-kind">{t("kindLabel")}</Label>
-                <NativeSelect id="te-kind" value={kind} onChange={(e) => setKind(e.target.value as TimeEntryKind)}>
+                <NativeSelect
+                  id="te-kind"
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as TimeEntryKind)}
+                >
                   <option value="work">{t("kind.work")}</option>
                   <option value="travel">{t("kind.travel")}</option>
                 </NativeSelect>
@@ -287,7 +294,13 @@ function EntryDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="te-start">{t("start")}</Label>
-              <Input id="te-start" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
+              <Input
+                id="te-start"
+                type="datetime-local"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="te-end">{t("end")}</Label>

@@ -77,13 +77,20 @@ export function CompleteDialog({
           setError(up.message);
           return;
         }
-        const captured = await captureSignatureAction(jobId, { attachment_id: up.attachmentId, signer_name: name });
+        const captured = await captureSignatureAction(jobId, {
+          attachment_id: up.attachmentId,
+          signer_name: name,
+        });
         if (!captured.ok) {
           setError(captured.error.message);
           return;
         }
       }
-      const r = await transitionJobAction(jobId, { to: "completed", reason: null, hold_reason: null }, version);
+      const r = await transitionJobAction(
+        jobId,
+        { to: "completed", reason: null, hold_reason: null },
+        version,
+      );
       if (!r.ok) {
         const missing = (r.error.details?.missing as string[] | undefined) ?? [];
         setError(missing.length ? `${r.error.message}: ${missing.join(", ")}` : r.error.message);

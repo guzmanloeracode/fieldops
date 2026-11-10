@@ -38,7 +38,10 @@ export function SkillsEditor({
       {value.length ? (
         <ul className="flex flex-wrap gap-1.5" aria-label={t("skills")}>
           {value.map((s) => (
-            <li key={s} className="bg-secondary inline-flex items-center gap-1 rounded-full py-0.5 pr-1 pl-2.5 text-xs">
+            <li
+              key={s}
+              className="bg-secondary inline-flex items-center gap-1 rounded-full py-0.5 pr-1 pl-2.5 text-xs"
+            >
               {s}
               <button
                 type="button"
@@ -74,7 +77,14 @@ export function SkillsEditor({
       {suggestions.length ? (
         <div className="flex flex-wrap gap-1.5">
           {suggestions.map((s) => (
-            <Button key={s} type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => add(s)}>
+            <Button
+              key={s}
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => add(s)}
+            >
               <Plus className="size-3" /> {s}
             </Button>
           ))}
@@ -93,7 +103,10 @@ export function ChecklistTemplateEditor({
   form: UseFormReturn<FormInput, unknown, FormOutput>;
 }) {
   const t = useTranslations("fieldwork.template");
-  const { fields, append, remove, move } = useFieldArray({ control: form.control, name: "checklist_template" });
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: "checklist_template",
+  });
   const errors = form.formState.errors.checklist_template;
   return (
     <fieldset className="space-y-3">
@@ -107,7 +120,9 @@ export function ChecklistTemplateEditor({
             return (
               <li key={field.id} className="space-y-2 rounded-md border p-3" data-testid="template-item">
                 <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-2 w-5 text-right text-xs tabular-nums">{i + 1}.</span>
+                  <span className="text-muted-foreground mt-2 w-5 text-right text-xs tabular-nums">
+                    {i + 1}.
+                  </span>
                   <div className="min-w-0 flex-1 space-y-1">
                     <Label htmlFor={`${base}-label`} className="sr-only">
                       {t("itemLabel", { n: i + 1 })}
@@ -157,7 +172,11 @@ export function ChecklistTemplateEditor({
                     <Label htmlFor={`${base}-kind`} className="text-xs">
                       {t("kindLabel")}
                     </Label>
-                    <NativeSelect id={`${base}-kind`} className="w-36" {...form.register(`checklist_template.${i}.kind`)}>
+                    <NativeSelect
+                      id={`${base}-kind`}
+                      className="w-36"
+                      {...form.register(`checklist_template.${i}.kind`)}
+                    >
                       {CHECKLIST_ITEM_KINDS.map((k) => (
                         <option key={k} value={k}>
                           {t(`kind.${k}`)}

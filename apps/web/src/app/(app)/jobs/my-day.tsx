@@ -18,7 +18,9 @@ function mapsUrl(job: JobView): string {
   const destination =
     job.site.latitude !== null && job.site.longitude !== null
       ? `${job.site.latitude},${job.site.longitude}`
-      : [job.site.address.line1, job.site.address.city, job.site.address.postal_code].filter(Boolean).join(", ");
+      : [job.site.address.line1, job.site.address.city, job.site.address.postal_code]
+          .filter(Boolean)
+          .join(", ");
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 }
 
@@ -70,7 +72,10 @@ export async function MyDay({ actor }: { actor: ResolvedActor }) {
           <h2 id="next-heading" className="text-muted-foreground text-sm font-medium">
             {tf(data.next.status === "in_progress" || data.next.status === "en_route" ? "current" : "next")}
           </h2>
-          <div className="border-primary bg-card space-y-3 rounded-xl border-2 p-4 shadow-sm" data-testid="next-visit">
+          <div
+            className="border-primary bg-card space-y-3 rounded-xl border-2 p-4 shadow-sm"
+            data-testid="next-visit"
+          >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold tabular-nums">
                 {formatWindow(data.next.scheduledStart, data.next.scheduledEnd, tz).split(" · ")[1]}

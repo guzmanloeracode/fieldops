@@ -111,7 +111,7 @@ export function Attachments({
           {t("attachments.title")} <span className="text-muted-foreground font-normal">({items.length})</span>
         </CardTitle>
         {canUpload ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={tag} onValueChange={(v) => setTag(v as typeof tag)}>
               <SelectTrigger className="h-8 w-28" aria-label={t("attachments.tag")}>
                 <SelectValue />

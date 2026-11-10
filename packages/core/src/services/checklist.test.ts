@@ -109,13 +109,13 @@ describe("checklist generation (JOB-08)", () => {
   it("follows a service type change until an item is done", async () => {
     const w = withTemplate();
     const j = await assignedJob(w);
-    let job = await jobs.updateJob(w.ctx(w.dispatcher), j.id, { service_type_id: w.otherServiceTypeId });
+    await jobs.updateJob(w.ctx(w.dispatcher), j.id, { service_type_id: w.otherServiceTypeId });
     expect((await checklist.getChecklist(w.ctx(w.dispatcher), j.id)).map((i) => i.label)).toEqual([
       "Ducts vacuumed",
     ]);
     const [item] = await checklist.getChecklist(w.ctx(w.tom), j.id);
     await checklist.updateChecklist(w.ctx(w.tom), j.id, { items: [{ id: item!.id, value: true }] });
-    job = await jobs.updateJob(w.ctx(w.dispatcher), j.id, { service_type_id: w.serviceTypeId });
+    const job = await jobs.updateJob(w.ctx(w.dispatcher), j.id, { service_type_id: w.serviceTypeId });
     expect(job.serviceTypeId).toBe(w.serviceTypeId);
     // Work had started, so the answers stay.
     expect((await checklist.getChecklist(w.ctx(w.dispatcher), j.id)).map((i) => i.label)).toEqual([
