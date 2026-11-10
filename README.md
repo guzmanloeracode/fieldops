@@ -54,8 +54,25 @@ Release 0.2 added the dispatch board with conflict checks, the technician worksp
 dashboard; release 0.1 laid the base: accounts and roles, customers and sites, the job lifecycle, the REST API with
 OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHANGELOG.md).
 
-The [roadmap](#roadmap) adds quotes, invoices and payments, the AI assistant, a Go event-delivery service, a
-marketing site and a mobile app.
+## Coming in release 0.4
+
+- **Quotes and invoices:** quotes with a discount and a validity date that become jobs when approved; invoices
+  drafted from a completed job with its service, labor rounded to the quarter hour and approved parts at cost plus
+  markup; numbers per year with no gaps, payments recorded by hand, overdue reminders after 3, 7 and 14 days, and a
+  catalog of parts and fees.
+- **Branded PDFs** for quotes, invoices and service reports, in English or Bahasa Indonesia.
+- **AI service reports:** completing a job drafts the customer's report from the checklist, readings, notes and
+  photos; someone reviews and sends it, and the customer opens the PDF from an email link or the portal.
+- **Ask FieldOps** (⌘J / Ctrl+J): questions about jobs, SLA risks, capacity, customers, approvals and revenue,
+  answered through read-only tools that only see what the asking user can see.
+- **Operations:** maintenance plans that create recurring jobs ahead of time, an SLA clock that pauses while a job
+  waits for the customer, a daily digest for owners, and revenue on the dashboard.
+
+<!-- PENDING (pay slice): online payments; quotes and invoices in the customer portal. -->
+<!-- PENDING (i18n slice): Bahasa Indonesia. -->
+
+After 0.4 the [roadmap](#roadmap) adds a Go event-delivery service, API keys and webhooks, a marketing site and a
+mobile app.
 
 ## Engineering highlights
 
@@ -78,6 +95,12 @@ marketing site and a mobile app.
   it can't invent ids, no database transaction waits on the model, every call is logged with its tokens, and
   per-user, per-visitor and global rate limits answer with standard `RateLimit-*` headers. Without an API key
   every flow still works by hand.
+- **An assistant that can only read.** _Ask FieldOps_ answers through read-only tools bound to the user's
+  organization and role, each in its own short transaction, capped in rows and calls; record contents reach the
+  model as escaped data, so a job description can't steer it. ([ADR 019](docs/adr/019-ask-fieldops-tools.md))
+- **Exact money, gap-free numbers.** Totals are computed in BigInt minor units with the discount split exactly
+  across lines and tax rounded per line; invoice numbers come from a per-year counter in the issuing transaction,
+  so they never skip. ([ADR 017](docs/adr/017-billing-totals-and-numbering.md))
 - **Accessible drag and drop.** Every board action has a keyboard path and a screen-reader announcement, and
   every chart has a data table. Playwright runs axe (WCAG 2.2 AA) on every page against the production images.
 - **Measured dashboard.** `pnpm --filter @fieldops/db bench:dashboard` runs the KPI queries as the RLS role on the
@@ -92,7 +115,7 @@ flowchart LR
     B[Browser] --> CF[Cloudflare] --> NX[nginx] --> WEB
     subgraph Docker Compose
       WEB[web · Next.js<br/>pages, server actions, /api/v1]
-      WK[worker · Node<br/>SLA monitor, AI drafts, email outbox,<br/>nightly reset, maintenance]
+      WK[worker · Node<br/>SLA monitor, AI drafts, billing, maintenance plans,<br/>digest, email outbox, nightly reset, cleanup]
       MG[migrate · one-shot]
       PG[(PostgreSQL 18<br/>RLS)]
     end
@@ -119,8 +142,8 @@ More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the [ADRs](docs/adr).
 
 TypeScript (strict) · Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · shadcn/ui (Radix) · TanStack Table ·
 Better Auth · PostgreSQL 18 · Drizzle ORM · Zod 4 · zod-openapi + Scalar · pg-boss · Claude API (Anthropic SDK) ·
-server-sent events · MapLibre GL · React Email · Vitest · Testcontainers · Playwright + axe-core · pnpm + Turborepo
-· Docker Compose
+server-sent events · MapLibre GL · React Email · React PDF · Vitest · Testcontainers · Playwright + axe-core ·
+pnpm + Turborepo · Docker Compose
 
 ## Run it locally
 
@@ -145,6 +168,7 @@ pnpm verify          # format, lint, typecheck, unit tests (coverage) and Postgr
 pnpm e2e:image       # Playwright journeys + axe on the production images, with a throwaway database
 pnpm security        # gitleaks over the full git history and a production dependency audit
 pnpm eval:intake     # AI intake evaluation set (40 messages; needs ANTHROPIC_API_KEY, costs money)
+pnpm eval:assistant  # Ask FieldOps evaluation set (25 questions; needs a seeded database and ANTHROPIC_API_KEY)
 ```
 
 There is no hosted CI. The same checks are the release pipeline: `infra/deploy/release.sh` runs `pnpm verify`,
@@ -154,15 +178,17 @@ check fails.
 ## Project layout
 
 ```
-apps/web        Next.js app: UI, server actions, /api/v1, API docs
-apps/worker     Email outbox, nightly demo reset, maintenance, migrations
-packages/core   Domain rules and services (no framework dependencies)
-packages/db     Drizzle schema, migrations, RLS policies, repositories, seed
-packages/shared Zod schemas and types shared by web, worker, API and mobile
-packages/email  React Email templates
-packages/ai     AI intake model, prompt and evaluation set
-infra/          Dockerfiles, Compose files, nginx site config, release script
-docs/           PRD, architecture, runbook, ADRs
+apps/web           Next.js app: UI, server actions, /api/v1, API docs
+apps/worker        SLA monitor, AI drafts, billing, maintenance plans, digest, email outbox, nightly reset,
+                   cleanup, migrations
+packages/core      Domain rules and services (no framework dependencies)
+packages/db        Drizzle schema, migrations, RLS policies, repositories, seed
+packages/shared    Zod schemas and types shared by web, worker, API and mobile
+packages/email     React Email templates
+packages/documents PDF quotes, invoices and service reports (React PDF)
+packages/ai        AI models for intake, the assistant and service reports, prompts and evaluation sets
+infra/             Dockerfiles, Compose files, nginx site config, release script
+docs/              PRD, architecture, runbook, ADRs
 ```
 
 ## Roadmap
@@ -172,7 +198,7 @@ docs/           PRD, architecture, runbook, ADRs
 | 0.1 Core     | Accounts, customers, jobs, REST API, demo                                  | ✅ live |
 | 0.2 Dispatch | Drag-and-drop board, technician day view, checklists, approvals, dashboard | ✅ live |
 | 0.3 Automate | SLA engine, notifications, audit log, customer portal, AI job intake       | ✅ live |
-| 0.4 Get paid | Quotes, invoices, Stripe, AI assistant and reports                         | next    |
+| 0.4 Get paid | Quotes, invoices, payments, AI reports and assistant, maintenance plans    | next    |
 | Relay 1.0    | Event delivery service in Go                                               |         |
 | 0.5 Platform | API keys, signed webhooks, SaaS plans, MCP server                          |         |
 | Site 1.0     | Marketing site with GSAP                                                   |         |

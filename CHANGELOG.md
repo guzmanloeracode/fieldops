@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.4.0 — Get paid (2026-11-10)
+
+- **Quotes** (`/quotes`): lines for services, labor, parts and fees with a tax rate each, a discount and a validity
+  date. A quote is emailed to the customer's contact, revised back to draft while it is sent or expired, and
+  duplicated once it is approved or declined. Staff record the customer's decision; an approval creates a New job
+  with the quote's lines in its description, and office roles are notified. Sent quotes expire after their date.
+- **Invoices** (`/invoices`): drafted from a completed job with the service (or the approved quote's lines), one
+  labor line per technician for recorded work rounded up to the quarter hour, and the approved parts and expenses
+  not billed yet, at cost plus markup. Issuing gives the next number of the year with no gaps, the issue and due
+  dates, and emails the bill-to contact. Payments recorded by hand (up to the balance) send a receipt and mark the
+  invoice paid once they cover it; unpaid invoices turn overdue after their due date, and drafts and invoices
+  without payments can be voided with a reason. A part is billed on one invoice only, even when two invoices race
+  for it.
+- **Overdue reminders** 3, 7 and 14 days after the due date, each sent once per invoice, with the payment
+  instructions.
+- **Catalog and billing settings:** parts and fees with SKUs, prices and costs (`/settings/catalog`); payment terms,
+  quote validity, the labor rate, number prefixes, reminders and payment instructions (`/settings/billing`). Service
+  types gained a tax rate.
+- **Exact totals:** amounts are computed with BigInt in minor units, the discount is spread over the lines so it
+  adds up exactly, and tax is rounded once per line (ADR 017).
+- **Revenue on the dashboard** for owners and admins: invoiced, collected, receivables and overdue against the
+  previous period, a trend chart, and CSV downloads. The job page and the customer page list their quotes and
+  invoices.
+- **Branded PDFs** for quotes, invoices and service reports: the organization's letterhead and brand color, labels
+  in English or Bahasa Indonesia, repeated table headers, page numbers, and PAID or VOID stamps (ADR 018).
+- **Service reports:** completing a job creates a draft report from the checklist, readings, notes for the customer
+  and parts used. With AI on, Claude drafts it for the customer in their language (in the background, or with
+  _Draft with AI_); someone reviews it and sends it. The customer gets a _Job completed_ email with a link to the
+  PDF, valid for 30 days without signing in, and can download it from the portal. Internal notes never reach the
+  model, and a draft never overwrites someone's edits.
+- **Ask FieldOps** (⌘J / Ctrl+J): ask about jobs, SLA risks, technician capacity, customers, pending approvals and,
+  for owners and admins, revenue. Answers stream in with the lookups shown and every job linked. Seven read-only
+  tools run with the user's own organization and role (technicians only reach their jobs), at most 8 per question
+  and 50 rows each, and record contents are passed as data so they can't steer the answer (ADR 019).
+  Conversations are private and kept 30 days.
+- **Maintenance plans:** a recurring visit on a customer's site, every N days, weeks, months or years, creates its
+  jobs a set number of days ahead, unassigned, with the checklist and SLA deadlines from the visit date. Month ends
+  don't drift, and pausing or changing a plan never creates a backlog.
+- **SLA pause:** on hold waiting for the customer stops the resolution clock; the deadline moves by the time paused,
+  in business hours where the policy counts them. Badges show _Paused_.
+- **Daily digest:** at 07:00 local time, owners (and admins who opt in) get yesterday's jobs, SLA compliance,
+  first-visit completion and revenue, the most overdue jobs and pending approvals by email.
+- **Notifications:** a customer's decision on a quote (office roles) and a payment received (owners).
+- **API:** quotes, invoices, payments, the catalog, service reports with their PDFs, maintenance plans and the
+  assistant (server-sent events over POST) with its conversations, all in the OpenAPI document. Jobs gained
+  `sla_paused_at`, `recurrence_id` and `occurrence_date`; service types gained `tax_rate_bps`.
+- **Demo seed:** a catalog per company, quotes in every state, invoices with full, partial and missing payments and
+  their reminders, service reports (many AI-drafted, Indonesian at Acme Teknik), maintenance plans with their
+  generated jobs, jobs paused for the customer, yesterday's digest and a few past assistant conversations. The
+  demo portal customers each have a sent quote and an unpaid invoice.
+
+<!-- PENDING (pay slice): online payments (FIN-05) and quotes and invoices in the customer portal (POR-04). -->
+
+<!-- PENDING (i18n slice): Bahasa Indonesia (SET-05). -->
+
 ## 0.3.1 — Sidebar and demo requests (2026-11-10)
 
 - **Collapsible sidebar:** on desktop, the sidebar collapses to an icon rail and expands again with its button or
