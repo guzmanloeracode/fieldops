@@ -23,9 +23,10 @@ async function audit(page: Page, path: string) {
   expect(summary, `${path}\n${summary.join("\n")}`).toEqual([]);
 }
 
-// The live event stream (NOT-05) keeps a request open, which would keep "networkidle" from ever settling.
+// The live event stream (NOT-05) keeps a request open, which would keep "networkidle" from ever settling. A 204
+// tells EventSource not to reconnect.
 test.beforeEach(async ({ page }) => {
-  await page.route("**/api/v1/stream", (route) => route.abort());
+  await page.route("**/api/v1/stream", (route) => route.fulfill({ status: 204 }));
 });
 
 test.describe("public pages", () => {
