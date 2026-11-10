@@ -74,6 +74,8 @@ export async function jobForTom(
         lead_member_id: tom.id,
         scheduled_start: w.start.toISOString(),
         scheduled_end: w.end.toISOString(),
+        // The checklist tests pick service types by name, some of which need skills Tom lacks (SCH-03).
+        override_reason: "E2E: checklist test",
       },
     });
     expect(res.status(), await res.text()).toBe(200);
