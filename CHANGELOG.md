@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1 — Loading states (2026-11-10)
+
+- **Skeletons while pages load:** every page that loads data shows a skeleton shaped like the page (lists,
+  details, forms, the dashboard, the dispatch board, team availability, settings, the demo inbox and invitations),
+  so content replaces it without the layout jumping. Screen readers hear one "Loading…" status; the shapes are
+  hidden from them and don't animate when reduced motion is on.
+- Filter, search and date changes within a page keep the current page on screen instead of flashing the skeleton,
+  so the search box keeps its focus and text.
+- An E2E test holds a navigation, checks the skeleton with axe, then checks that the page replaces it.
+
 ## 0.2.0 — Dispatch (2026-11-10)
 
 - **Dispatch board** (`/schedule`): day and week views with one lane per technician, an unscheduled queue, and

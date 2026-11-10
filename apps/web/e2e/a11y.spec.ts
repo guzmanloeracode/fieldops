@@ -96,3 +96,42 @@ test.describe("technician view", () => {
   test.use({ storageState: storageState("technician") });
   test("axe: my day", async ({ page }) => audit(page, "/jobs?view=my-day"));
 });
+
+test.describe("loading skeletons", () => {
+  test.use({ storageState: storageState("owner") });
+
+  test("a page shows an accessible skeleton while it loads, then the page", async ({ page }) => {
+    await page.goto("/dashboard");
+    // Hold the navigation request (not prefetches) so the route's loading state stays on screen.
+    let release = () => {};
+    const released = new Promise<void>((resolve) => (release = resolve));
+    await page.route(
+      (url) => url.searchParams.has("_rsc"),
+      async (route) => {
+        if (!route.request().headers()["next-router-prefetch"]) await released;
+        await route.continue();
+      },
+    );
+    const link = page
+      .getByRole("navigation")
+      .getByRole("link", { name: /^Customers/ })
+      .first();
+    await link.hover(); // prefetches the route's loading state
+    await page.waitForLoadState("networkidle");
+    await link.click();
+
+    const skeleton = page.getByTestId("page-skeleton");
+    await expect(skeleton).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "Loading…" })).toBeAttached();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[data-testid=page-skeleton]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+
+    release();
+    await expect(page.getByRole("heading", { name: "Customers", level: 1 })).toBeVisible();
+    await expect(skeleton).toHaveCount(0);
+  });
+});

@@ -1,4 +1,5 @@
 {
+  "loading": "Loading…",
   "dashboard": {
     "greeting": "Good day, {name}",
     "subtitle": "Here's {date} at a glance.",

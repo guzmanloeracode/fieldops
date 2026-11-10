@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.3 · release 0.2 live, repository public |
+| **Status** | Draft 1.4 · release 0.2.1 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -18,6 +18,7 @@
 | 1.1 | 10 Nov 2026 | Release 0.1 built. Recorded the decisions made while building it: pinned versions (§14.3), services behind repository interfaces (§14.2), OpenFreeMap as the default map style (§14.3), Redis deferred to 0.3 (§15.3), the on-server release script until the Actions deploy is approved (§15.4), backups blocked until R2 is enabled (§15.5), the server capacity check (§23), and new open questions (§23). |
 | 1.2 | 10 Nov 2026 | Repository published at github.com/guzmanloeracode/fieldops. **No hosted CI** (owner's decision): GitHub Actions is disabled and the checks run on the server as release gates — `pnpm verify` before the build, `infra/deploy/e2e.sh` on the new images before they go live (§15.4, §18.2, ADR 014). |
 | 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
+| 1.4 | 10 Nov 2026 | Release 0.2.1: route-level loading skeletons for every page that loads data (§13 *As built (0.2.1)*). |
 
 ## Contents
 
@@ -744,6 +745,8 @@ sequenceDiagram
 | **Observability** | Sentry for errors and traces. Structured JSON logs carrying request ID, organization ID and user ID. AI usage metrics. Web Vitals reporting. |
 | **Reliability** | Idempotent scheduled jobs and webhook handlers. Transactional outbox for integrations. Forward-only database migrations. Nightly backups with tested restores. |
 | **Maintainability** | TypeScript strict mode. ESLint and Prettier. Conventional commits. ADRs for significant decisions. Automated dependency updates. Coverage thresholds enforced in CI. |
+
+*As built (0.2.1):* every page that loads data has a route-level skeleton (`loading.tsx`) shaped like the page, built from shared parts in `apps/web/src/components/app/skeletons.tsx`. It carries one polite "Loading…" status for screen readers, hides its shapes from them and stops pulsing under reduced motion. Changing filters, search or the date within a page is a transition, so the current page stays on screen and the skeleton only shows when moving to another page.
 
 ---
 
