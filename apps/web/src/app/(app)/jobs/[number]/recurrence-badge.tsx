@@ -1,5 +1,5 @@
 import { can, type Actor, type JobView } from "@fieldops/core";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { RecurringBadge } from "@/components/app/recurring-badge";
 import { formatDay, planHref } from "@/lib/recurrence";
 import { runService } from "@/server/context";
@@ -11,6 +11,7 @@ import { runService } from "@/server/context";
 export async function JobRecurrence({ job, actor }: { job: JobView; actor: Actor }) {
   if (!job.recurrenceId) return null;
   const t = await getTranslations("recurrences.badge");
+  const locale = await getLocale();
   const office = can(actor, "recurrences.manage");
   const plan = office ? await runService((ctx) => ctx.store.recurrences.get(job.recurrenceId!), actor) : null;
   const open = job.status !== "completed" && job.status !== "canceled";
@@ -19,7 +20,7 @@ export async function JobRecurrence({ job, actor }: { job: JobView; actor: Actor
     <>
       <RecurringBadge
         href={plan ? planHref(job.customer.id, plan.id) : null}
-        title={t("title", { date: job.occurrenceDate ? formatDay(job.occurrenceDate, "long") : "—" })}
+        title={t("title", { date: job.occurrenceDate ? formatDay(job.occurrenceDate, "long", locale) : "—" })}
       />
       {suggested ? (
         <span className="text-muted-foreground text-xs" data-testid="suggested-technician">

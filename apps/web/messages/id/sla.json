@@ -1,0 +1,60 @@
+{
+  "state": {
+    "on_track": "Aman",
+    "at_risk": "Berisiko",
+    "breached": "Terlewati",
+    "met": "Terpenuhi"
+  },
+  "short": {
+    "on_track": "SLA aman",
+    "at_risk": "SLA berisiko",
+    "breached": "SLA terlewati",
+    "met": "SLA terpenuhi"
+  },
+  "target": {
+    "response": "Respons",
+    "resolution": "Penyelesaian"
+  },
+  "targetLong": {
+    "response": "Respons: dijadwalkan dengan teknisi",
+    "resolution": "Penyelesaian: pekerjaan selesai"
+  },
+  "badgeTitle": "{target} {state}, tenggat {due}",
+  "card": {
+    "title": "SLA",
+    "description": "Prioritas {priority} · {basis}",
+    "calendar": "waktu kalender",
+    "businessHours": "jam operasional",
+    "defaults": "Target bawaan",
+    "dueIn": "Tenggat {when}",
+    "wasDue": "Tenggat terlewat {when}",
+    "metAt": "Terpenuhi {when}",
+    "missedAt": "Selesai {when}, melewati tenggat",
+    "deadline": "Batas waktu {date}",
+    "notTracked": "Tidak dilacak untuk pekerjaan yang dibatalkan.",
+    "none": "Tidak ada tenggat SLA untuk pekerjaan ini."
+  },
+  "filter": {
+    "label": "SLA",
+    "chip": "SLA: {states}"
+  },
+  "settings": {
+    "title": "Kebijakan SLA",
+    "description": "Setiap prioritas memiliki target respons (dijadwalkan dengan teknisi) dan target penyelesaian (pekerjaan selesai). Pekerjaan baru, dan pekerjaan yang prioritasnya berubah, mendapat tenggat dari target ini.",
+    "priority": "Prioritas",
+    "response": "Target respons",
+    "resolution": "Target penyelesaian",
+    "businessHours": "Hanya jam operasional",
+    "businessHoursHint": "Target berbasis jam operasional hanya menghitung jam buka yang diatur di pengaturan Organisasi, jadi 24 jam kira-kira sama dengan tiga hari kerja.",
+    "default": "Bawaan",
+    "unit": "Satuan",
+    "minutes": "menit",
+    "hours": "jam",
+    "days": "hari",
+    "amount": "{target}, prioritas {priority}",
+    "invalid": "Masukkan bilangan bulat",
+    "save": "Simpan kebijakan",
+    "saved": "Kebijakan SLA disimpan",
+    "existingJobs": "Tenggat pekerjaan yang sudah ada tidak berubah."
+  }
+}

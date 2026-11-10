@@ -1,5 +1,4 @@
 "use client";
-import { PRIORITY_LABELS } from "@fieldops/core";
 import { JOB_PRIORITIES, type JobPriority } from "@fieldops/shared";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -50,6 +49,7 @@ const ORDER = [...JOB_PRIORITIES].reverse();
 
 export function SlaForm({ policies }: { policies: Policy[] }) {
   const t = useTranslations("sla.settings");
+  const tp = useTranslations("common.priority");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [rows, setRows] = useState<Row[]>(() =>
@@ -106,7 +106,7 @@ export function SlaForm({ policies }: { policies: Policy[] }) {
   const targetCell = (r: Row, target: Target) => {
     const id = `sla-${r.priority}-${target}`;
     const error = errors[`${r.priority}.${target}`];
-    const label = t("amount", { priority: PRIORITY_LABELS[r.priority], target: t(target).toLowerCase() });
+    const label = t("amount", { priority: tp(r.priority), target: t(target).toLowerCase() });
     return (
       <TableCell>
         <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export function SlaForm({ policies }: { policies: Policy[] }) {
                 {rows.map((r) => (
                   <TableRow key={r.priority} data-testid={`sla-row-${r.priority}`}>
                     <TableCell className="font-medium">
-                      {PRIORITY_LABELS[r.priority]}
+                      {tp(r.priority)}
                       {r.isDefault ? (
                         <span className="text-muted-foreground ml-2 text-xs font-normal">{t("default")}</span>
                       ) : null}
@@ -179,7 +179,7 @@ export function SlaForm({ policies }: { policies: Policy[] }) {
                       <Switch
                         checked={r.businessHours}
                         onCheckedChange={(v) => set(r.priority, { businessHours: v })}
-                        aria-label={`${PRIORITY_LABELS[r.priority]}: ${t("businessHours").toLowerCase()}`}
+                        aria-label={`${tp(r.priority)}: ${t("businessHours").toLowerCase()}`}
                         data-testid={`sla-${r.priority}-business-hours`}
                       />
                     </TableCell>

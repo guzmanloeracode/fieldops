@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { requireActor, runService } from "@/server/context";
 import { TeamAvailability, type TeamMember } from "./team-availability";
 
-export const metadata: Metadata = { title: "Team availability" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("team") };
+}
 
 /** SCH-04: working hours, skills and time off per member. Office roles manage it. */
 export default async function TeamPage() {

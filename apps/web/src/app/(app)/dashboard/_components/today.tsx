@@ -2,12 +2,12 @@ import { formatJobNumber, formatMoney, type dashboard } from "@fieldops/core";
 import type { Currency } from "@fieldops/shared";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { SlaBadge } from "@/components/app/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatRelative } from "@/lib/format";
+import { formatRelative, intlLocale } from "@/lib/format";
 import { jobsHref } from "@/lib/drilldown";
 import { formatMinutes, formatPercent } from "./format";
 import { CsvLink, exportHref } from "./overview";
@@ -23,6 +23,7 @@ export async function Today({
   canApprove: boolean;
 }) {
   const t = await getTranslations("dashboard.today");
+  const locale = await getLocale();
   const tsla = await getTranslations("sla");
   const csv = (report: string, title: string) => ({
     href: exportHref(report),
@@ -123,9 +124,9 @@ export async function Today({
                           ? t("off")
                           : `${t("techLine", {
                               jobs: m.jobs,
-                              scheduled: formatMinutes(m.scheduledMin),
-                              working: formatMinutes(m.availableMin),
-                            })} · ${formatPercent(m.utilization)}`}
+                              scheduled: formatMinutes(m.scheduledMin, locale),
+                              working: formatMinutes(m.availableMin, locale),
+                            })} · ${formatPercent(m.utilization, locale)}`}
                       </span>
                     </div>
                     <div aria-hidden className="bg-muted h-1.5 overflow-hidden rounded-full">
@@ -168,7 +169,7 @@ export async function Today({
                         {j.title}
                       </Link>
                       <p className="text-muted-foreground truncate text-xs">
-                        {j.customer.name} · {t("requested", { when: formatRelative(j.createdAt) })}
+                        {j.customer.name} · {t("requested", { when: formatRelative(j.createdAt, locale) })}
                       </p>
                     </div>
                     <PriorityBadge priority={j.priority} />
@@ -212,7 +213,7 @@ export async function Today({
                         {r.dueAt
                           ? t(r.state === "breached" ? "wasDue" : "dueIn", {
                               target: tsla(`target.${r.target}`),
-                              when: formatRelative(r.dueAt),
+                              when: formatRelative(r.dueAt, locale),
                             })
                           : tsla(`target.${r.target}`)}{" "}
                         · {r.customerName}
@@ -256,11 +257,14 @@ export async function Today({
                             name: a.requesterName ?? "—",
                             job: formatJobNumber(a.jobNumber),
                           })}{" "}
-                          · {formatRelative(a.createdAt)}
+                          · {formatRelative(a.createdAt, locale)}
                         </p>
                       </div>
                       <span className="text-sm font-medium tabular-nums">
-                        {formatMoney({ amountMinor: a.totalMinor, currency: a.currency as Currency })}
+                        {formatMoney(
+                          { amountMinor: a.totalMinor, currency: a.currency as Currency },
+                          intlLocale(locale),
+                        )}
                       </span>
                     </li>
                   ))}

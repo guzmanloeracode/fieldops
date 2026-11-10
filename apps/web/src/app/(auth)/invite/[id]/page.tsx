@@ -1,6 +1,5 @@
-import { ROLE_LABELS } from "@fieldops/core";
 import { schema } from "@fieldops/db";
-import type { Role } from "@fieldops/shared";
+import { ROLES } from "@fieldops/shared";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -11,11 +10,15 @@ import { getSession } from "@/server/context";
 import { db } from "@/server/db";
 import { acceptInvitationAction } from "./actions";
 
-export const metadata: Metadata = { title: "Invitation", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("invitation"), robots: { index: false } };
+}
 
 export default async function InvitePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = await getTranslations("auth");
+  const tRole = await getTranslations("common.role");
   const session = await getSession();
   const [inv] = /^[0-9a-f-]{36}$/i.test(id)
     ? await db
@@ -35,7 +38,7 @@ export default async function InvitePage({ params }: { params: Promise<{ id: str
         <CardDescription>
           {valid
             ? t("invite.description", {
-                role: ROLE_LABELS[inv.i.role as Role] ?? inv.i.role,
+                role: (ROLES as readonly string[]).includes(inv.i.role) ? tRole(inv.i.role) : inv.i.role,
                 email: inv.i.email,
               })
             : t("invite.invalid")}

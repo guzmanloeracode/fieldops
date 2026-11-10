@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { Logo } from "@/components/app/logo";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -8,6 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Logo /> FieldOps
       </Link>
       <div className="w-full max-w-md">{children}</div>
+      <LanguageSwitcher className="mt-6" />
     </div>
   );
 }

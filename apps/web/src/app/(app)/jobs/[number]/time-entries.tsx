@@ -2,7 +2,7 @@
 import type { TimeEntryKind } from "@fieldops/shared";
 import { Car, Clock, Loader2, Pencil, Plus, Wrench } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { NativeSelect } from "@/components/app/native-select";
@@ -19,8 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDateTime, fromLocalInput, inZone, toLocalInput } from "@/lib/format";
-import { format } from "date-fns";
+import { formatDateTime, formatTime, fromLocalInput, toLocalInput } from "@/lib/format";
 import { addTimeEntryAction, updateTimeEntryAction } from "./fieldwork-actions";
 
 export type TimeEntryView = {
@@ -67,6 +66,7 @@ export function TimeEntries({
   members: { id: string; name: string }[];
 }) {
   const t = useTranslations("fieldwork.time");
+  const locale = useLocale();
   const duration = useDuration();
   const [now, setNow] = useState(() => Date.now());
   const running = entries.some((e) => !e.endedAt);
@@ -134,8 +134,8 @@ export function TimeEntries({
                         <span className="font-medium">{t(`kind.${e.kind}`)}</span> · {e.memberName}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {formatDateTime(e.startedAt, timeZone)} –{" "}
-                        {e.endedAt ? format(inZone(e.endedAt, timeZone), "h:mm a") : t("now")} ·{" "}
+                        {formatDateTime(e.startedAt, timeZone, locale)} –{" "}
+                        {e.endedAt ? formatTime(e.endedAt, timeZone, locale) : t("now")} ·{" "}
                         {duration(minutesOf(e, now))}
                         {e.source === "manual" ? ` · ${t("manual")}` : ""}
                       </p>

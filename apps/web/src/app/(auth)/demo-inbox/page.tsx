@@ -13,7 +13,10 @@ import { emailLinks } from "@/lib/email-links";
 import { db } from "@/server/db";
 import { demoInboxAddresses } from "@/server/demo-inbox";
 
-export const metadata: Metadata = { title: "Demo inbox", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("demoInbox"), robots: { index: false } };
+}
 export const dynamic = "force-dynamic";
 
 /** Emails captured by the demo for the addresses used in this browser (DEM-05). */

@@ -1,0 +1,67 @@
+{
+  "title": "Tanya FieldOps",
+  "open": "Tanya FieldOps",
+  "close": "Tutup",
+  "description": "Menjawab pertanyaan tentang data organisasi Anda. Hanya membaca, tidak pernah mengubah apa pun.",
+  "intro": "Tanyakan tentang pekerjaan, SLA, jadwal, pelanggan, atau persetujuan. Jawaban disertai tautan ke data yang disebutkan.",
+  "conversation": "Percakapan",
+  "newConversation": "Percakapan baru",
+  "inputLabel": "Pertanyaan Anda",
+  "placeholder": "Tulis pertanyaan…",
+  "send": "Kirim",
+  "stop": "Hentikan",
+  "thinking": "Sedang berpikir…",
+  "loading": "Memuat…",
+  "you": "Anda",
+  "aiLabel": "Dibuat oleh AI dari data Anda. Periksa detailnya sebelum menindaklanjuti.",
+  "starters": {
+    "title": "Coba tanyakan",
+    "slaRisks": "Pekerjaan mana yang SLA-nya berisiko terlewati hari ini?",
+    "acJobs": "Berapa pekerjaan AC yang selesai bulan lalu dibanding bulan sebelumnya?",
+    "capacity": "Teknisi mana yang masih kosong besok siang?"
+  },
+  "history": {
+    "title": "Percakapan terbaru",
+    "back": "Kembali ke percakapan",
+    "empty": "Tidak ada percakapan dalam 30 hari terakhir.",
+    "retention": "Percakapan hanya dapat dilihat oleh Anda dan dihapus 30 hari setelah pesan terakhirnya.",
+    "delete": "Hapus “{title}”",
+    "deleted": "“{title}” dihapus",
+    "opened": "“{title}” dibuka"
+  },
+  "tool": {
+    "label": "Penelusuran",
+    "failed": "Satu penelusuran gagal",
+    "running": {
+      "search_jobs": "Mencari pekerjaan…",
+      "get_job": "Membuka pekerjaan…",
+      "list_sla_risks": "Memeriksa SLA…",
+      "technician_workload": "Memeriksa jadwal…",
+      "revenue_summary": "Menghitung pendapatan…",
+      "customer_history": "Mencari pelanggan…",
+      "pending_approvals": "Memeriksa persetujuan…"
+    },
+    "done": {
+      "search_jobs": "{count, plural, =0 {Tidak ada pekerjaan ditemukan} other {# pekerjaan ditelusuri}}",
+      "get_job": "Pekerjaan dibuka",
+      "list_sla_risks": "{count, plural, =0 {SLA diperiksa: tidak ada yang berisiko} other {SLA diperiksa: # pekerjaan berisiko}}",
+      "technician_workload": "{count, plural, other {# jadwal diperiksa}}",
+      "revenue_summary": "Faktur dan pembayaran dijumlahkan",
+      "customer_history": "{count, plural, other {# pelanggan ditemukan}}",
+      "pending_approvals": "{count, plural, =0 {Tidak ada pengajuan yang menunggu} other {# pengajuan menunggu}}"
+    }
+  },
+  "error": {
+    "refused": "Tanya FieldOps tidak dapat membantu permintaan tersebut.",
+    "failed": "Tanya FieldOps tidak dapat menjawab. Coba lagi sebentar lagi.",
+    "network": "Koneksi terputus sebelum jawaban selesai. Coba lagi.",
+    "quota": "Kuota AI bulan ini sudah habis.",
+    "rateLimited": "Terlalu banyak pertanyaan dalam waktu singkat. Tunggu sebentar, lalu coba lagi.",
+    "disabled": "Fitur AI dinonaktifkan untuk organisasi Anda. Pemilik atau admin dapat mengaktifkannya di Pengaturan → AI.",
+    "notConfigured": "AI belum dikonfigurasi di server ini.",
+    "notFound": "Percakapan itu sudah tidak tersedia. Mulai percakapan baru.",
+    "invalid": "Pertanyaan maksimal 2.000 karakter.",
+    "noAnswer": "Tidak ada jawaban yang tersimpan untuk pertanyaan ini.",
+    "stopped": "Dihentikan sebelum jawaban selesai."
+  }
+}

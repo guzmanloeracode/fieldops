@@ -12,16 +12,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { DemoSignIn } from "@/components/app/demo-sign-in";
+import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { Logo } from "@/components/app/logo";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
 import { getSession } from "@/server/context";
 
-export const metadata: Metadata = {
-  title: { absolute: "FieldOps: open-source field service management" },
-  description:
-    "Requests, dispatch, on-site work, reports and payments for small service businesses. Open source, with a live demo.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("landing.meta");
+  return { title: { absolute: t("title") }, description: t("description") };
+}
 
 const RELEASES = ["r01", "r02", "r03", "r04", "relay", "r05", "site", "mobile"] as const;
 const HIGHLIGHTS = [
@@ -40,7 +40,8 @@ export default async function LandingPage() {
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Logo /> FieldOps
         </Link>
-        <nav aria-label="Site" className="flex items-center gap-1 text-sm sm:gap-2">
+        <nav aria-label={t("nav.label")} className="flex items-center gap-1 text-sm sm:gap-2">
+          {session ? null : <LanguageSwitcher className="mr-1" />}
           <Button variant="ghost" size="sm" asChild>
             <Link href="/docs/api">
               <BookOpen /> <span className="hidden sm:inline">{t("nav.api")}</span>

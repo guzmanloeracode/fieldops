@@ -52,6 +52,15 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
+    },
+    "customerLocale": "Customer language",
+    "customerLocaleHint": "The customer portal, emails and documents to customers use this language, unless a customer has their own.",
+    "errors": {
+      "time": "Use HH:MM",
+      "closeAfterOpen": "Closing time must be after opening time",
+      "taxName": "Name is required",
+      "taxRate": "Enter a percentage like 8.25",
+      "taxRateMax": "Can't be more than 100%"
     }
   },
   "members": {
@@ -130,7 +139,10 @@
     "statusInactive": "Inactive",
     "empty": "No service types yet.",
     "emptyHint": "Add the services you offer so dispatchers can pick them on new jobs.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "errors": {
+      "price": "Enter a price"
+    }
   },
   "demoOutbox": {
     "title": "Demo outbox",

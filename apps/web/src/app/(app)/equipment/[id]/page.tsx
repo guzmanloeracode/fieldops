@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
@@ -16,7 +16,10 @@ import { EquipmentDialog } from "../../customers/_components/equipment-dialog";
 import { WarrantyBadge } from "../../customers/_components/warranty-badge";
 import { DeleteEquipmentButton } from "./delete-equipment-button";
 
-export const metadata: Metadata = { title: "Equipment" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("equipment") };
+}
 
 /** One unit: details, warranty and service history (CUS-03). */
 export default async function EquipmentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +27,7 @@ export default async function EquipmentPage({ params }: { params: Promise<{ id: 
   if (!z.uuid().safeParse(id).success) notFound();
   const actor = await requireActor();
   const t = await getTranslations("insights.equipment");
+  const locale = await getLocale();
   const tz = actor.organization.timezone;
   const data = await runService((ctx) => customers.getEquipmentDetail(ctx, id), actor).catch((err) => {
     if (err instanceof NotFoundError) notFound();
@@ -38,8 +42,8 @@ export default async function EquipmentPage({ params }: { params: Promise<{ id: 
     [t("brand"), unit.brand ?? "—"],
     [t("model"), unit.model ?? "—"],
     [t("serial"), unit.serial ?? "—"],
-    [t("installDate"), unit.installDate ? formatDate(`${unit.installDate}T12:00:00Z`, "UTC") : "—"],
-    [t("warrantyEnd"), unit.warrantyEnd ? formatDate(`${unit.warrantyEnd}T12:00:00Z`, "UTC") : "—"],
+    [t("installDate"), unit.installDate ? formatDate(`${unit.installDate}T12:00:00Z`, "UTC", locale) : "—"],
+    [t("warrantyEnd"), unit.warrantyEnd ? formatDate(`${unit.warrantyEnd}T12:00:00Z`, "UTC", locale) : "—"],
   ];
 
   return (
@@ -138,7 +142,7 @@ export default async function EquipmentPage({ params }: { params: Promise<{ id: 
                         </TableCell>
                         <TableCell className="text-sm">{h.serviceTypeName ?? "—"}</TableCell>
                         <TableCell className="text-sm whitespace-nowrap">
-                          {formatDate(h.completedAt ?? h.scheduledStart ?? h.createdAt, tz)}
+                          {formatDate(h.completedAt ?? h.scheduledStart ?? h.createdAt, tz, locale)}
                         </TableCell>
                         <TableCell className="text-sm">{h.technicians.join(", ") || "—"}</TableCell>
                         <TableCell>

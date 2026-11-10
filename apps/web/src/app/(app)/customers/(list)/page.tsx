@@ -3,7 +3,7 @@ import { customerListQuerySchema, CUSTOMER_TYPES } from "@fieldops/shared";
 import { Building2, Plus, Search, User } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { NativeSelect } from "@/components/app/native-select";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
@@ -16,7 +16,10 @@ import { formatDate } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 import { listCustomerTags } from "../queries";
 
-export const metadata: Metadata = { title: "Customers" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("customers") };
+}
 
 const PAGE_SIZE = 25;
 const SORTS = ["name", "-name", "-created_at", "created_at"] as const;
@@ -27,6 +30,7 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const actor = await requireActor();
   const t = await getTranslations("customers");
+  const locale = await getLocale();
   const sp = await searchParams;
 
   const raw = {
@@ -210,7 +214,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                   <TableCell className="text-right tabular-nums">{c.siteCount}</TableCell>
                   <TableCell className="text-right tabular-nums">{c.openJobCount}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">
-                    {formatDate(c.lastJobAt, actor.organization.timezone)}
+                    {formatDate(c.lastJobAt, actor.organization.timezone, locale)}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">

@@ -1,5 +1,4 @@
 "use client";
-import { STATUS_LABELS } from "@fieldops/core";
 import type { JobStatus } from "@fieldops/shared";
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -21,6 +20,7 @@ const MapInner = dynamic(() => import("./board-map-inner").then((m) => m.BoardMa
 /** SCH-05: the day's visits on a map, colored by status, with the same list for screen readers and phones. */
 export function BoardMap({ date, jobs }: { date: string; timeZone: string; jobs: BoardJob[] }) {
   const t = useTranslations("dispatch.map");
+  const tStatus = useTranslations("common.status");
   const markers = useMemo(
     () =>
       jobs
@@ -32,11 +32,11 @@ export function BoardMap({ date, jobs }: { date: string; timeZone: string; jobs:
           time: `${hhmm(j.startMin)}–${hhmm(j.endMin)}`,
           technicians: j.assignees.map((a) => a.name).join(", "),
           color: STATUS_HEX[j.status],
-          status: STATUS_LABELS[j.status],
+          status: tStatus(j.status),
           latitude: j.latitude!,
           longitude: j.longitude!,
         })),
-    [jobs],
+    [jobs, tStatus],
   );
   const statuses = [...new Set(jobs.map((j) => j.status))] as JobStatus[];
   return (
@@ -54,7 +54,7 @@ export function BoardMap({ date, jobs }: { date: string; timeZone: string; jobs:
             {statuses.map((s) => (
               <li key={s} className="flex items-center gap-1.5">
                 <span className="size-3 rounded-full" style={{ background: STATUS_HEX[s] }} aria-hidden />
-                {STATUS_LABELS[s]}
+                {tStatus(s)}
               </li>
             ))}
           </ul>

@@ -20,5 +20,121 @@
   "sidebar": {
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar"
-  }
+  },
+  "meta": {
+    "title": "FieldOps: field service management",
+    "description": "FieldOps is an open-source field service management SaaS for small service businesses: requests, dispatch, on-site work, reports and payments."
+  },
+  "status": {
+    "new": "New",
+    "scheduled": "Scheduled",
+    "en_route": "En route",
+    "in_progress": "In progress",
+    "on_hold": "On hold",
+    "completed": "Completed",
+    "canceled": "Canceled"
+  },
+  "priority": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "role": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "dispatcher": "Dispatcher",
+    "technician": "Technician"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "signOut": "Sign out",
+  "demoBanner": "Public demo with fictional data. Demo data resets daily at 00:00 UTC.",
+  "nav": {
+    "main": "Main",
+    "home": "Home",
+    "jobs": "Jobs",
+    "schedule": "Dispatch board",
+    "approvals": "Approvals",
+    "customers": "Customers",
+    "quotes": "Quotes",
+    "invoices": "Invoices",
+    "workspace": "Workspace",
+    "organization": "Organization",
+    "members": "Members",
+    "serviceTypes": "Service types",
+    "apiReference": "API reference",
+    "pending": "{count} pending",
+    "openMenu": "Open menu",
+    "menu": "Menu"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "range": "{from}–{to} of {total}",
+    "page": "Page {page} of {pages}",
+    "previous": "Previous",
+    "previousPage": "Previous page",
+    "next": "Next",
+    "nextPage": "Next page"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  },
+  "pageTitle": {
+    "newJob": "New job",
+    "jobs": "Jobs",
+    "ai": "AI settings",
+    "audit": "Audit log",
+    "sla": "SLA policies",
+    "demoOutbox": "Demo outbox",
+    "operations": "Operations settings",
+    "organization": "Organization settings",
+    "serviceTypes": "Service types",
+    "members": "Members",
+    "equipment": "Equipment",
+    "schedule": "Dispatch board",
+    "team": "Team availability",
+    "customer": "Customer",
+    "newCustomer": "New customer",
+    "customers": "Customers",
+    "home": "Home",
+    "approvals": "Approvals",
+    "invitation": "Invitation",
+    "signIn": "Sign in",
+    "onboarding": "Set up your organization",
+    "signUp": "Create an account",
+    "demoInbox": "Demo inbox",
+    "newQuote": "New quote",
+    "quotes": "Quotes",
+    "billingSettings": "Billing settings",
+    "invoice": "Invoice",
+    "newInvoice": "New invoice",
+    "invoices": "Invoices",
+    "catalog": "Catalog"
+  },
+  "validation": {
+    "required": "Required",
+    "number": "Enter a number",
+    "minLength": "Use at least {min} characters",
+    "maxLength": "Use at most {max} characters",
+    "min": "Must be {min} or more",
+    "above": "Must be more than {min}",
+    "max": "Must be {max} or less",
+    "minItems": "Add at least {min}",
+    "maxItems": "At most {max}",
+    "email": "Enter a valid email",
+    "url": "Enter a valid link",
+    "format": "Check the format",
+    "choose": "Choose one of the options",
+    "invalid": "Invalid value"
+  },
+  "close": "Close",
+  "notifications": "Notifications"
 }

@@ -1,18 +1,23 @@
 import { formatMoney, organization } from "@fieldops/core";
+import { intlLocale } from "@/lib/format";
 import { Wrench } from "lucide-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/app/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireActor, runService } from "@/server/context";
 import { ActiveSwitch, ServiceTypeDialog } from "./service-type-dialog";
 
-export const metadata: Metadata = { title: "Service types" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("serviceTypes") };
+}
 
 export default async function ServiceTypesPage() {
   const actor = await requireActor();
   const t = await getTranslations("settings.serviceTypes");
+  const locale = await getLocale();
   const { types, org } = await runService(
     async (ctx) => ({
       types: await organization.listServiceTypes(ctx, { includeInactive: true }),
@@ -66,7 +71,10 @@ export default async function ServiceTypesPage() {
                     {t("minutes", { count: st.defaultDurationMin })}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {formatMoney({ amountMinor: st.defaultPriceMinor, currency: st.currency })}
+                    {formatMoney(
+                      { amountMinor: st.defaultPriceMinor, currency: st.currency },
+                      intlLocale(locale),
+                    )}
                   </TableCell>
                   <TableCell>
                     <ActiveSwitch id={st.id} name={st.name} active={st.active} />

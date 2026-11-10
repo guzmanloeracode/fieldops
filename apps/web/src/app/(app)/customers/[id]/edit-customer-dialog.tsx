@@ -1,6 +1,12 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CUSTOMER_TYPES, customerUpdateSchema, type Address, type CustomerType } from "@fieldops/shared";
+import {
+  CUSTOMER_TYPES,
+  customerUpdateSchema,
+  type Address,
+  type CustomerType,
+  type Locale,
+} from "@fieldops/shared";
 import { Loader2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -25,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateCustomerAction } from "../actions";
 import { AddressFields } from "../_components/address-fields";
+import { LocaleField, localeValue } from "../_components/locale-field";
 import { splitTags } from "../_components/tags";
 
 const formSchema = customerUpdateSchema
@@ -36,6 +43,7 @@ type FormOutput = z.output<typeof formSchema>;
 export function EditCustomerDialog({
   customer,
   defaultCountry,
+  orgLocale,
 }: {
   customer: {
     id: string;
@@ -44,8 +52,11 @@ export function EditCustomerDialog({
     tags: string[];
     notes: string | null;
     billingAddress: Address | null;
+    locale?: Locale | null;
   };
   defaultCountry: string;
+  /** The organization's customer language, which an empty choice follows. */
+  orgLocale: Locale;
 }) {
   const t = useTranslations("customers");
   const router = useRouter();
@@ -59,6 +70,7 @@ export function EditCustomerDialog({
       name: customer.name,
       tags_text: customer.tags.join(", "),
       notes: customer.notes ?? "",
+      locale: customer.locale ?? null,
       billing_address: customer.billingAddress
         ? {
             ...customer.billingAddress,
@@ -135,6 +147,11 @@ export function EditCustomerDialog({
             <Label htmlFor="edit-notes">{t("form.notes")}</Label>
             <Textarea id="edit-notes" rows={3} {...form.register("notes")} />
           </div>
+          <LocaleField
+            id="edit-locale"
+            orgLocale={orgLocale}
+            registration={form.register("locale", { setValueAs: localeValue })}
+          />
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox

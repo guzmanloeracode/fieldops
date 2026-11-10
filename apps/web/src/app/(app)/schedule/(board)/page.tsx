@@ -12,7 +12,10 @@ import { toBoardJob, toBoardProps, weekStart, type BoardView } from "../board-da
 import { BoardMap } from "../board-map";
 import { BoardToolbar } from "../toolbar";
 
-export const metadata: Metadata = { title: "Dispatch board" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("schedule") };
+}
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);

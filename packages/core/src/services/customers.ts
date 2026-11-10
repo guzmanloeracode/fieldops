@@ -76,6 +76,7 @@ export async function createCustomer(ctx: ServiceContext, raw: CustomerCreateInp
     billingAddress: input.billing_address ?? null,
     tags: dedupe(input.tags),
     notes: input.notes ?? null,
+    locale: input.locale ?? null,
   });
   const contacts: ContactRecord[] = [];
   const hasPrimary = input.contacts.some((c) => c.is_primary);
@@ -104,6 +105,7 @@ export async function updateCustomer(ctx: ServiceContext, id: string, raw: unkno
     ...(input.billing_address !== undefined && { billingAddress: input.billing_address }),
     ...(input.tags !== undefined && { tags: dedupe(input.tags) }),
     ...(input.notes !== undefined && { notes: input.notes }),
+    ...(input.locale !== undefined && { locale: input.locale }),
   });
   if (!updated) throw new NotFoundError("Customer");
   return updated;

@@ -3,7 +3,7 @@ import { schema } from "@fieldops/db";
 import { ROLES } from "@fieldops/shared";
 import { and, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,11 +13,15 @@ import { requireActor, runService } from "@/server/context";
 import { db } from "@/server/db";
 import { InvitationActions, InviteForm, RemoveButton, RoleSelect } from "./member-controls";
 
-export const metadata: Metadata = { title: "Members" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("members") };
+}
 
 export default async function MembersPage() {
   const actor = await requireActor();
   const t = await getTranslations("settings.members");
+  const locale = await getLocale();
   const tz = actor.organization.timezone;
   const [members, invitations] = await Promise.all([
     runService((ctx) => organization.listMembers(ctx), actor),
@@ -98,7 +102,7 @@ export default async function MembersPage() {
                       />
                     </TableCell>
                     <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
-                      {formatDate(m.createdAt, tz)}
+                      {formatDate(m.createdAt, tz, locale)}
                     </TableCell>
                     <TableCell className="text-right">
                       {!self &&
@@ -135,7 +139,9 @@ export default async function MembersPage() {
                       <p className="truncate text-sm font-medium">{inv.email}</p>
                       <p className="text-muted-foreground text-xs">
                         {roleLabels[inv.role as keyof typeof roleLabels] ?? inv.role} ·{" "}
-                        {expired ? t("expired") : t("expires", { date: formatDate(inv.expiresAt, tz) })}
+                        {expired
+                          ? t("expired")
+                          : t("expires", { date: formatDate(inv.expiresAt, tz, locale) })}
                       </p>
                     </div>
                     <InvitationActions invitationId={inv.id} email={inv.email} />

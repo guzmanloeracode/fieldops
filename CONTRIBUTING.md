@@ -7,4 +7,5 @@
    requests small; they are squash-merged.
 4. Business rules belong in `packages/core` with unit tests. A new tenant table needs `organization_id`, an
    entry in `TENANT_TABLES` and a row-level security policy, or the guard test fails.
-5. User-facing strings go in `apps/web/messages/en/*.json`.
+5. User-facing strings go in `apps/web/messages/en/*.json`, with their Bahasa Indonesia translation in
+   `apps/web/messages/id/*.json` (terms in `apps/web/messages/GLOSSARY.md`).

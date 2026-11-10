@@ -21,6 +21,8 @@ export interface OrgSpec {
     role: "owner" | "admin" | "dispatcher" | "technician";
     skills?: string[];
     demo?: boolean;
+    /** The person's language when it isn't the organization's (SET-05). */
+    locale?: "en" | "id";
   }[];
   customers: number;
   sites: number;
@@ -453,7 +455,7 @@ export const ORGS: OrgSpec[] = [
       { name: "Agus Prasetyo", role: "technician", skills: ["ac", "refrigerant"], demo: true },
       { name: "Dewi Lestari", role: "technician", skills: ["ac"] },
       { name: "Rizky Ramadhan", role: "technician", skills: ["ac", "install"] },
-      { name: "Fajar Nugroho", role: "technician", skills: ["ac", "electrical"] },
+      { name: "Fajar Nugroho", role: "technician", skills: ["ac", "electrical"], locale: "en" },
       { name: "Wahyu Hidayat", role: "technician", skills: ["ac", "install", "refrigerant"] },
     ],
     customers: 120,

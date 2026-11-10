@@ -1,7 +1,7 @@
 import "server-only";
 import { audit, formatJobNumber, formatMoney, type AuditEntryRecord } from "@fieldops/core";
 import { AUDIT_ENTITY_TYPES, type Currency } from "@fieldops/shared";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, intlLocale } from "@/lib/format";
 
 // Plain-language rendering of audit entries, shared by the viewer and the CSV export (AUD-03).
 
@@ -36,14 +36,14 @@ export function formatValue(
   t: T,
   field: string,
   value: unknown,
-  ctx: { timeZone: string; currency: Currency },
+  ctx: { timeZone: string; currency: Currency; locale?: string },
 ): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? t("yes") : t("no");
   if (typeof value === "number" && field.endsWith("_minor")) {
-    return formatMoney({ amountMinor: value, currency: ctx.currency });
+    return formatMoney({ amountMinor: value, currency: ctx.currency }, ctx.locale && intlLocale(ctx.locale));
   }
-  if (typeof value === "string" && ISO.test(value)) return formatDateTime(value, ctx.timeZone);
+  if (typeof value === "string" && ISO.test(value)) return formatDateTime(value, ctx.timeZone, ctx.locale);
   if (Array.isArray(value) && value.every((v) => typeof v !== "object")) {
     return value.length ? value.join(", ") : "—";
   }

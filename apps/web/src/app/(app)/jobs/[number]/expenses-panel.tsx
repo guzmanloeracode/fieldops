@@ -1,9 +1,10 @@
 "use client";
 import { formatMoney } from "@fieldops/core";
+import { intlLocale } from "@/lib/format";
 import type { Currency } from "@fieldops/shared";
 import { Check, CheckCheck, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,11 +32,12 @@ export function ExpensesPanel({
   totals: { approvedMinor: number; pendingMinor: number; pendingCount: number };
 }) {
   const t = useTranslations("expenses");
+  const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
-  const money = (minor: number) => formatMoney({ amountMinor: minor, currency });
+  const money = (minor: number) => formatMoney({ amountMinor: minor, currency }, intlLocale(locale));
 
   const run = (id: string, fn: () => Promise<{ ok: boolean; error?: { message: string } }>, done: string) => {
     setBusy(id);

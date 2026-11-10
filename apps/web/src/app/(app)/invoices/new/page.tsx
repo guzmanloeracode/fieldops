@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { requireActor, runService } from "@/server/context";
 import { InvoiceForm } from "../_components/invoice-form";
 
-export const metadata: Metadata = { title: "New invoice" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("newInvoice") };
+}
 
 /**
  * A new invoice (FIN-03): `?job=` prefills the lines from a completed job (service or approved quote, labor,

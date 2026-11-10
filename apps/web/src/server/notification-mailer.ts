@@ -15,7 +15,7 @@ export function notificationMailer(tx: Tx, organizationId: string): Notification
   return {
     async send({ userId, event, payload }) {
       const [recipient] = await tx
-        .select({ name: schema.user.name, email: schema.user.email })
+        .select({ name: schema.user.name, email: schema.user.email, locale: schema.user.locale })
         .from(schema.user)
         .where(eq(schema.user.id, userId));
       if (!recipient) return;
@@ -29,6 +29,8 @@ export function notificationMailer(tx: Tx, organizationId: string): Notification
       const rendered = await renderEmail({
         kind: "notification",
         to: recipient.email,
+        // In the recipient's language (SET-05).
+        locale: recipient.locale,
         props: {
           event,
           payload,

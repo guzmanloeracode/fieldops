@@ -11,7 +11,7 @@ import {
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, Download, Inbox } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { SlaBadge } from "@/components/app/sla-badge";
@@ -82,6 +82,7 @@ export function JobsTable({
   bulk?: BulkOptions;
 }) {
   const t = useTranslations("jobs");
+  const locale = useLocale();
   const tb = useTranslations("insights.bulk");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const rowKey = rows.map((r) => r.id).join(",");
@@ -209,7 +210,7 @@ export function JobsTable({
         cell: ({ row }) => (
           <span className="text-sm whitespace-nowrap">
             {row.original.scheduledStart ? (
-              formatWindow(row.original.scheduledStart, row.original.scheduledEnd, timeZone)
+              formatWindow(row.original.scheduledStart, row.original.scheduledEnd, timeZone, locale)
             ) : (
               <span className="text-muted-foreground">{t("unscheduled")}</span>
             )}
@@ -243,12 +244,12 @@ export function JobsTable({
         header: t("col.created"),
         cell: ({ row }) => (
           <span className="text-muted-foreground text-sm whitespace-nowrap">
-            {formatDate(row.original.createdAt, timeZone)}
+            {formatDate(row.original.createdAt, timeZone, locale)}
           </span>
         ),
       },
     ],
-    [t, tb, timeZone, bulk],
+    [t, tb, timeZone, bulk, locale],
   );
 
   const table = useReactTable({

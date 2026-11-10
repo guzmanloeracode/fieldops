@@ -1,12 +1,13 @@
 "use client";
-import { Building2, Check, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
+import { Building2, Check, Languages, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { switchOrganizationAction } from "@/app/(app)/org-actions";
+import { changeLocaleAction } from "@/app/locale-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LOCALE_NAMES, LOCALES, isLocale } from "@/i18n/locales";
 import { authClient } from "@/lib/auth-client";
 import { initials } from "@/lib/format";
 
@@ -46,7 +48,15 @@ export function UserMenu({
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const t = useTranslations("insights.orgs");
+  const tc = useTranslations("common");
+  const locale = useLocale();
   const [switching, startTransition] = useTransition();
+  const switchLanguage = (next: string) =>
+    startTransition(async () => {
+      if (!isLocale(next) || next === locale) return;
+      // The page re-renders in the new language, which is the confirmation.
+      if ((await changeLocaleAction(next, "account")).ok) router.refresh();
+    });
   const switchTo = (org: OrganizationOption) =>
     startTransition(async () => {
       const res = await switchOrganizationAction(org.id);
@@ -117,16 +127,33 @@ export function UserMenu({
             <DropdownMenuSeparator />
           </>
         ) : null}
-        <DropdownMenuLabel className="text-muted-foreground text-xs">Theme</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <Languages className="size-3.5" aria-hidden /> {tc("language.label")}
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={locale} onValueChange={switchLanguage}>
+          {LOCALES.map((l) => (
+            <DropdownMenuRadioItem
+              key={l}
+              value={l}
+              lang={l}
+              disabled={switching}
+              data-testid={`language-${l}`}
+            >
+              {LOCALE_NAMES[l]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-muted-foreground text-xs">{tc("theme.label")}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme ?? "system"} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="light">
-            <Sun className="size-4" /> Light
+            <Sun className="size-4" /> {tc("theme.light")}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dark">
-            <Moon className="size-4" /> Dark
+            <Moon className="size-4" /> {tc("theme.dark")}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="system">
-            <Monitor className="size-4" /> System
+            <Monitor className="size-4" /> {tc("theme.system")}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
@@ -137,7 +164,7 @@ export function UserMenu({
             router.refresh();
           }}
         >
-          <LogOut className="size-4" /> Sign out
+          <LogOut className="size-4" /> {tc("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

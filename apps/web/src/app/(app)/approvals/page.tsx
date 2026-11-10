@@ -1,10 +1,11 @@
 import { can, expenses, formatMoney, organization } from "@fieldops/core";
+import { intlLocale } from "@/lib/format";
 import { EXPENSE_KINDS, EXPENSE_STATUSES, expenseListQuerySchema } from "@fieldops/shared";
 import { BadgeCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { NativeSelect } from "@/components/app/native-select";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
@@ -15,7 +16,10 @@ import { requireActor, runService } from "@/server/context";
 import { toExpenseRows } from "./_components/to-row";
 import { ApprovalsList } from "./approvals-list";
 
-export const metadata: Metadata = { title: "Approvals" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("approvals") };
+}
 
 const PAGE_SIZE = 25;
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -26,6 +30,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const actor = await requireActor();
   if (!can(actor, "expenses.approve", { belowDispatcherThreshold: true })) notFound();
   const t = await getTranslations("expenses");
+  const locale = await getLocale();
   const sp = await searchParams;
 
   // Pending is the default view; "all" shows every status.
@@ -57,6 +62,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   }, actor);
   const rows = toExpenseRows(data.result.rows, {
     actor,
+    locale,
     settings: data.org.settings,
     receipts: data.receipts,
     canWork: () => can(actor, "jobs.work", { assigned: false }),
@@ -65,7 +71,10 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const limitNote =
     actor.role === "dispatcher"
       ? t("inbox.limitNote", {
-          amount: formatMoney({ amountMinor: data.org.settings.approval.dispatcherLimitMinor, currency }),
+          amount: formatMoney(
+            { amountMinor: data.org.settings.approval.dispatcherLimitMinor, currency },
+            intlLocale(locale),
+          ),
         })
       : null;
   const filtered = Boolean(
