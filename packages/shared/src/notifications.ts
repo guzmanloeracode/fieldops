@@ -30,8 +30,8 @@ export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
  * alerts (small teams often have no dispatcher); technicians get their own work.
  */
 export const NOTIFICATION_EVENTS_BY_ROLE: Record<Role, readonly NotificationEvent[]> = {
-  owner: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided"],
-  admin: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided"],
+  owner: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided", "daily_digest"],
+  admin: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided", "daily_digest"],
   dispatcher: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided"],
   technician: ["job_assigned", "job_rescheduled", "expense_decided"],
 };
@@ -65,7 +65,8 @@ export type NotificationDto = z.infer<typeof notificationSchema>;
 export const notificationPreferenceSchema = z
   .object({
     event: notificationEventSchema,
-    in_app: z.boolean(),
+    /** Null when the event has no in-app notification. */
+    in_app: z.boolean().nullable(),
     /** Null when the event has no email. */
     email: z.boolean().nullable(),
   })
@@ -78,7 +79,7 @@ export const notificationPreferencesUpdateSchema = z
       .array(
         z.object({
           event: notificationEventSchema,
-          in_app: z.boolean(),
+          in_app: z.boolean().nullable(),
           email: z.boolean().nullable().optional(),
         }),
       )
