@@ -40,6 +40,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe.serial("billing", () => {
+  // Pages compile on first use under `next dev`; give the journeys room.
+  test.slow();
   const tag = uniq();
   let quoteId = "";
 
@@ -72,7 +74,7 @@ test.describe.serial("billing", () => {
     // $14.50 + 2 × $95.00 = $204.50, plus 8.25% Texas sales tax per line ($1.20 + $15.68).
     await expect(page.getByTestId("line-editor").getByTestId("total")).toHaveText("$221.38");
     await page.getByTestId("save-quote").click();
-    await expect(page).toHaveURL(/\/quotes\/QUO-\d{4}-\d{4}$/);
+    await expect(page).toHaveURL(/\/quotes\/QUO-\d{4}-\d{4}$/, { timeout: 60_000 });
     const number = page.url().split("/").pop()!;
     await expect(page.getByTestId("quote-status")).toHaveText("Draft");
 
@@ -86,7 +88,7 @@ test.describe.serial("billing", () => {
     await expect(page.getByTestId("quote-status")).toHaveText("Approved");
     await expect(page.getByTestId("totals").getByTestId("total")).toHaveText("$221.38");
     await page.getByTestId("quote-job-link").click();
-    await expect(page).toHaveURL(/\/jobs\/JOB-\d{6}$/);
+    await expect(page).toHaveURL(/\/jobs\/JOB-\d{6}$/, { timeout: 60_000 });
     await expect(page.getByRole("heading", { name: `E2E quote ${tag}`, level: 1 })).toBeVisible();
     await expect(page.getByTestId("job-status")).toHaveText("New");
     await expect(page.getByTestId("job-quote").getByRole("link", { name: number })).toBeVisible();
@@ -135,7 +137,7 @@ test.describe.serial("billing", () => {
     await page.route("**/api/v1/stream", (route) => route.fulfill({ status: 204 }));
     await page.goto(`/jobs/${job.number}`);
     await page.getByTestId("job-billing").getByTestId("create-invoice").click();
-    await expect(page).toHaveURL(/\/invoices\/new\?job=/);
+    await expect(page).toHaveURL(/\/invoices\/new\?job=/, { timeout: 60_000 });
     // No service type on this job: the labor line, then the approved part.
     const lines = page.getByTestId("line");
     await expect(lines).toHaveCount(2);
@@ -147,7 +149,7 @@ test.describe.serial("billing", () => {
     await capacitor.getByLabel(/Markup %/).fill("20");
     await expect(capacitor.getByTestId("line-net")).toHaveText("$22.20");
     await page.getByTestId("save-invoice").click();
-    await expect(page).toHaveURL(/\/invoices\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/invoices\/[0-9a-f-]{36}$/, { timeout: 60_000 });
     await expect(page.getByTestId("invoice-status")).toHaveText("Draft");
     const invoiceId = page.url().split("/").pop()!;
 
