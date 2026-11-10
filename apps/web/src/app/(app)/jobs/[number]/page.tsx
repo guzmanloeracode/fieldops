@@ -10,6 +10,7 @@ import { formatDateTime, formatWindow } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
+import { JobExpenses } from "./expenses";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
 import { SiteMap } from "./site-map";
@@ -198,6 +199,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
               uploadedBy: a.uploadedBy,
             }))}
           />
+
+          <JobExpenses jobId={job.id} status={job.status} assigned={assigned} />
 
           <Timeline
             timeZone={tz}

@@ -20,6 +20,8 @@ import type {
   Store,
 } from "../services/types";
 
+import { memoryExpenses } from "./memory-expenses";
+
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
 
@@ -390,6 +392,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         return data.org;
       },
     },
+    expenses: memoryExpenses(data, uuid),
   };
   return { store, data };
 }

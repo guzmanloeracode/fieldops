@@ -10,6 +10,10 @@ import {
   customerSummarySchema,
   customerUpdateSchema,
   equipmentSchema,
+  expenseCreateSchema,
+  expenseDecisionSchema,
+  expenseListQuerySchema,
+  expenseSchema,
   jobAssignmentSchema,
   jobCreateSchema,
   jobDetailSchema,
@@ -155,6 +159,7 @@ export function openApiDocument() {
     tags: [
       { name: "Jobs", description: "Work orders and their lifecycle" },
       { name: "Customers", description: "Customers, contacts, sites and equipment" },
+      { name: "Expenses", description: "Parts and expenses requested on jobs, and their approval" },
       { name: "Organization", description: "The current user, members and service types" },
     ],
     components: {
@@ -289,6 +294,53 @@ export function openApiDocument() {
           operationId: "confirmAttachmentUpload",
           requestParams: { path: uuidParam("Attachment"), header: idempotencyHeader },
           responses: { "200": json(attachmentSchema, "The ready attachment"), ...errors(404, 409, 503) },
+        }),
+      },
+      "/jobs/{id}/expenses": {
+        get: op("Expenses", "List a job's parts and expenses", {
+          operationId: "listJobExpenses",
+          requestParams: { path: jobId },
+          responses: {
+            "200": json(list(expenseSchema, "JobExpensePage"), "Requests, newest first"),
+            ...errors(404),
+          },
+        }),
+        post: op("Expenses", "Request a part or expense", {
+          operationId: "requestExpense",
+          description:
+            "Open jobs only. Requests below the organization's auto-approve threshold are approved at once; the rest wait for an approver. Attach a receipt by uploading it to the job first and passing its `receipt_attachment_id`.",
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(expenseCreateSchema),
+          responses: { "201": json(expenseSchema, "The new request"), ...errors(404, 409, 415, 422) },
+        }),
+      },
+      "/expenses": {
+        get: op("Expenses", "List parts and expense requests", {
+          operationId: "listExpenses",
+          description: "The approvals inbox. Technicians only see requests on jobs assigned to them.",
+          requestParams: { query: expenseListQuerySchema.omit({ page: true }) },
+          responses: {
+            "200": json(list(expenseSchema, "ExpensePage"), "Requests, newest first"),
+            ...errors(422),
+          },
+        }),
+      },
+      "/expenses/{id}/decision": {
+        post: op("Expenses", "Approve or reject a request", {
+          operationId: "decideExpense",
+          description:
+            "Owners and admins decide any amount; dispatchers only below the organization's dispatcher limit. A rejection needs a `comment`. Only pending requests can be decided (409 otherwise).",
+          requestParams: { path: uuidParam("Expense"), header: idempotencyHeader },
+          requestBody: body(expenseDecisionSchema),
+          responses: { "200": json(expenseSchema, "The decided request"), ...errors(404, 409, 415, 422) },
+        }),
+      },
+      "/expenses/{id}/used": {
+        post: op("Expenses", "Record a part as used", {
+          operationId: "markExpenseUsed",
+          description: "Approved parts only. Repeating the call keeps the first time.",
+          requestParams: { path: uuidParam("Expense"), header: idempotencyHeader },
+          responses: { "200": json(expenseSchema, "The request with `used_at` set"), ...errors(404, 409) },
         }),
       },
       "/customers": {

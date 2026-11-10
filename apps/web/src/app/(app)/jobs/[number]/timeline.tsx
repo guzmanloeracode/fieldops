@@ -1,5 +1,5 @@
-import { STATUS_LABELS } from "@fieldops/core";
-import type { JobEventType, JobStatus } from "@fieldops/shared";
+import { formatMoney, STATUS_LABELS } from "@fieldops/core";
+import type { Currency, JobEventType, JobStatus } from "@fieldops/shared";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow } from "@/lib/format";
@@ -25,6 +25,9 @@ export async function Timeline({
   members: Record<string, string>;
 }) {
   const t = await getTranslations("jobs");
+  const te = await getTranslations("expenses.timeline");
+  const amount = (p: Record<string, unknown>) =>
+    formatMoney({ amountMinor: Number(p.total_minor ?? 0), currency: (p.currency as Currency) ?? "USD" });
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -51,6 +54,18 @@ export async function Timeline({
         return e.payload.visibility === "customer" ? t("timeline.noteCustomer") : t("timeline.note");
       case "attachment_added":
         return t("timeline.attachment", { name: String(e.payload.file_name ?? "") });
+      case "expense_requested":
+        return te(e.payload.auto_approved ? "requestedAuto" : "requested", {
+          item: String(e.payload.item ?? ""),
+          amount: amount(e.payload),
+        });
+      case "expense_decided":
+        return te(e.payload.decision === "rejected" ? "rejected" : "approved", {
+          item: String(e.payload.item ?? ""),
+          amount: amount(e.payload),
+        });
+      case "part_used":
+        return te("used", { item: String(e.payload.item ?? "") });
       case "updated":
         return t("timeline.updated", {
           fields: ((e.payload.fields as string[] | undefined) ?? []).join(", "),
@@ -77,6 +92,9 @@ export async function Timeline({
               </p>
               {typeof e.payload.reason === "string" ? (
                 <p className="text-muted-foreground text-sm">“{e.payload.reason}”</p>
+              ) : null}
+              {e.type === "expense_decided" && typeof e.payload.comment === "string" ? (
+                <p className="text-muted-foreground text-sm">“{e.payload.comment}”</p>
               ) : null}
               {typeof e.payload.override_reason === "string" ? (
                 <p className="text-muted-foreground text-sm">

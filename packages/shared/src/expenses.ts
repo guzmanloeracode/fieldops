@@ -96,3 +96,31 @@ export const expenseSchema = z
   })
   .meta({ id: "Expense" });
 export type ExpenseDto = z.infer<typeof expenseSchema>;
+
+/** The operations settings page: approval thresholds (EXP-02) and the signature rule (JOB-10). */
+export const operationsSettingsSchema = z
+  .object({
+    auto_approve_below_minor: z.number().int().min(0).max(100_000_000_00),
+    dispatcher_limit_minor: z.number().int().min(0).max(100_000_000_00),
+    require_signature: z.boolean(),
+  })
+  .refine((v) => v.dispatcher_limit_minor >= v.auto_approve_below_minor, {
+    message: "The dispatcher limit can't be lower than the auto-approve threshold",
+    path: ["dispatcher_limit_minor"],
+  })
+  .meta({ id: "OperationsSettings" });
+export type OperationsSettings = z.output<typeof operationsSettingsSchema>;
+
+/** Result of a bulk decision: every request is checked on its own. */
+export const expenseBulkResultSchema = z
+  .object({
+    results: z.array(
+      z.object({
+        id: z.uuid(),
+        ok: z.boolean(),
+        status: z.enum(EXPENSE_STATUSES).optional(),
+        error: z.object({ code: z.string(), message: z.string() }).optional(),
+      }),
+    ),
+  })
+  .meta({ id: "ExpenseBulkResult" });
