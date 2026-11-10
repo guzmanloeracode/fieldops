@@ -169,11 +169,7 @@ export function JobsTable({
                 {row.original.customer} · {row.original.city}
               </span>
               {row.original.recurring ? (
-                <RecurringBadge
-                  href={row.original.recurring.href}
-                  title={row.original.recurring.title}
-                  className="px-1.5 text-[10px]"
-                />
+                <RecurringBadge href={row.original.recurring.href} title={row.original.recurring.title} />
               ) : null}
               {row.original.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">

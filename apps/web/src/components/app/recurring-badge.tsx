@@ -32,7 +32,8 @@ export function RecurringBadge({
       href={href}
       prefetch={false}
       title={title}
-      className={cn(style, "hover:underline")}
+      // At least 24 px tall: a pointer target (WCAG 2.5.8).
+      className={cn(style, "min-h-6 hover:underline")}
       data-testid="recurring-badge"
     >
       {content}
