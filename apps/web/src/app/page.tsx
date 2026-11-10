@@ -20,7 +20,7 @@ import { getSession } from "@/server/context";
 export const metadata: Metadata = {
   title: { absolute: "FieldOps: open-source field service management" },
   description:
-    "Requests, dispatch, on-site work, reports and payments for small service businesses. Open-source portfolio project with a live demo.",
+    "Requests, dispatch, on-site work, reports and payments for small service businesses. Open source, with a live demo.",
 };
 
 const RELEASES = ["r01", "r02", "r03", "r04", "relay", "r05", "site", "mobile"] as const;
@@ -138,7 +138,7 @@ export default async function LandingPage() {
       <footer className="border-t">
         <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="flex items-center gap-2">
-            <Building2 className="size-4" aria-hidden /> {t("footer.portfolio")}
+            <Building2 className="size-4" aria-hidden /> {t("footer.credit")}
           </p>
           <p>
             v{env.APP_VERSION} · {env.APP_COMMIT.slice(0, 7)}

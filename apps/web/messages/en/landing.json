@@ -58,5 +58,5 @@
     "site": { "name": "Site 1.0", "body": "Marketing site with GSAP motion, SEO and accessibility." },
     "mobile": { "name": "1.0 Mobile", "body": "Expo app for technicians with offline mode, camera and push." }
   },
-  "footer": { "portfolio": "A portfolio project by Ahmad Izzat Maulana. All demo data is fictional." }
+  "footer": { "credit": "Built by Ahmad Izzat Maulana. All demo data is fictional." }
 }
