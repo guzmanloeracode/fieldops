@@ -8,7 +8,7 @@ import { db } from "@/server/db";
 import { files } from "@/server/files";
 import { logger } from "@/server/logger";
 import { notificationMailer } from "@/server/notification-mailer";
-import { metaFromHeaders } from "@/server/request-meta";
+import { auditMeta, metaFromHeaders } from "@/server/request-meta";
 import { claimIdempotencyKey, hashBody, readIdempotencyKey, storeIdempotentResponse } from "./idempotency";
 import { ApiProblem, internalProblem, problemFromError, type ProblemBody } from "./problem";
 
@@ -153,7 +153,7 @@ export function apiRoute<P extends Record<string, string> = Record<string, never
           if (scope) await storeIdempotentResponse(tx, scope, status, out.body);
           return { ...out, status };
         },
-        { userId: actor.userId, ...metaFromHeaders(req.headers) },
+        { userId: actor.userId, ...auditMeta(metaFromHeaders(req.headers)) },
       );
       log.info({ status: result.status, orgId: actor.organizationId, userId: actor.userId }, "api request");
       return respond(result.status ?? 200, result.body, { ...result.headers, "X-Request-Id": requestId });

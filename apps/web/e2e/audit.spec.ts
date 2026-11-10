@@ -7,14 +7,20 @@ import { api, json, storageState } from "./fixtures";
 test.describe("as the owner", () => {
   test.use({ storageState: storageState("owner") });
 
-  test("a change shows who made it, what changed and from where", async ({ page }) => {
+  test("a change shows who made it and what changed, but no visitor IP in the demo", async ({ page }) => {
     const client = await api("owner");
     const customers = await json<{ data: { id: string; name: string }[] }>(
       await client.get("/api/v1/customers?limit=1"),
     );
     const customer = customers.data[0]!;
     const note = `Audit check ${Date.now()}`;
-    await json(await client.patch(`/api/v1/customers/${customer.id}`, { data: { notes: note } }));
+    // The E2E stack has no proxy in front, so the app takes this header as the client's address.
+    await json(
+      await client.patch(`/api/v1/customers/${customer.id}`, {
+        data: { notes: note },
+        headers: { "X-Real-IP": "203.0.113.9" },
+      }),
+    );
     await client.dispose();
 
     await page.goto(`/settings/audit?entity_type=customer&entity_id=${customer.id}`);
@@ -22,6 +28,8 @@ test.describe("as the owner", () => {
     await expect(entry).toContainText("Olivia");
     await expect(entry).toContainText("updated customer");
     await expect(entry.getByRole("row", { name: /notes/ })).toContainText(note);
+    // The demo shares accounts between visitors, so it never records their IP addresses.
+    await expect(entry).not.toContainText("203.0.113.9");
     await expect(entry.getByRole("link", { name: "Open customer" })).toHaveAttribute(
       "href",
       `/customers/${customer.id}`,

@@ -10,7 +10,7 @@ import { env } from "@/env";
 import { db } from "@/server/db";
 import { files } from "@/server/files";
 import { notificationMailer } from "@/server/notification-mailer";
-import { requestMeta } from "@/server/request-meta";
+import { auditMeta, requestMeta } from "@/server/request-meta";
 
 // Customer portal sessions (POR-01). The cookie holds a random token scoped to /portal/<slug>; the database keeps
 // only its SHA-256. Each portal request resolves the organization by slug, then works inside that organization's
@@ -59,7 +59,7 @@ export async function withPortalStore<T>(
   org: PortalOrg,
   fn: (store: Store, tx: Tx) => Promise<T>,
 ): Promise<T> {
-  const meta = await requestMeta();
+  const meta = auditMeta(await requestMeta());
   return withStore(db, org.id, fn, { userId: null, ip: meta.ip, userAgent: meta.userAgent });
 }
 

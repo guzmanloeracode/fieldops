@@ -78,7 +78,8 @@ async function recordAuthEvent(
     if (!m) return;
     await withStore(db, m.organizationId, (store) => audit.recordAuthEvent(store, event, session.userId), {
       userId: session.userId,
-      ip: session.ipAddress ?? null,
+      // The demo's shared accounts would show every visitor's address to the next one (see auditMeta).
+      ip: env.DEMO_MODE ? null : (session.ipAddress ?? null),
       userAgent: session.userAgent?.slice(0, 512) ?? null,
     });
   } catch (err) {

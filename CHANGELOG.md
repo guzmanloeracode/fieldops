@@ -24,7 +24,8 @@
   API key, AI shows as not configured and every manual flow still works.
 - **Audit log** (`/settings/audit`): every change to business records, roles, approvals and settings, plus staff
   sign-ins, with the actor, before and after values, IP address and user agent, written by database triggers in
-  the same transaction and read-only for the app (ADR 016). Filters and CSV export.
+  the same transaction and read-only for the app (ADR 016). Filters and CSV export. The public demo doesn't record
+  IP addresses, because its visitors share the demo accounts.
 - **Sign in with Google**, shown when an OAuth client is configured.
 - **Demo tour:** a "Try these 5 things" card per demo role.
 - **API:** SLA policies, notifications and their settings, the event stream, AI intake and the portal-request
