@@ -70,7 +70,7 @@ export function UserMenu({
             {initials(name)}
           </AvatarFallback>
         </Avatar>
-        <span className="min-w-0 flex-1">
+        <span className="min-w-0 flex-1 group-data-[collapsed=true]/sidebar:sr-only">
           <span className="block truncate text-sm font-medium">{name}</span>
           <span className="text-muted-foreground block truncate text-xs">{roleLabel}</span>
         </span>

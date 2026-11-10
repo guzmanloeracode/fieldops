@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSidebar } from "@/components/app/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type Item = {
@@ -49,6 +51,8 @@ export function Nav({
   counts?: Record<string, number>;
 }) {
   const pathname = usePathname();
+  // Collapsed to icons: labels stay for screen readers and show as tooltips, badges become a dot.
+  const { collapsed } = useSidebar();
   const office = role !== "technician";
   const managers = role === "owner" || role === "admin";
   const visible = (i: Item) => (!i.office || office) && (!i.managers || managers);
@@ -69,29 +73,46 @@ export function Nav({
         </li>
       );
     }
+    const count = counts[i.href];
+    const link = (
+      <Link
+        href={i.href}
+        onClick={onNavigate}
+        {...(i.external ? { target: "_blank", rel: "noreferrer" } : {})}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex items-center gap-3 rounded-md py-2 text-sm transition-colors",
+          collapsed ? "justify-center px-2" : "px-3",
+          active
+            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+        )}
+      >
+        <Icon className="size-4 shrink-0" aria-hidden />
+        <span className={collapsed ? "sr-only" : undefined}>{i.label}</span>
+        {count && collapsed ? (
+          <>
+            <span className="bg-primary absolute top-1.5 right-1.5 size-2 rounded-full" aria-hidden />
+            <span className="sr-only">, {count} pending</span>
+          </>
+        ) : count ? (
+          <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-[11px] leading-none font-semibold tabular-nums">
+            {count}
+            <span className="sr-only"> pending</span>
+          </span>
+        ) : null}
+      </Link>
+    );
     return (
       <li key={i.href}>
-        <Link
-          href={i.href}
-          onClick={onNavigate}
-          {...(i.external ? { target: "_blank", rel: "noreferrer" } : {})}
-          aria-current={active ? "page" : undefined}
-          className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-            active
-              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/60",
-          )}
-        >
-          <Icon className="size-4" aria-hidden />
-          {i.label}
-          {counts[i.href] ? (
-            <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-[11px] leading-none font-semibold tabular-nums">
-              {counts[i.href]}
-              <span className="sr-only"> pending</span>
-            </span>
-          ) : null}
-        </Link>
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{link}</TooltipTrigger>
+            <TooltipContent side="right">{count ? `${i.label} (${count})` : i.label}</TooltipContent>
+          </Tooltip>
+        ) : (
+          link
+        )}
       </li>
     );
   };
@@ -99,7 +120,13 @@ export function Nav({
     <nav aria-label="Main" className="flex flex-1 flex-col gap-6">
       <ul className="space-y-0.5">{ITEMS.filter(visible).map(render)}</ul>
       <div>
-        <p className="text-muted-foreground px-3 pb-1 text-xs font-medium tracking-wide uppercase">
+        {collapsed ? <div className="border-sidebar-border mx-2 mb-2 border-t" aria-hidden /> : null}
+        <p
+          className={cn(
+            "text-muted-foreground px-3 pb-1 text-xs font-medium tracking-wide uppercase",
+            collapsed && "sr-only",
+          )}
+        >
           Workspace
         </p>
         <ul className="space-y-0.5">{SETTINGS.filter(visible).map(render)}</ul>

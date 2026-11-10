@@ -16,5 +16,9 @@
     "nothingToday": "No visits scheduled today.",
     "queueEmpty": "Nothing waiting. Every job has a technician and a time.",
     "requested": "requested {when}"
+  },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   }
 }
