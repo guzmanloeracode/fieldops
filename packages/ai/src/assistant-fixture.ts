@@ -76,7 +76,7 @@ export function planAssistantTools(question: string, ctx: Pick<AssistantContext,
       },
     ];
   }
-  if (/\b(revenue|invoiced|collected|outstanding|receivables?|income|pendapatan)\b/.test(q)) {
+  if (/\b(revenue|invoice\w*|collected|outstanding|receivables?|income|pendapatan)\b/.test(q)) {
     const range = /\blast month\b/.test(q) ? monthRange(ctx.today, -1) : { from: null, to: null };
     const groupBy = /\b(by|per) month\b/.test(q)
       ? "month"

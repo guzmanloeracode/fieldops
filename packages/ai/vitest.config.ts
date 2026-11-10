@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/eval-intake.ts"],
+      exclude: ["src/**/*.test.ts", "src/eval-intake.ts", "src/eval-assistant.ts"],
       thresholds: { lines: 90, functions: 90, statements: 90, branches: 80 },
       reporter: ["text-summary"],
     },
