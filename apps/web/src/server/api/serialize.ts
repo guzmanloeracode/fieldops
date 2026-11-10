@@ -95,6 +95,7 @@ export function toCustomerDto(c: CustomerRecord, contacts: ContactRecord[], site
     billing_address: c.billingAddress,
     tags: c.tags,
     notes: c.notes,
+    locale: c.locale ?? null,
     contacts: contacts.map(toContactDto),
     site_count: siteCount,
     created_at: c.createdAt.toISOString(),

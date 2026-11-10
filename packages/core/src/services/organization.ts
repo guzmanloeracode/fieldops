@@ -18,6 +18,11 @@ export async function getOrganization(ctx: ServiceContext) {
 export async function updateOrganization(ctx: ServiceContext, raw: unknown) {
   assertCan(ctx.actor, "org.update");
   const input = parseInput(organizationUpdateSchema, raw);
+  // The customers' language lives in the settings JSON next to the other organization settings.
+  const settings =
+    input.locale !== undefined
+      ? { ...(await ctx.store.organization.get()).settings, locale: input.locale }
+      : undefined;
   return ctx.store.organization.update({
     ...(input.name !== undefined && { name: input.name }),
     ...(input.timezone !== undefined && { timezone: input.timezone }),
@@ -27,6 +32,7 @@ export async function updateOrganization(ctx: ServiceContext, raw: unknown) {
     ...(input.address !== undefined && { address: input.address ?? null }),
     ...(input.business_hours !== undefined && { businessHours: input.business_hours }),
     ...(input.tax_rates !== undefined && { taxRates: input.tax_rates }),
+    ...(settings && { settings }),
   });
 }
 

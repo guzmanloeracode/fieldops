@@ -15,6 +15,7 @@ import {
   CHECKLIST_ITEM_KINDS,
   SLA_STATES,
   AI_STATUSES,
+  LOCALES,
 } from "./constants";
 
 // Inputs and API representations use snake_case, matching the public REST API (/api/v1).
@@ -24,6 +25,8 @@ export const roleSchema = z.enum(ROLES).meta({ id: "Role" });
 export const jobStatusSchema = z.enum(JOB_STATUSES).meta({ id: "JobStatus" });
 export const jobPrioritySchema = z.enum(JOB_PRIORITIES).meta({ id: "JobPriority" });
 export const jobSourceSchema = z.enum(JOB_SOURCES).meta({ id: "JobSource" });
+/** Language of the UI, emails and documents (SET-05). */
+export const localeSchema = z.enum(LOCALES).meta({ id: "Locale" });
 export const customerTypeSchema = z.enum(CUSTOMER_TYPES).meta({ id: "CustomerType" });
 export const currencySchema = z.enum(CURRENCIES).meta({ id: "Currency" });
 export const slaStateSchema = z.enum(SLA_STATES).meta({ id: "SlaState" });
@@ -78,6 +81,8 @@ export const customerCreateSchema = z
     tags: z.array(trimmed(40).min(1)).max(20).default([]),
     notes: optionalText(4000),
     contacts: z.array(contactInputSchema).max(20).default([]),
+    /** Language of the customer's emails and documents; null follows the organization (SET-05). */
+    locale: localeSchema.nullable().optional(),
   })
   .meta({ id: "CustomerCreate" });
 export type CustomerCreateInput = z.input<typeof customerCreateSchema>;
@@ -92,6 +97,7 @@ export const customerUpdateSchema = z
     billing_address: addressSchema.nullable(),
     tags: z.array(trimmed(40).min(1)).max(20),
     notes: optionalText(4000),
+    locale: localeSchema.nullable(),
   })
   .partial()
   .meta({ id: "CustomerUpdate" });
@@ -248,6 +254,8 @@ export const organizationUpdateSchema = z
     address: addressSchema.nullable().optional(),
     business_hours: businessHoursSchema.optional(),
     tax_rates: z.array(taxRateSchema).max(10).optional(),
+    /** Language for customers without their own: portal, emails and documents (SET-05). */
+    locale: localeSchema.optional(),
   })
   .partial()
   .meta({ id: "OrganizationUpdate" });
@@ -471,6 +479,9 @@ export const customerSchema = z
     billing_address: addressDtoSchema.nullable(),
     tags: z.array(z.string()),
     notes: z.string().nullable(),
+    locale: localeSchema
+      .nullable()
+      .meta({ description: "Null follows the organization's customer language" }),
     contacts: z.array(contactSchema),
     site_count: z.number().int(),
     created_at: ts,
