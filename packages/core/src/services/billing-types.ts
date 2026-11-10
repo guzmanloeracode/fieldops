@@ -374,6 +374,7 @@ export type CustomerEmail =
       balance: string;
       paidAt: string;
       method: PaymentMethod;
+      paidInFull: boolean;
     })
   | (CustomerEmailBase & {
       kind: "invoice_reminder";

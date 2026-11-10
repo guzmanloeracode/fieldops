@@ -635,6 +635,7 @@ export async function applyPayment(
       balance: moneyText(applied.totalMinor - applied.amountPaidMinor, invoice.currency, locale),
       paidAt: dateText(todayIn(org, payment.paidAt), locale)!,
       method: payment.method,
+      paidInFull: applied.amountPaidMinor >= applied.totalMinor,
     });
   }
   return (await store.billing.getInvoice(invoice.id))!;

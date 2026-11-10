@@ -3,8 +3,10 @@ import { createElement } from "react";
 import { NotificationEmail, notificationCopy, type NotificationEmailProps } from "./notification";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
 import { PortalSignIn } from "./portal";
+import { BillingEmail, billingCopy, type BillingEmailProps } from "./billing";
 
 export { notificationCopy, type NotificationEmailEvent, type NotificationEmailProps } from "./notification";
+export { billingCopy, type BillingEmailProps } from "./billing";
 
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
@@ -19,7 +21,9 @@ export type EmailMessage =
       to: string;
       props: { name: string; organizationName: string; url: string; minutes: number };
     }
-  | { kind: "notification"; to: string; props: NotificationEmailProps };
+  | { kind: "notification"; to: string; props: NotificationEmailProps }
+  /** Quotes, invoices, receipts and reminders to a customer's contact (0.4). */
+  | { kind: "billing"; to: string; props: BillingEmailProps };
 
 export interface RenderedEmail {
   subject: string;
@@ -50,6 +54,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "notification":
       subject = notificationCopy(message.props).subject;
       element = createElement(NotificationEmail, message.props);
+      break;
+    case "billing":
+      subject = billingCopy(message.props).subject;
+      element = createElement(BillingEmail, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
