@@ -49,7 +49,7 @@ describe("bulk job actions (JOB-04)", () => {
     );
     expect(res).toMatchObject({ action: "assign", updated: 1, skipped: 3 });
     expect(res.results.map((r) => [r.number, r.ok, r.message])).toEqual([
-      ["JOB-000001", false, "This visit overlaps another job for the same technician"],
+      ["JOB-000001", false, "Tom Tech has another visit at this time (JOB-000004)"],
       ["JOB-000002", true, undefined],
       ["JOB-000003", false, "Already assigned"],
       [null, false, "Job not found"],
