@@ -21,7 +21,10 @@ async function axe(page: Page) {
 async function pageAs(browser: Browser, user: UserKey): Promise<Page> {
   const context = await browser.newContext({ storageState: storageState(user) });
   const page = await context.newPage();
-  page.on("close", () => void context.close());
+  // Not awaited by anyone: a rejection here (the context already closing) would surface in the next test.
+  page.on("close", () => {
+    context.close().catch(() => {});
+  });
   return page;
 }
 
