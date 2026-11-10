@@ -1,1 +1,67 @@
-{}
+{
+  "bell": {
+    "label": "Notifications",
+    "labelUnread": "Notifications, {count} unread",
+    "title": "Notifications",
+    "markAll": "Mark all as read",
+    "empty": "You're all caught up.",
+    "viewAll": "View all notifications",
+    "settings": "Notification settings",
+    "loading": "Loading notifications…",
+    "error": "Couldn't load notifications. Try again.",
+    "arrived": "New notification: {text}"
+  },
+  "page": {
+    "title": "Notifications",
+    "description": "Updates about your jobs, approvals and SLAs.",
+    "filter": "Show",
+    "all": "All",
+    "unread": "Unread",
+    "markAll": "Mark all as read",
+    "markRead": "Mark as read",
+    "marked": "Marked as read",
+    "empty": "No notifications yet.",
+    "emptyUnread": "No unread notifications.",
+    "settings": "Notification settings",
+    "unreadDot": "Unread"
+  },
+  "events": {
+    "job_assigned": "{actor} assigned you to {job}",
+    "job_rescheduled": "{job} was rescheduled",
+    "portal_request": "New portal request: {job}",
+    "sla_at_risk": "SLA at risk: {job}",
+    "sla_breached": "SLA breached: {job}",
+    "expense_requested": "{actor} requested {item} on {job}",
+    "expense_decided": "{item} was {decision, select, approved {approved} other {rejected}} on {job}"
+  },
+  "detail": {
+    "starts": "Starts {when}",
+    "due": "{target, select, response {Scheduling} other {Completion}} due {when}"
+  },
+  "fallback": {
+    "actor": "Someone",
+    "job": "a job",
+    "item": "A part"
+  },
+  "eventNames": {
+    "job_assigned": "A job is assigned to me",
+    "job_rescheduled": "One of my visits is rescheduled",
+    "portal_request": "A customer sends a request from the portal",
+    "sla_at_risk": "A job is at risk of missing its SLA",
+    "sla_breached": "A job missed its SLA",
+    "expense_requested": "A part or expense needs my approval",
+    "expense_decided": "My part or expense request is decided"
+  },
+  "preferences": {
+    "title": "Notification settings",
+    "description": "Choose how FieldOps tells you about each event. Emails go to {email}.",
+    "event": "Event",
+    "inApp": "In the app",
+    "email": "Email",
+    "noEmail": "Not sent by email",
+    "toggle": "{channel}: {event}",
+    "save": "Save settings",
+    "saved": "Notification settings saved",
+    "back": "Notifications"
+  }
+}

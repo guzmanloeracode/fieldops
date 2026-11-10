@@ -40,3 +40,4 @@ export * as portal from "./services/portal";
 export * as audit from "./services/audit";
 export * as ai from "./services/ai";
 export * as sla from "./services/sla";
+export * as notifications from "./services/notifications";

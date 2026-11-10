@@ -34,6 +34,11 @@ import {
   memberSchema,
   noteCreateSchema,
   noteSchema,
+  notificationListQuerySchema,
+  notificationPreferenceSchema,
+  notificationPreferencesUpdateSchema,
+  notificationReadSchema,
+  notificationSchema,
   pageOf,
   problemSchema,
   scheduleSchema,
@@ -143,6 +148,16 @@ const jobId = z.object({
 const uuidParam = (what: string) => z.object({ id: z.uuid().meta({ description: `${what} ID` }) });
 
 const jobPage = pageOf(jobSchema, "JobPage");
+const notificationPage = z
+  .object({
+    data: z.array(notificationSchema),
+    next_cursor: z.string().nullable(),
+    unread_count: z.number().int().meta({ description: "Unread notifications in total" }),
+  })
+  .meta({ id: "NotificationPage" });
+const notificationPreferences = z
+  .object({ data: z.array(notificationPreferenceSchema) })
+  .meta({ id: "NotificationPreferences" });
 const customerPage = pageOf(customerSummarySchema, "CustomerPage");
 const list = <T extends z.ZodType>(item: T, id: string) => pageOf(item, id);
 
@@ -178,6 +193,10 @@ export function openApiDocument() {
       { name: "Customers", description: "Customers, contacts, sites and equipment" },
       { name: "Expenses", description: "Parts and expenses requested on jobs, and their approval" },
       { name: "Schedule", description: "The dispatch board's data and each member's agenda" },
+      {
+        name: "Notifications",
+        description: "The signed-in user's notifications, their settings, and the live event stream",
+      },
       { name: "Organization", description: "The current user, members and service types" },
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
     ],
@@ -449,6 +468,57 @@ export function openApiDocument() {
               }),
             ),
             ...errors(400, 415, 422, 429, 503),
+          },
+        }),
+      },
+      "/notifications": {
+        get: op("Notifications", "List my notifications", {
+          operationId: "listNotifications",
+          description:
+            "The signed-in user's notifications in the active organization, newest first. `href` is the page in the web app the notification links to.",
+          requestParams: { query: notificationListQuerySchema.omit({ page: true }) },
+          responses: { "200": json(notificationPage, "A page of notifications"), ...errors(422) },
+        }),
+      },
+      "/notifications/read": {
+        post: op("Notifications", "Mark notifications as read", {
+          operationId: "markNotificationsRead",
+          description: "Send `ids` to mark some, or `all: true` to mark every unread notification.",
+          requestParams: { header: idempotencyHeader },
+          requestBody: body(notificationReadSchema),
+          responses: {
+            "200": json(
+              z.object({ updated: z.number().int(), unread_count: z.number().int() }),
+              "How many changed, and the unread count left",
+            ),
+            ...errors(415, 422),
+          },
+        }),
+      },
+      "/notifications/preferences": {
+        get: op("Notifications", "Get my notification settings", {
+          operationId: "getNotificationPreferences",
+          description:
+            "One row per event the user's role can receive. `email` is null for events that have no email.",
+          responses: { "200": json(notificationPreferences, "Settings per event") },
+        }),
+        put: op("Notifications", "Change my notification settings", {
+          operationId: "updateNotificationPreferences",
+          description: "Events not listed keep their settings. Events of other roles are rejected (422).",
+          requestBody: body(notificationPreferencesUpdateSchema),
+          responses: { "200": json(notificationPreferences, "The saved settings"), ...errors(415, 422) },
+        }),
+      },
+      "/stream": {
+        get: op("Notifications", "Live events (server-sent events)", {
+          operationId: "streamEvents",
+          description:
+            'A `text/event-stream` that stays open. Events: `notification` (a new notification for you, with its `id`), `job` (a job in your organization changed, with its `id`), `time_off` and `expense`. Each `data` is JSON `{ "kind", "id" }`; fetch the record to see the change. A comment line is sent every 25 seconds to keep the connection open; reconnect after an error.',
+          responses: {
+            "200": {
+              description: "The event stream",
+              content: { "text/event-stream": { schema: z.string() } },
+            },
           },
         }),
       },

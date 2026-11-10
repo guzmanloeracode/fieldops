@@ -8,6 +8,8 @@ await build({
   platform: "node",
   target: "node22",
   format: "esm",
+  // The email templates (packages/email) are TSX with the automatic runtime.
+  jsx: "automatic",
   outfile: "dist/index.js",
   sourcemap: "linked",
   minifySyntax: true,

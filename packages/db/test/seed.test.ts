@@ -277,6 +277,30 @@ describe("demo seed", () => {
     for (const d of drafts.rows) expect(intakeDraftSchema.safeParse(d.output).success).toBe(true);
   });
 
+  it("seeds recent notifications, the same for the same reset time (NOT-01)", async () => {
+    const summary = (db: Database) =>
+      db
+        .execute<{ row: string }>(
+          sql`
+          select concat_ws('|', u.email, n.type, n.payload->>'job_number', n.created_at, n.read_at is null) as row
+          from notification n join "user" u on u.id = n.user_id
+          order by u.email, n.created_at, n.type, n.payload->>'job_number'`,
+        )
+        .then((r) => r.rows.map((x) => x.row));
+    const [a, b] = await Promise.all([summary(first.owner), summary(second.owner)]);
+    expect(a).toEqual(b);
+    const r = await first.owner.execute<{ type: string; unread: number; future: number; old: number }>(sql`
+      select n.type, count(*) filter (where n.read_at is null)::int as unread,
+        count(*) filter (where n.created_at > ${NOW})::int as future,
+        count(*) filter (where n.created_at < ${new Date(NOW.getTime() - 8 * 86_400_000)})::int as old
+      from notification n join "user" u on u.id = n.user_id
+      where u.email = ${DEMO_LOGINS["acme-air"].technician} group by n.type`);
+    const tom = new Map(r.rows.map((x) => [x.type, x]));
+    expect(tom.get("job_assigned")).toBeDefined();
+    expect(r.rows.every((x) => x.future === 0 && x.old === 0)).toBe(true);
+    expect(r.rows.reduce((n, x) => n + x.unread, 0)).toBeGreaterThan(0);
+  });
+
   it("wipes everything before a reset", async () => {
     await wipeAll(second.owner);
     const r = await second.owner.execute<{ n: number }>(

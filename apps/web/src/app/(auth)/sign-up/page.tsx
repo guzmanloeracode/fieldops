@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { env } from "@/env";
+import { env, googleConfigured } from "@/env";
 import { SignUpForm } from "./sign-up-form";
 
 export const metadata: Metadata = { title: "Create an account" };
@@ -15,6 +15,7 @@ export default async function SignUpPage({
       demo={env.DEMO_MODE}
       defaultEmail={email ?? ""}
       next={next?.startsWith("/") ? next : undefined}
+      google={googleConfigured}
     />
   );
 }

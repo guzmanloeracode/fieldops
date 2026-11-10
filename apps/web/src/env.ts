@@ -32,10 +32,16 @@ const schema = z.object({
   AI_USER_HOURLY_LIMIT: z.coerce.number().int().min(0).default(20),
   AI_VISITOR_DAILY_LIMIT: z.coerce.number().int().min(0).default(15),
   AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(300),
+  /** Google sign-in (AUTH-02). The button only shows when both are set. */
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 });
 
 export const env = schema.parse(process.env);
 /** Cloudflare R2 is configured. Without it, uploads go to the local disk (ADR 015). */
+/** Google OAuth is configured (AUTH-02). */
+export const googleConfigured = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+
 export const r2Configured = Boolean(
   env.S3_ENDPOINT && env.S3_BUCKET && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY,
 );

@@ -1,7 +1,10 @@
 import { render } from "@react-email/render";
 import { createElement } from "react";
+import { NotificationEmail, notificationCopy, type NotificationEmailProps } from "./notification";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
 import { PortalSignIn } from "./portal";
+
+export { notificationCopy, type NotificationEmailEvent, type NotificationEmailProps } from "./notification";
 
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
@@ -15,7 +18,8 @@ export type EmailMessage =
       kind: "portal.magic_link";
       to: string;
       props: { name: string; organizationName: string; url: string; minutes: number };
-    };
+    }
+  | { kind: "notification"; to: string; props: NotificationEmailProps };
 
 export interface RenderedEmail {
   subject: string;
@@ -42,6 +46,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "portal.magic_link":
       subject = `Your sign-in link for ${message.props.organizationName}`;
       element = createElement(PortalSignIn, message.props);
+      break;
+    case "notification":
+      subject = notificationCopy(message.props).subject;
+      element = createElement(NotificationEmail, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);

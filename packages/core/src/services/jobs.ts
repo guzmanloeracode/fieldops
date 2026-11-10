@@ -16,6 +16,7 @@ import { assertTransition, availableTransitions, findTransition } from "../domai
 import { assertCan, seesOnlyAssigned } from "../domain/permissions";
 import { assertValidWindow } from "../domain/schedule";
 import * as checklist from "./checklist";
+import * as notifications from "./notifications";
 import { getJob, isAssigned } from "./job-access";
 import * as signatures from "./signature";
 import * as sla from "./sla";
@@ -276,7 +277,9 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
         : {}),
     },
   });
-  return (await ctx.store.jobs.get(job.id))!;
+  const after = (await ctx.store.jobs.get(job.id))!;
+  await notifications.afterAssignment(ctx, job, after);
+  return after;
 }
 
 /** The conflicts an assignment would raise, without saving anything (for the dispatch board). */

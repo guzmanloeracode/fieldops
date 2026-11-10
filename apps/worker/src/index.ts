@@ -51,6 +51,11 @@ async function run() {
     await pool.query(`delete from portal_token where expires_at < now() - interval '1 day'`);
     await pool.query(`delete from portal_session where expires_at < now()`);
     await pool.query(`delete from rate_limit where window_start < now() - interval '2 days'`);
+    // Read notifications are kept 90 days, unread ones a year (NOT-01).
+    await pool.query(
+      `delete from notification where (read_at is not null and created_at < now() - interval '90 days')
+         or created_at < now() - interval '365 days'`,
+    );
     log.info("maintenance done");
   });
 
