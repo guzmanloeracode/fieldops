@@ -46,6 +46,8 @@ export type Action =
   | "dashboard.financial"
   | "audit.view"
   | "ai.use"
+  | "ai.manage"
+  | "sla.manage"
   | "demoOutbox.view";
 
 /**
@@ -106,6 +108,10 @@ const RULES: Record<Action, Rule> = {
   "dashboard.financial": MANAGERS,
   "audit.view": MANAGERS,
   "ai.use": officeOrAssigned,
+  // AI settings: on or off and the monthly quota (SET-04).
+  "ai.manage": MANAGERS,
+  // SLA policies (SLA-01, SET-03).
+  "sla.manage": MANAGERS,
   "demoOutbox.view": MANAGERS,
 };
 

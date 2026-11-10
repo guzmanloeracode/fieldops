@@ -7,6 +7,7 @@ import { resolveActor, type ResolvedActor } from "@/server/context";
 import { db } from "@/server/db";
 import { files } from "@/server/files";
 import { logger } from "@/server/logger";
+import { metaFromHeaders } from "@/server/request-meta";
 import { claimIdempotencyKey, hashBody, readIdempotencyKey, storeIdempotentResponse } from "./idempotency";
 import { ApiProblem, internalProblem, problemFromError, type ProblemBody } from "./problem";
 
@@ -114,32 +115,37 @@ export function apiRoute<P extends Record<string, string> = Record<string, never
       const key = req.method === "POST" ? readIdempotencyKey(req) : null;
       const requestHash = key ? await hashBody(text) : "";
 
-      const result = await withStore(db, actor.organizationId, async (store, tx) => {
-        const scope = key
-          ? {
-              organizationId: actor.organizationId,
-              userId: actor.userId,
-              key,
-              method: req.method,
-              path: url.pathname,
-              requestHash,
-            }
-          : null;
-        if (scope) {
-          const replay = await claimIdempotencyKey(tx, scope);
-          if (replay)
-            return {
-              status: replay.status,
-              body: replay.body ?? undefined,
-              headers: { "Idempotent-Replayed": "true" },
-            };
-        }
-        const ctx: ServiceContext = { actor, store, now: new Date(), demo: env.DEMO_MODE, files };
-        const out = await handler({ req, url, params, body: json, ctx, actor, tx, requestId });
-        const status = out.status ?? 200;
-        if (scope) await storeIdempotentResponse(tx, scope, status, out.body);
-        return { ...out, status };
-      });
+      const result = await withStore(
+        db,
+        actor.organizationId,
+        async (store, tx) => {
+          const scope = key
+            ? {
+                organizationId: actor.organizationId,
+                userId: actor.userId,
+                key,
+                method: req.method,
+                path: url.pathname,
+                requestHash,
+              }
+            : null;
+          if (scope) {
+            const replay = await claimIdempotencyKey(tx, scope);
+            if (replay)
+              return {
+                status: replay.status,
+                body: replay.body ?? undefined,
+                headers: { "Idempotent-Replayed": "true" },
+              };
+          }
+          const ctx: ServiceContext = { actor, store, now: new Date(), demo: env.DEMO_MODE, files };
+          const out = await handler({ req, url, params, body: json, ctx, actor, tx, requestId });
+          const status = out.status ?? 200;
+          if (scope) await storeIdempotentResponse(tx, scope, status, out.body);
+          return { ...out, status };
+        },
+        { userId: actor.userId, ...metaFromHeaders(req.headers) },
+      );
       log.info({ status: result.status, orgId: actor.organizationId, userId: actor.userId }, "api request");
       return respond(result.status ?? 200, result.body, { ...result.headers, "X-Request-Id": requestId });
     } catch (err) {

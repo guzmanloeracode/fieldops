@@ -16,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { member, organization, user } from "./auth";
+import { slaPolicy } from "./automate";
 
 // Tenant-scoped tables. Every one carries organization_id, every index starts with it, and row-level
 // security (migration 0001) limits rows to the organization set in `app.org_id` (ADR 003).
@@ -204,6 +205,18 @@ export const job = pgTable(
     revisit: boolean("revisit").notNull().default(false),
     aiDrafted: boolean("ai_drafted").notNull().default(false),
     needsReview: boolean("needs_review").notNull().default(false),
+    /** Portal requests waiting for, or done with, an AI draft (AI-01): pending | drafted | failed | skipped. */
+    aiStatus: text("ai_status"),
+    /** The policy the deadlines came from (SLA-01). Null when the defaults applied. */
+    slaPolicyId: uuid("sla_policy_id").references(() => slaPolicy.id, { onDelete: "set null" }),
+    responseDueAt: timestamp("response_due_at", { withTimezone: true }),
+    resolutionDueAt: timestamp("resolution_due_at", { withTimezone: true }),
+    /** When 75% of each window is used, in the policy's time basis: the job turns "at risk" (SLA-02). */
+    responseAtRiskAt: timestamp("response_at_risk_at", { withTimezone: true }),
+    resolutionAtRiskAt: timestamp("resolution_at_risk_at", { withTimezone: true }),
+    /** on_track | at_risk | breached | met (SLA-02). Updated on status changes and by the SLA monitor. */
+    slaResponseState: text("sla_response_state"),
+    slaResolutionState: text("sla_resolution_state"),
     createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
     version: integer("version").notNull().default(1),
     createdAt: createdAt(),
@@ -220,6 +233,10 @@ export const job = pgTable(
     index("job_org_customer_idx").on(t.organizationId, t.customerId),
     index("job_org_site_idx").on(t.organizationId, t.siteId),
     index("job_title_trgm_idx").using("gin", t.title.op("gin_trgm_ops")),
+    index("job_org_resolution_due_idx").on(t.organizationId, t.resolutionDueAt),
+    index("job_org_ai_status_idx")
+      .on(t.organizationId, t.aiStatus)
+      .where(sql`ai_status = 'pending'`),
   ],
 );
 
@@ -493,4 +510,13 @@ export const TENANT_TABLES = [
   "time_entry",
   "expense_request",
   "saved_view",
+  // 0.3 (schema/automate.ts)
+  "sla_policy",
+  "sla_alert",
+  "notification",
+  "notification_preference",
+  "audit_log",
+  "portal_token",
+  "portal_session",
+  "ai_interaction",
 ] as const;

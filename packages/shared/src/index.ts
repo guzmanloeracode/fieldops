@@ -5,3 +5,8 @@ export * from "./dispatch";
 export * from "./fieldwork";
 export * from "./expenses";
 export * from "./insights";
+export * from "./notifications";
+export * from "./sla";
+export * from "./audit";
+export * from "./portal";
+export * from "./ai";

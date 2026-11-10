@@ -13,6 +13,8 @@ import {
   NOTE_VISIBILITIES,
   ROLES,
   CHECKLIST_ITEM_KINDS,
+  SLA_STATES,
+  AI_STATUSES,
 } from "./constants";
 
 // Inputs and API representations use snake_case, matching the public REST API (/api/v1).
@@ -24,6 +26,8 @@ export const jobPrioritySchema = z.enum(JOB_PRIORITIES).meta({ id: "JobPriority"
 export const jobSourceSchema = z.enum(JOB_SOURCES).meta({ id: "JobSource" });
 export const customerTypeSchema = z.enum(CUSTOMER_TYPES).meta({ id: "CustomerType" });
 export const currencySchema = z.enum(CURRENCIES).meta({ id: "Currency" });
+export const slaStateSchema = z.enum(SLA_STATES).meta({ id: "SlaState" });
+export const aiStatusSchema = z.enum(AI_STATUSES).meta({ id: "AiStatus" });
 
 // ---------------------------------------------------------------- addresses
 export const addressSchema = z
@@ -410,6 +414,13 @@ export const jobSchema = z
     hold_reason: z.enum(HOLD_REASONS).nullable(),
     needs_review: z.boolean(),
     ai_drafted: z.boolean(),
+    ai_status: aiStatusSchema
+      .nullable()
+      .meta({ description: "AI drafting of a portal request; null for other jobs" }),
+    response_due_at: ts.nullable().meta({ description: "SLA: schedule with a technician by this time" }),
+    resolution_due_at: ts.nullable().meta({ description: "SLA: complete by this time" }),
+    sla_response_state: slaStateSchema.nullable(),
+    sla_resolution_state: slaStateSchema.nullable(),
     version: z.number().int().meta({ description: "Increments on every change. Sent as the ETag." }),
     created_at: ts,
     updated_at: ts,

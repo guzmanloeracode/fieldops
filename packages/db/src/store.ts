@@ -1,5 +1,5 @@
 import type { Store } from "@fieldops/core";
-import { withTenant, type Database, type Tx } from "./client";
+import { withTenant, type Database, type Tx, type TxContext } from "./client";
 import { customerRepo } from "./repos/customers";
 import { expenseRepo } from "./repos/expenses";
 import { dashboardRepo } from "./repos/dashboard";
@@ -11,6 +11,11 @@ import { attachmentRepo, noteRepo } from "./repos/notes";
 import { memberRepo, organizationRepo, serviceTypeRepo } from "./repos/organization";
 import { availabilityRepo, scheduleRepo } from "./repos/schedule";
 import { equipmentRepo, siteRepo } from "./repos/sites";
+import { aiRepo } from "./repos/ai";
+import { auditRepo } from "./repos/audit";
+import { notificationRepo } from "./repos/notifications";
+import { portalRepo } from "./repos/portal";
+import { slaRepo } from "./repos/sla";
 
 /** Builds the repositories for one organization on top of an open transaction. */
 export function createStore(tx: Tx, organizationId: string): Store {
@@ -34,6 +39,12 @@ export function createStore(tx: Tx, organizationId: string): Store {
     timeEntries: timeEntryRepo(tx, organizationId),
     availability: availabilityRepo(tx, organizationId),
     schedule: scheduleRepo(tx, organizationId),
+    // 0.3 automate
+    sla: slaRepo(tx, organizationId),
+    notifications: notificationRepo(tx, organizationId),
+    audit: auditRepo(tx, organizationId),
+    portal: portalRepo(tx, organizationId),
+    ai: aiRepo(tx, organizationId),
   };
 }
 
@@ -42,6 +53,7 @@ export function withStore<T>(
   db: Database,
   organizationId: string,
   fn: (store: Store, tx: Tx) => Promise<T>,
+  context?: TxContext,
 ): Promise<T> {
-  return withTenant(db, organizationId, (tx) => fn(createStore(tx, organizationId), tx));
+  return withTenant(db, organizationId, (tx) => fn(createStore(tx, organizationId), tx), context);
 }

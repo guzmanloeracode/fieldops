@@ -25,6 +25,7 @@ import { fieldworkRepos, type MemoryChecklistItem, type MemoryTimeEntry } from "
 import { memoryExpenses } from "./memory-expenses";
 import type { TimeOffRecord } from "../services/dispatch-types";
 import { memoryDispatch } from "./memory-dispatch";
+import { memoryAutomate, type MemoryAutomate } from "./memory-automate";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -52,6 +53,8 @@ export interface MemoryData {
   timeEntries: MemoryTimeEntry[];
   counter: number;
   timeOff?: TimeOffRecord[];
+  /** 0.3 repositories (memory-automate.ts). */
+  automate?: MemoryAutomate;
 }
 
 export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; data: MemoryData } {
@@ -72,6 +75,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
       settings: {
         approval: { autoApproveBelowMinor: 5000, dispatcherLimitMinor: 25000 },
         requireSignature: false,
+        ai: { enabled: true, monthlyQuota: 500 },
       },
       isDemo: false,
     },
@@ -270,6 +274,14 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
       },
       async create(input) {
         const j: JobRecord = {
+          aiStatus: null,
+          slaPolicyId: null,
+          responseDueAt: null,
+          resolutionDueAt: null,
+          responseAtRiskAt: null,
+          resolutionAtRiskAt: null,
+          slaResponseState: null,
+          slaResolutionState: null,
           ...input,
           id: uuid(),
           status: "new",
@@ -407,6 +419,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     expenses: memoryExpenses(data, uuid),
     ...insights.repos,
     ...fieldworkRepos(data, uuid),
+    ...memoryAutomate(data, uuid),
   };
   return { store, data };
 }

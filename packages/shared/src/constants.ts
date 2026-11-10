@@ -79,8 +79,8 @@ export type ConflictKind = (typeof CONFLICT_KINDS)[number];
 export const SUGGESTED_SKILLS = ["ac", "install", "refrigerant", "duct", "cleaning", "electrical"] as const;
 
 /**
- * Provisional response and resolution targets per priority, in minutes. KPIs use them until SLA policies
- * (SLA-01) arrive in 0.3 and store real deadlines on each job.
+ * Default response and resolution targets per priority, in minutes, counted in calendar time. They apply
+ * when an organization has no SLA policy for a priority (SLA-01), and to jobs created before 0.3.
  */
 export const DEFAULT_SLA_TARGETS: Record<JobPriority, { responseMin: number; resolutionMin: number }> = {
   urgent: { responseMin: 2 * 60, resolutionMin: 24 * 60 },
@@ -112,3 +112,54 @@ export const DEMO_ATTACHMENT_TYPES = ["image/jpeg", "image/png", "image/webp"] a
 
 export const INVITATION_TTL_DAYS = 7;
 export const PAGE_SIZES = [25, 50, 100] as const;
+
+// ---------------------------------------------------------------- 0.3 Automate
+
+/** The two SLA clocks (SLA-01): response = scheduled with a technician; resolution = completed. */
+export const SLA_TARGETS = ["response", "resolution"] as const;
+export type SlaTarget = (typeof SLA_TARGETS)[number];
+
+/** SLA state per target (SLA-02). "At risk" starts when 75% of the window is used. */
+export const SLA_STATES = ["on_track", "at_risk", "breached", "met"] as const;
+export type SlaState = (typeof SLA_STATES)[number];
+export const SLA_AT_RISK_SHARE = 0.75;
+
+/** Events users are notified about (NOT-01, PRD §8.7 notification matrix). */
+export const NOTIFICATION_EVENTS = [
+  "job_assigned",
+  "job_rescheduled",
+  "portal_request",
+  "sla_at_risk",
+  "sla_breached",
+  "expense_requested",
+  "expense_decided",
+] as const;
+export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
+
+/**
+ * Default channels per event, from the notification matrix. `email: null` means the event has no email
+ * (the channel isn't offered in the preferences either). Users change the rest per event (NOT-03).
+ */
+export const NOTIFICATION_DEFAULTS: Record<NotificationEvent, { inApp: boolean; email: boolean | null }> = {
+  job_assigned: { inApp: true, email: true },
+  job_rescheduled: { inApp: true, email: true },
+  portal_request: { inApp: true, email: true },
+  sla_at_risk: { inApp: true, email: true },
+  sla_breached: { inApp: true, email: true },
+  expense_requested: { inApp: true, email: null },
+  expense_decided: { inApp: true, email: null },
+};
+
+/** Where a portal request is in AI drafting (AI-01). Null for jobs that didn't come from the portal. */
+export const AI_STATUSES = ["pending", "drafted", "failed", "skipped"] as const;
+export type AiStatus = (typeof AI_STATUSES)[number];
+
+export const AI_FEATURES = ["intake"] as const;
+export type AiFeature = (typeof AI_FEATURES)[number];
+
+/** What happened to an AI call's output (§9.1 "Measured"). */
+export const AI_OUTCOMES = ["drafted", "accepted", "edited", "discarded", "refused", "failed"] as const;
+export type AiOutcome = (typeof AI_OUTCOMES)[number];
+
+/** AI settings per organization (SET-04). The quota counts AI calls per calendar month. */
+export const DEFAULT_AI_SETTINGS = { enabled: true, monthlyQuota: 500 } as const;

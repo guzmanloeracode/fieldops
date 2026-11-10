@@ -8,6 +8,7 @@ import type {
   ServiceTypeRepo,
 } from "@fieldops/core";
 import {
+  DEFAULT_AI_SETTINGS,
   DEFAULT_APPROVAL_THRESHOLDS,
   type Address,
   type ChecklistTemplateItem,
@@ -22,6 +23,7 @@ import { definedOnly } from "./util";
 interface StoredSettings {
   approval?: { auto_approve_below_minor?: number; dispatcher_limit_minor?: number };
   require_signature?: boolean;
+  ai?: { enabled?: boolean; monthly_quota?: number };
   [key: string]: unknown;
 }
 
@@ -35,6 +37,10 @@ export function toSettings(raw: unknown, currency: Currency): OrganizationSettin
       dispatcherLimitMinor: s.approval?.dispatcher_limit_minor ?? d.dispatcherLimitMinor,
     },
     requireSignature: s.require_signature ?? false,
+    ai: {
+      enabled: s.ai?.enabled ?? DEFAULT_AI_SETTINGS.enabled,
+      monthlyQuota: s.ai?.monthly_quota ?? DEFAULT_AI_SETTINGS.monthlyQuota,
+    },
   };
 }
 
@@ -46,6 +52,7 @@ function fromSettings(settings: OrganizationSettings, existing: unknown): Stored
       dispatcher_limit_minor: settings.approval.dispatcherLimitMinor,
     },
     require_signature: settings.requireSignature,
+    ai: { enabled: settings.ai.enabled, monthly_quota: settings.ai.monthlyQuota },
   };
 }
 

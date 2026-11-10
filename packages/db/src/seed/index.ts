@@ -2,13 +2,18 @@ import { Faker, base, en, en_US, id_ID } from "@faker-js/faker";
 import { hashPassword } from "better-auth/crypto";
 import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
-import type { Database, Tx } from "../client";
+import { quiet, type Database, type Tx } from "../client";
 import * as s from "../schema";
 import { ORGS, ROOMS, ROOMS_ID, type OrgSpec } from "./data";
 import { seedDispatch } from "./dispatch";
 import { seedExpenses } from "./expenses";
 import { seedFieldwork } from "./fieldwork";
 import { seedInsights } from "./insights";
+import { seedAi } from "./ai";
+import { seedAudit } from "./audit";
+import { seedNotifications } from "./notifications";
+import { seedPortal } from "./portal";
+import { seedSla } from "./sla";
 import type { SeedContext } from "./context";
 import { DAY, insertBatches, localDate, zoned } from "./time";
 export { DEMO_LOGINS, ORGS, type DemoOrg, type DemoRole } from "./data";
@@ -35,6 +40,8 @@ const SEED = 20261110;
 /** Removes all data. Used by the nightly demo reset before seeding again (DEM-04). */
 export async function wipeAll(db: Database) {
   await db.execute(sql`truncate table
+    "audit_log", "notification", "notification_preference", "sla_alert", "ai_interaction", "portal_token",
+    "portal_session", "rate_limit", "sla_policy",
     "email_outbox", "idempotency_key", "saved_view", "expense_request", "time_entry", "time_off",
     "attachment", "note", "job_event", "checklist_item", "job_assignment", "job",
     "equipment", "site", "contact", "customer", "service_type", "org_counter",
@@ -47,6 +54,8 @@ export async function seedDemo(db: Database, opts: SeedOptions): Promise<SeedRes
   const result: SeedResult = { organizations: [], demoUsers: [] };
   for (const [i, spec] of ORGS.entries()) {
     await db.transaction(async (tx) => {
+      // Bulk inserts aren't user actions: no audit rows, no live events.
+      await quiet(tx);
       const r = await seedOrg(tx, spec, { now, passwordHash, seed: SEED + i, days: opts.days ?? 180 });
       result.organizations.push(r.org);
       result.demoUsers.push(...r.demoUsers);
@@ -704,7 +713,7 @@ async function seedOrg(
         and e.type in ('status_changed', 'assigned')
         and ((e.from_status = 'on_hold' and e.to_status = 'scheduled') or (e.from_status = 'completed' and e.to_status = 'in_progress')))`);
 
-  // 0.2 extensions, each with its own deterministic random stream so they don't shift each other.
+  // Extensions, each with its own deterministic random stream so they don't shift each other.
   const ext: SeedContext = {
     tx,
     orgId,
@@ -723,6 +732,13 @@ async function seedOrg(
   await seedFieldwork(ext);
   await seedExpenses(ext);
   await seedInsights(ext);
+  // 0.3 extensions. SLA first (deadlines and states on every job), then portal requests, their AI drafts,
+  // notifications about all of the above, and finally the audit history.
+  await seedSla(ext);
+  await seedPortal(ext);
+  await seedAi(ext);
+  await seedNotifications(ext);
+  await seedAudit(ext);
 
   return {
     org: { id: orgId, slug: spec.slug, name: spec.name, jobs: jobs.length, customers: customers.length },

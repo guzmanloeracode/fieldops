@@ -42,6 +42,8 @@ const MATRIX: Record<Action, Expect> = {
   "dashboard.financial": { owner: true, admin: true, dispatcher: false, technician: false },
   "audit.view": { owner: true, admin: true, dispatcher: false, technician: false },
   "ai.use": { owner: true, admin: true, dispatcher: true, technician: "assigned" },
+  "ai.manage": { owner: true, admin: true, dispatcher: false, technician: false },
+  "sla.manage": { owner: true, admin: true, dispatcher: false, technician: false },
   "demoOutbox.view": { owner: true, admin: true, dispatcher: false, technician: false },
 };
 

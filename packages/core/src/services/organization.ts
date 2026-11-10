@@ -9,7 +9,7 @@ import { ConflictError, DemoRestrictedError, NotFoundError } from "../domain/err
 import { assertCan, canChangeRole } from "../domain/permissions";
 import { ForbiddenError } from "../domain/errors";
 import { parseInput } from "./validate";
-import type { ServiceContext } from "./types";
+import type { OrganizationRecord, ServiceContext } from "./types";
 
 export async function getOrganization(ctx: ServiceContext) {
   return ctx.store.organization.get();
@@ -36,14 +36,24 @@ export async function updateOrganization(ctx: ServiceContext, raw: unknown) {
 export async function getOperationsSettings(ctx: ServiceContext) {
   assertCan(ctx.actor, "settings.operations");
   const org = await ctx.store.organization.get();
-  return { currency: org.currency, ...org.settings };
+  return operationsOf(org);
+}
+
+function operationsOf(org: OrganizationRecord) {
+  return {
+    currency: org.currency,
+    approval: org.settings.approval,
+    requireSignature: org.settings.requireSignature,
+  };
 }
 
 export async function updateOperationsSettings(ctx: ServiceContext, raw: unknown) {
   assertCan(ctx.actor, "settings.operations");
   const input = parseInput(operationsSettingsSchema, raw);
+  const current = await ctx.store.organization.get();
   const org = await ctx.store.organization.update({
     settings: {
+      ...current.settings,
       approval: {
         autoApproveBelowMinor: input.auto_approve_below_minor,
         dispatcherLimitMinor: input.dispatcher_limit_minor,
@@ -51,7 +61,7 @@ export async function updateOperationsSettings(ctx: ServiceContext, raw: unknown
       requireSignature: input.require_signature,
     },
   });
-  return { currency: org.currency, ...org.settings };
+  return operationsOf(org);
 }
 
 // ------------------------------------------------------------------ members (SET-02)

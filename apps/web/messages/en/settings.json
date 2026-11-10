@@ -5,7 +5,10 @@
     "organization": "Organization",
     "members": "Members",
     "serviceTypes": "Service types",
-    "demoOutbox": "Demo outbox"
+    "demoOutbox": "Demo outbox",
+    "sla": "SLA policies",
+    "ai": "AI",
+    "audit": "Audit log"
   },
   "organization": {
     "title": "Organization",

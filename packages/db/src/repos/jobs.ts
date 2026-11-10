@@ -15,6 +15,8 @@ import {
   type JobPriority,
   type JobSource,
   type JobStatus,
+  type AiStatus,
+  type SlaState,
 } from "@fieldops/shared";
 import { and, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { Tx } from "../client";
@@ -131,6 +133,14 @@ export function toJobRecord(r: typeof job.$inferSelect): JobRecord {
     revisit: r.revisit,
     aiDrafted: r.aiDrafted,
     needsReview: r.needsReview,
+    aiStatus: (r.aiStatus as AiStatus | null) ?? null,
+    slaPolicyId: r.slaPolicyId,
+    responseDueAt: r.responseDueAt,
+    resolutionDueAt: r.resolutionDueAt,
+    responseAtRiskAt: r.responseAtRiskAt,
+    resolutionAtRiskAt: r.resolutionAtRiskAt,
+    slaResponseState: (r.slaResponseState as SlaState | null) ?? null,
+    slaResolutionState: (r.slaResolutionState as SlaState | null) ?? null,
     createdBy: r.createdBy,
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,

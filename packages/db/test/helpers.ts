@@ -198,6 +198,48 @@ export async function createOrgWithData(db: Database, label: string) {
     currency: "USD",
     reason: "Pump failed",
   });
+  // 0.3 tables. audit_log fills itself: the inserts above went through the audit trigger.
+  const policyId = id();
+  await db.insert(s.slaPolicy).values({
+    id: policyId,
+    organizationId: orgId,
+    priority: "normal",
+    responseMin: 24 * 60,
+    resolutionMin: 7 * 24 * 60,
+  });
+  await db
+    .insert(s.slaAlert)
+    .values({ organizationId: orgId, jobId: ids.job, target: "response", kind: "at_risk" });
+  await db.insert(s.notification).values({
+    organizationId: orgId,
+    userId: users.tech,
+    type: "job_assigned",
+    payload: { job_id: ids.job, job_number: 1 },
+  });
+  await db
+    .insert(s.notificationPreference)
+    .values({ organizationId: orgId, userId: users.tech, event: "job_assigned", email: false });
+  await db.insert(s.portalToken).values({
+    organizationId: orgId,
+    contactId: ids.contact,
+    tokenHash: `token-${label}`,
+    expiresAt: new Date("2026-11-11T00:15:00Z"),
+  });
+  await db.insert(s.portalSession).values({
+    organizationId: orgId,
+    contactId: ids.contact,
+    customerId: ids.customer,
+    tokenHash: `session-${label}`,
+    expiresAt: new Date("2026-12-11T00:00:00Z"),
+  });
+  await db.insert(s.aiInteraction).values({
+    organizationId: orgId,
+    userId: users.dispatcher,
+    jobId: ids.job,
+    feature: "intake",
+    model: "claude-opus-5-5",
+    outcome: "accepted",
+  });
   await db.insert(s.savedView).values({
     organizationId: orgId,
     memberId: members.dispatcher,

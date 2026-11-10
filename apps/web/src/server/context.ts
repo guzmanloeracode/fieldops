@@ -11,6 +11,7 @@ import { auth } from "./auth";
 import { db } from "./db";
 import { files } from "./files";
 import { logger } from "./logger";
+import { requestMeta } from "./request-meta";
 
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
@@ -83,7 +84,12 @@ function context(actor: Actor, store: ServiceContext["store"]): ServiceContext {
 /** Runs a core service for the signed-in member in one tenant-scoped transaction. */
 export async function runService<T>(fn: (ctx: ServiceContext) => Promise<T>, actor?: Actor): Promise<T> {
   const a = actor ?? (await requireActor());
-  return withStore(db, a.organizationId, (store) => fn(context(a, store)));
+  const meta = await requestMeta();
+  return withStore(db, a.organizationId, (store) => fn(context(a, store)), {
+    userId: a.userId,
+    ip: meta.ip,
+    userAgent: meta.userAgent,
+  });
 }
 
 export type ActionResult<T> =

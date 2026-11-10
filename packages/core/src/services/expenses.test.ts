@@ -68,6 +68,7 @@ describe("expenseTotal, canDecideExpense, summarizeExpenses", () => {
     const settings = {
       approval: { autoApproveBelowMinor: 5000, dispatcherLimitMinor: 25000 },
       requireSignature: false,
+      ai: { enabled: true, monthlyQuota: 500 },
     };
     expect(expenses.canDecideExpense({ role: "dispatcher" }, { totalMinor: 24999 }, settings)).toBe(true);
     expect(expenses.canDecideExpense({ role: "dispatcher" }, { totalMinor: 25000 }, settings)).toBe(false);

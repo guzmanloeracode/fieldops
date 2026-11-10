@@ -14,12 +14,19 @@ import type {
   JobStatus,
   NoteVisibility,
   Role,
+  SlaState,
+  AiStatus,
 } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
 import type { ExpenseRepo } from "./expense-types";
 import type { DashboardRepo, EquipmentHistoryRow, SavedViewRepo, SearchRepo } from "./insights-types";
 import type { ChecklistRepo, TimeEntryRepo } from "./fieldwork-types";
 import type { AvailabilityRepo, ScheduleRepo } from "./dispatch-types";
+import type { SlaRepo } from "./sla-types";
+import type { NotificationMailer, NotificationRepo } from "./notification-types";
+import type { AuditRepo } from "./audit-types";
+import type { PortalRepo } from "./portal-types";
+import type { AiRepo } from "./ai-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -120,6 +127,16 @@ export interface JobRecord {
   revisit: boolean;
   aiDrafted: boolean;
   needsReview: boolean;
+  /** AI drafting of a portal request (AI-01); null for other jobs. */
+  aiStatus: AiStatus | null;
+  /** SLA (SLA-01, SLA-02): the policy used, the deadlines, when each window is 75% used, and the states. */
+  slaPolicyId: string | null;
+  responseDueAt: Date | null;
+  resolutionDueAt: Date | null;
+  responseAtRiskAt: Date | null;
+  resolutionAtRiskAt: Date | null;
+  slaResponseState: SlaState | null;
+  slaResolutionState: SlaState | null;
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -209,6 +226,8 @@ export interface OrganizationSettings {
   approval: { autoApproveBelowMinor: number; dispatcherLimitMinor: number };
   /** Completing a job needs a customer signature (JOB-10). */
   requireSignature: boolean;
+  /** AI features on or off and the monthly number of AI calls allowed (SET-04). */
+  ai: { enabled: boolean; monthlyQuota: number };
 }
 
 export interface OrganizationRecord {
@@ -303,6 +322,16 @@ export interface ServiceTypeRepo {
   update(id: string, patch: Partial<Omit<ServiceTypeRecord, "id">>): Promise<ServiceTypeRecord | null>;
 }
 
+/** SLA columns: set when a job is created or its priority changes, then kept current (SLA-02). */
+export type JobSlaField =
+  | "slaPolicyId"
+  | "responseDueAt"
+  | "resolutionDueAt"
+  | "responseAtRiskAt"
+  | "resolutionAtRiskAt"
+  | "slaResponseState"
+  | "slaResolutionState";
+
 export interface JobRepo {
   list(filters: JobListFilters): Promise<Page<JobView>>;
   get(id: string): Promise<JobView | null>;
@@ -323,7 +352,10 @@ export interface JobRepo {
       | "holdReason"
       | "firstScheduledAt"
       | "revisit"
-    >,
+      | JobSlaField
+      | "aiStatus"
+    > &
+      Partial<Pick<JobRecord, JobSlaField | "aiStatus">>,
   ): Promise<JobRecord>;
   /** Applies the patch and bumps the version. With `expectedVersion`, returns null on a version mismatch. */
   update(
@@ -399,6 +431,12 @@ export interface Store {
   // 0.2 dispatch (SCH)
   availability: AvailabilityRepo;
   schedule: ScheduleRepo;
+  // 0.3 automate
+  sla: SlaRepo;
+  notifications: NotificationRepo;
+  audit: AuditRepo;
+  portal: PortalRepo;
+  ai: AiRepo;
 }
 
 export interface FileStorage {
@@ -420,4 +458,6 @@ export interface ServiceContext {
   /** Public demo safeguards (DEM-05). */
   demo: boolean;
   files?: FileStorage;
+  /** Sends notification emails through the outbox, in the same transaction (NOT-02). */
+  mailer?: NotificationMailer;
 }

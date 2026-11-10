@@ -47,16 +47,21 @@ export async function createOrganizationAction(
     };
   }
   // A few starter service types so the first job can be created right away.
-  await withStore(db, orgId, async (_store, tx) => {
-    await tx.insert(schema.serviceType).values(
-      STARTER_SERVICES.map((s) => ({
-        organizationId: orgId,
-        name: s.name,
-        defaultDurationMin: s.defaultDurationMin,
-        defaultPriceMinor: s.price[v.currency],
-        currency: v.currency,
-      })),
-    );
-  });
+  await withStore(
+    db,
+    orgId,
+    async (_store, tx) => {
+      await tx.insert(schema.serviceType).values(
+        STARTER_SERVICES.map((s) => ({
+          organizationId: orgId,
+          name: s.name,
+          defaultDurationMin: s.defaultDurationMin,
+          defaultPriceMinor: s.price[v.currency],
+          currency: v.currency,
+        })),
+      );
+    },
+    { userId: session.user.id },
+  );
   redirect("/dashboard");
 }
