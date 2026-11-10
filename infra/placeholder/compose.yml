@@ -1,0 +1,13 @@
+# Project page shown at fieldops.tinggalpake.com until release 0.1 replaces it with the web app.
+name: fieldops
+
+services:
+  web:
+    image: nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8097:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+    mem_limit: 32m
+    cpus: 0.2

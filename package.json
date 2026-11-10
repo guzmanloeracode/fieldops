@@ -1,0 +1,32 @@
+{
+  "name": "fieldops",
+  "private": true,
+  "description": "Field service management SaaS for small service businesses",
+  "license": "MIT",
+  "packageManager": "pnpm@10.34.9",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:int": "pnpm --filter @fieldops/db test:int",
+    "test:e2e": "pnpm --filter @fieldops/web test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @fieldops/db generate",
+    "db:migrate": "pnpm --filter @fieldops/db migrate",
+    "db:seed": "pnpm --filter @fieldops/db seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2"
+  }
+}

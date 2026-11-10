@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FieldOps — field service management (in development)</title>
+<meta name="description" content="FieldOps is an open-source field service management SaaS for small service businesses. The live demo opens with release 0.1.">
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#0b1220; --fg:#e6edf6; --muted:#93a3b8; --accent:#38bdf8; --card:#111a2e; --line:#1e2a44; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f7f9fc; --fg:#0b1220; --muted:#4a5a70; --accent:#0369a1; --card:#fff; --line:#dbe3ee; } }
+  * { box-sizing:border-box }
+  body { margin:0; font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:760px; margin:0 auto; padding:72px 20px 48px; }
+  .tag { display:inline-block; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); border:1px solid var(--line); padding:4px 10px; border-radius:999px; }
+  h1 { font-size:clamp(32px,6vw,48px); line-height:1.1; margin:20px 0 12px; }
+  p.lead { color:var(--muted); font-size:18px; margin:0 0 32px; }
+  ul { list-style:none; padding:0; margin:0 0 32px; display:grid; gap:10px; }
+  li { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  li b { display:block; }
+  li span { color:var(--muted); font-size:14px; }
+  footer { color:var(--muted); font-size:14px; border-top:1px solid var(--line); padding-top:20px; }
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">In development</span>
+  <h1>FieldOps</h1>
+  <p class="lead">Field service management for small service businesses: requests, dispatch, on-site work, reports and payments in one place. The live demo opens here with release 0.1.</p>
+  <ul>
+    <li><b>FieldOps Web</b><span>Multi-tenant SaaS: Next.js, PostgreSQL, roles, AI intake, Stripe payments</span></li>
+    <li><b>Relay</b><span>Event delivery service in Go: webhooks, push, retries, observability</span></li>
+    <li><b>FieldOps Site</b><span>Marketing site with GSAP motion, SEO and accessibility</span></li>
+    <li><b>FieldOps Mobile</b><span>Expo app for technicians with offline mode, camera and push</span></li>
+  </ul>
+  <footer>A portfolio project by Ahmad Izzat Maulana. All demo data will be fictional.</footer>
+</main>
+</body>
+</html>

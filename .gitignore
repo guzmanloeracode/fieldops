@@ -1,0 +1,14 @@
+node_modules/
+.next/
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+blob-report/
+.DS_Store
+apps/web/AGENTS.md
