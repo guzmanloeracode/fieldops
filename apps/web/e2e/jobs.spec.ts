@@ -11,6 +11,7 @@ import {
   uniq,
   USERS,
 } from "./fixtures";
+import { signViaApi } from "./fieldwork-helpers";
 
 test.describe("dispatcher (J1 for 0.1)", () => {
   test.use({ storageState: storageState("dispatcher") });
@@ -143,7 +144,12 @@ test.describe("technician and dispatcher (J2 for 0.1)", () => {
     await expect(page.getByText("Your unit is cooling normally again.")).toBeVisible();
     await expect(page.getByText("Customer can see")).toBeVisible();
 
+    // Acme Air asks for the customer's signature on completion (JOB-10).
     await page.getByTestId("transition-complete").click();
+    const complete = page.getByRole("dialog");
+    await complete.getByLabel("Signer's name").fill("Cara Example");
+    await complete.getByText("Type name").click();
+    await complete.getByTestId("complete-confirm").click();
     await expectStatus(page, "Completed");
 
     const timeline = page.locator("ol").filter({ hasText: "created the job" });
@@ -154,6 +160,7 @@ test.describe("technician and dispatcher (J2 for 0.1)", () => {
       "changed the status from On hold to In progress",
       "changed the status from In progress to Completed",
       "added a note for the customer",
+      "captured the customer's signature (Cara Example)",
     ]) {
       await expect(timeline.getByText(text)).toBeVisible();
     }
@@ -171,6 +178,7 @@ test.describe("technician and dispatcher (J2 for 0.1)", () => {
       id: string;
       status: string;
     };
+    if (job.status !== "completed") await signViaApi(tech, job.id);
     for (const to of ["en_route", "in_progress", "completed"]) {
       if (job.status === "completed") break;
       const order = ["scheduled", "en_route", "in_progress", "completed"];

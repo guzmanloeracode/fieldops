@@ -1,6 +1,7 @@
 import type { Store } from "@fieldops/core";
 import { withTenant, type Database, type Tx } from "./client";
 import { customerRepo } from "./repos/customers";
+import { checklistRepo, timeEntryRepo } from "./repos/fieldwork";
 import { jobRepo } from "./repos/jobs";
 import { attachmentRepo, noteRepo } from "./repos/notes";
 import { memberRepo, organizationRepo, serviceTypeRepo } from "./repos/organization";
@@ -19,6 +20,8 @@ export function createStore(tx: Tx, organizationId: string): Store {
     attachments: attachmentRepo(tx, organizationId),
     members: memberRepo(tx, organizationId),
     organization: organizationRepo(tx, organizationId),
+    checklist: checklistRepo(tx, organizationId),
+    timeEntries: timeEntryRepo(tx, organizationId),
   };
 }
 

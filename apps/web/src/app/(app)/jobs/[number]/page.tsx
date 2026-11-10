@@ -1,4 +1,14 @@
-import { can, DomainError, formatJobNumber, jobs, organization, STATUS_LABELS } from "@fieldops/core";
+import {
+  can,
+  checklists,
+  DomainError,
+  formatJobNumber,
+  jobs,
+  organization,
+  signatures,
+  STATUS_LABELS,
+  timeEntries,
+} from "@fieldops/core";
 import { ArrowLeft, Inbox, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,9 +20,12 @@ import { formatDateTime, formatWindow } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
+import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
+import { SignatureCard } from "./signature-card";
 import { SiteMap } from "./site-map";
+import { TimeEntries } from "./time-entries";
 import { Timeline } from "./timeline";
 import { TransitionButtons } from "./transition-buttons";
 
@@ -40,8 +53,19 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
       if (err instanceof DomainError && err.code === "not_found") return null;
       throw err;
     }
-    const [actions, notes, events, attachments, members, serviceTypes, contacts, equipment] =
-      await Promise.all([
+    const [
+      actions,
+      notes,
+      events,
+      attachments,
+      members,
+      serviceTypes,
+      contacts,
+      equipment,
+      checklistItems,
+      time,
+      org,
+    ] = await Promise.all([
         jobs.getJobActions(ctx, job),
         jobs.listNotes(ctx, job.id),
         jobs.listJobEvents(ctx, job.id),
@@ -50,8 +74,24 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
         office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
         ctx.store.customers.contacts(job.customerId),
         job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
+        checklists.getChecklist(ctx, job.id),
+        timeEntries.listTimeEntries(ctx, job.id),
+        ctx.store.organization.get(),
       ]);
-    return { job, actions, notes, events, attachments, members, serviceTypes, contacts, equipment };
+    return {
+      job,
+      actions,
+      notes,
+      events,
+      attachments,
+      members,
+      serviceTypes,
+      contacts,
+      equipment,
+      checklistItems,
+      time,
+      requireSignature: org.settings.requireSignature,
+    };
   });
   if (!data) notFound();
   const { job } = data;
@@ -59,9 +99,16 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
   const primary = data.contacts[0];
   const assigned = job.assignees.some((a) => a.memberId === actor.memberId);
   const canWork = can(actor, "jobs.work", { assigned });
+  const technician = actor.role === "technician";
+  const open = job.status !== "completed" && job.status !== "canceled";
+  const signature = signatures.latestSignature(data.attachments);
+  const gallery = data.attachments.filter((a) => a.kind !== "signature");
+  const photos = gallery
+    .filter((a) => a.kind === "photo")
+    .map((a) => ({ id: a.id, fileName: a.fileName, url: a.url, thumbUrl: a.thumbUrl }));
 
   return (
-    <div className="space-y-6">
+    <div className={technician ? "space-y-6 pb-24 lg:pb-0" : "space-y-6"}>
       <div>
         <Link
           href="/jobs"
@@ -98,15 +145,32 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <TransitionButtons
-              jobId={job.id}
-              version={job.version}
-              actions={data.actions.map((a) => ({
-                to: a.to,
-                name: a.name,
-                requiresReason: Boolean(a.requiresReason),
-              }))}
-            />
+            {/* On phones, technicians get the status buttons in a bar at the bottom of the screen (TEC-02). */}
+            <div
+              data-testid="action-bar"
+              className={
+                technician
+                  ? "bg-background/95 fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur empty:hidden lg:static lg:z-auto lg:flex-wrap lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+                  : "contents"
+              }
+            >
+              <TransitionButtons
+                jobId={job.id}
+                version={job.version}
+                bar={technician}
+                actions={data.actions.map((a) => ({
+                  to: a.to,
+                  name: a.name,
+                  requiresReason: Boolean(a.requiresReason),
+                }))}
+                completion={{
+                  requireSignature: data.requireSignature,
+                  signedBy: signature ? (signature.caption ?? primary?.name ?? "—") : null,
+                  missingItems: data.checklistItems.filter((i) => i.required && !i.doneAt).map((i) => i.label),
+                  suggestedSigner: primary?.name ?? null,
+                }}
+              />
+            </div>
             {office ? (
               <JobMenu
                 job={{
@@ -168,6 +232,23 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             </CardContent>
           </Card>
 
+          <Checklist
+            jobId={job.id}
+            canEdit={canWork && open}
+            timeZone={tz}
+            photos={photos}
+            items={data.checklistItems.map((i) => ({
+              id: i.id,
+              label: i.label,
+              kind: i.kind,
+              unit: i.unit,
+              required: i.required,
+              value: i.value,
+              doneAt: i.doneAt?.toISOString() ?? null,
+              doneBy: i.doneBy?.name ?? null,
+            }))}
+          />
+
           <Notes
             jobId={job.id}
             canAdd={canWork}
@@ -187,7 +268,7 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             storageReady
             actorUserId={actor.userId}
             canRemoveAny={office}
-            items={data.attachments.map((a) => ({
+            items={gallery.map((a) => ({
               id: a.id,
               fileName: a.fileName,
               mimeType: a.mimeType,
@@ -196,6 +277,34 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
               url: a.url,
               thumbUrl: a.thumbUrl,
               uploadedBy: a.uploadedBy,
+            }))}
+          />
+
+          {signature ? (
+            <SignatureCard
+              url={signature.url}
+              signer={signature.caption}
+              signedAt={signature.createdAt.toISOString()}
+              timeZone={tz}
+            />
+          ) : null}
+
+          <TimeEntries
+            jobId={job.id}
+            timeZone={tz}
+            actorMemberId={actor.memberId}
+            canEditAll={office}
+            canAddOwn={assigned && canWork}
+            members={job.assignees.map((a) => ({ id: a.memberId, name: a.name }))}
+            entries={data.time.entries.map((e) => ({
+              id: e.id,
+              memberId: e.member.id,
+              memberName: e.member.name,
+              kind: e.kind,
+              startedAt: e.startedAt.toISOString(),
+              endedAt: e.endedAt?.toISOString() ?? null,
+              source: e.source,
+              editedReason: e.editedReason,
             }))}
           />
 

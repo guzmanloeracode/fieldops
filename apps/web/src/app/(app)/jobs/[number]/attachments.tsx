@@ -53,8 +53,10 @@ export function Attachments({
   canRemoveAny: boolean;
 }) {
   const t = useTranslations("jobs");
+  const tf = useTranslations("fieldwork");
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [tag, setTag] = useState<"none" | AttachmentTag>("none");
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
@@ -95,6 +97,7 @@ export function Attachments({
     }
     setBusy(false);
     if (input.current) input.current.value = "";
+    if (camera.current) camera.current.value = "";
     if (done) {
       toast.success(t("attachments.uploaded", { count: done }));
       router.refresh();
@@ -128,6 +131,27 @@ export function Attachments({
               id="attachment-input"
               onChange={(e) => e.target.files?.length && void upload(e.target.files)}
             />
+            {/* Phones: open the camera directly (TEC-03). */}
+            <input
+              ref={camera}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+              onChange={(e) => e.target.files?.length && void upload(e.target.files)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 sm:hidden"
+              disabled={busy}
+              onClick={() => camera.current?.click()}
+            >
+              {busy ? <Loader2 className="animate-spin" /> : <Camera />}
+              {tf("camera")}
+            </Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
               {busy ? <Loader2 className="animate-spin" /> : <Camera />}
               {t("attachments.add")}

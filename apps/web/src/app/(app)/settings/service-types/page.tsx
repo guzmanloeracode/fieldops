@@ -83,6 +83,8 @@ export default async function ServiceTypesPage() {
                         color: st.color,
                         active: st.active,
                         currency: st.currency,
+                        requiredSkills: st.requiredSkills,
+                        checklistTemplate: st.checklistTemplate,
                       }}
                     />
                   </TableCell>

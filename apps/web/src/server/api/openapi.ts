@@ -3,6 +3,8 @@ import {
   attachmentSchema,
   attachmentUploadResponseSchema,
   attachmentUploadSchema,
+  checklistListSchema,
+  checklistUpdateSchema,
   customerCreateSchema,
   customerCreatedSchema,
   customerListQuerySchema,
@@ -28,6 +30,11 @@ import {
   siteCreateSchema,
   siteSchema,
   siteUpdateSchema,
+  signatureCaptureSchema,
+  timeEntryCreateSchema,
+  timeEntryListSchema,
+  timeEntrySchema,
+  timeEntryUpdateSchema,
 } from "@fieldops/shared";
 import { z } from "zod";
 import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponsesObject } from "zod-openapi";
@@ -261,6 +268,61 @@ export function openApiDocument() {
             "200": json(list(jobEventSchema, "JobEventPage"), "Events, newest first"),
             ...errors(404),
           },
+        }),
+      },
+      "/jobs/{id}/checklist": {
+        get: op("Jobs", "Get the checklist", {
+          operationId: "getChecklist",
+          description: "Items come from the service type's template when the job is created (JOB-08).",
+          requestParams: { path: jobId },
+          responses: { "200": json(checklistListSchema, "Items and progress"), ...errors(404) },
+        }),
+        patch: op("Jobs", "Answer checklist items", {
+          operationId: "updateChecklist",
+          description:
+            "Values by kind: checkbox → boolean, number → number, text → string, photo → id of a ready photo attachment of the job; `null` clears an item. A job can't be completed while required items are open (409 with `missing`).",
+          requestParams: { path: jobId },
+          requestBody: body(checklistUpdateSchema),
+          responses: {
+            "200": json(checklistListSchema, "The checklist after the change"),
+            ...errors(404, 409, 415, 422),
+          },
+        }),
+      },
+      "/jobs/{id}/time-entries": {
+        get: op("Jobs", "List time entries", {
+          operationId: "listTimeEntries",
+          description:
+            "Travel and work time recorded from status changes (en route, start, hold, resume, complete), with totals per technician (TEC-04).",
+          requestParams: { path: jobId },
+          responses: { "200": json(timeEntryListSchema, "Entries in time order and totals"), ...errors(404) },
+        }),
+        post: op("Jobs", "Add a time entry", {
+          operationId: "addTimeEntry",
+          description: "For time no status change recorded. Technicians can only add their own time.",
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(timeEntryCreateSchema),
+          responses: { "201": json(timeEntrySchema, "The new entry"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/time-entries/{id}": {
+        patch: op("Jobs", "Correct a time entry", {
+          operationId: "updateTimeEntry",
+          description:
+            "Needs a reason, which appears in the job timeline. Technicians can only correct their own entries.",
+          requestParams: { path: uuidParam("Time entry") },
+          requestBody: body(timeEntryUpdateSchema),
+          responses: { "200": json(timeEntrySchema, "The corrected entry"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/jobs/{id}/signature": {
+        post: op("Jobs", "Capture the customer's signature", {
+          operationId: "captureSignature",
+          description:
+            'Upload the signature image with `POST /jobs/{id}/attachments` (`kind: "signature"`, `caption`: signer\'s name), PUT the file, then call this. When the organization requires a signature, completing the job without one returns 409 with `missing: ["signature"]` (JOB-10).',
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(signatureCaptureSchema),
+          responses: { "201": json(attachmentSchema, "The signature"), ...errors(404, 409, 415, 422) },
         }),
       },
       "/jobs/{id}/attachments": {

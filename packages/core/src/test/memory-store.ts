@@ -19,6 +19,7 @@ import type {
   SiteRecord,
   Store,
 } from "../services/types";
+import { fieldworkRepos, type MemoryChecklistItem, type MemoryTimeEntry } from "./memory-fieldwork";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -42,7 +43,8 @@ export interface MemoryData {
   notes: NoteRecord[];
   attachments: AttachmentRecord[];
   members: MemberRecord[];
-  checklist: { jobId: string; label: string; required: boolean; done: boolean }[];
+  checklist: MemoryChecklistItem[];
+  timeEntries: MemoryTimeEntry[];
   counter: number;
 }
 
@@ -79,6 +81,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     attachments: [],
     members: [],
     checklist: [],
+    timeEntries: [],
     counter: 0,
     ...seed,
   };
@@ -390,6 +393,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         return data.org;
       },
     },
+    ...fieldworkRepos(data, uuid),
   };
   return { store, data };
 }

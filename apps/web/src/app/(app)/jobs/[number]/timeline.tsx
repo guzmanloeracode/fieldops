@@ -25,6 +25,7 @@ export async function Timeline({
   members: Record<string, string>;
 }) {
   const t = await getTranslations("jobs");
+  const tf = await getTranslations("fieldwork.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -55,6 +56,19 @@ export async function Timeline({
         return t("timeline.updated", {
           fields: ((e.payload.fields as string[] | undefined) ?? []).join(", "),
         });
+      case "checklist_updated": {
+        const items = (e.payload.items as string[] | undefined) ?? [];
+        return Number(e.payload.cleared ?? 0) > 0 && Number(e.payload.done ?? 0) === 0
+          ? tf("checklistCleared", { items: items.join(", ") })
+          : tf("checklist", { items: items.join(", ") });
+      }
+      case "time_edited":
+        return tf(e.payload.action === "added" ? "timeAdded" : "timeEdited", {
+          kind: tf(`kind.${e.payload.kind === "travel" ? "travel" : "work"}`),
+          name: String(e.payload.member_name ?? "?"),
+        });
+      case "signature_captured":
+        return tf("signature", { name: String(e.payload.signer_name ?? "") });
       default:
         return e.type;
     }
