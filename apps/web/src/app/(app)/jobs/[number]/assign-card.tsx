@@ -2,7 +2,7 @@
 import type { JobStatus } from "@fieldops/shared";
 import { CalendarClock, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AssignForm } from "@/components/app/assign-form";
@@ -38,6 +38,7 @@ export function AssignCard(props: {
   members: Member[];
 }) {
   const t = useTranslations("jobs");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -86,7 +87,7 @@ export function AssignCard(props: {
       <CardContent className="space-y-3 text-sm">
         <div className="flex gap-2">
           <CalendarClock className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
-          <span>{formatWindow(props.scheduledStart, props.scheduledEnd, props.timeZone)}</span>
+          <span>{formatWindow(props.scheduledStart, props.scheduledEnd, props.timeZone, locale)}</span>
         </div>
         <div className="flex gap-2">
           <UserRound className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />

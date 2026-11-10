@@ -92,7 +92,8 @@
     "created": "Dibuat",
     "location": "Lokasi dan kontak",
     "directions": "Petunjuk arah",
-    "access": "Akses"
+    "access": "Akses",
+    "mapOf": "Peta lokasi {place}"
   },
   "transition": {
     "schedule": "Jadwalkan",

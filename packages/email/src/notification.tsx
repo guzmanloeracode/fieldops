@@ -1,5 +1,7 @@
 import { Button, Link, Text } from "@react-email/components";
 import { Layout, button, paragraph } from "./layout";
+import type { Dictionary, EmailLocale } from "./i18n";
+import { notificationCopyId } from "./notification-id";
 
 // One template for every notification event (NOT-02). The copy is built from the event and its payload; the
 // in-app text uses the same facts through next-intl.
@@ -42,6 +44,8 @@ export interface NotificationEmailProps {
   preferencesUrl: string;
   /** The organization's time zone, for dates in the text. */
   timeZone: string;
+  /** The recipient's language (SET-05); English when left out. */
+  locale?: EmailLocale;
 }
 
 const jobLabel = (n?: number) => (n === undefined ? "a job" : `JOB-${String(n).padStart(6, "0")}`);
@@ -61,8 +65,11 @@ function when(iso: string | undefined, timeZone: string): string {
   }).format(d);
 }
 
-/** Subject, heading, body and button text for an event. */
-export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payload" | "timeZone">) {
+/** Subject, heading, body and button text for an event, in the recipient's language. */
+export function notificationCopy(
+  p: Pick<NotificationEmailProps, "event" | "payload" | "timeZone" | "locale">,
+) {
+  if (p.locale === "id") return notificationCopyId(p);
   const { payload: x, timeZone } = p;
   const job = jobLabel(x.job_number);
   const title = x.job_title ?? job;
@@ -145,21 +152,41 @@ export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payl
   }
 }
 
+const FRAME: Dictionary<{
+  footer: (org: string) => string;
+  hi: (name: string) => string;
+  preferences: string;
+}> = {
+  en: {
+    footer: (org) => `You get this email because of your notification settings in ${org} on FieldOps.`,
+    hi: (name) => `Hi ${name},`,
+    preferences: "Change which emails you get",
+  },
+  id: {
+    footer: (org) => `Anda menerima email ini karena pengaturan notifikasi Anda di ${org} pada FieldOps.`,
+    hi: (name) => `Halo ${name},`,
+    preferences: "Atur email yang Anda terima",
+  },
+};
+
 export function NotificationEmail(props: NotificationEmailProps) {
   const copy = notificationCopy(props);
+  const locale = props.locale ?? "en";
+  const frame = FRAME[locale];
   return (
     <Layout
+      locale={locale}
       preview={copy.body}
       title={copy.heading}
-      footer={`You get this email because of your notification settings in ${props.organizationName} on FieldOps.`}
+      footer={frame.footer(props.organizationName)}
     >
-      <Text style={paragraph}>Hi {props.recipientName},</Text>
+      <Text style={paragraph}>{frame.hi(props.recipientName)}</Text>
       <Text style={paragraph}>{copy.body}</Text>
       <Button href={props.url} style={button}>
         {copy.cta}
       </Button>
       <Text style={{ ...paragraph, fontSize: 13, color: "#64748b" }}>
-        <Link href={props.preferencesUrl}>Change which emails you get</Link>
+        <Link href={props.preferencesUrl}>{frame.preferences}</Link>
       </Text>
     </Layout>
   );

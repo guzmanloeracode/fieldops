@@ -111,5 +111,15 @@
     "customer": "{name} (pelanggan)",
     "requested": "mengajukan permintaan layanan lewat portal pelanggan",
     "windows": "Waktu yang diinginkan: {windows}"
+  },
+  "errors": {
+    "noPortal": "Portal ini tidak ada",
+    "email": "Masukkan email yang valid",
+    "tooManyLinks": "Terlalu banyak permintaan tautan masuk. Coba lagi satu jam lagi.",
+    "invalidLink": "Tautan ini tidak valid",
+    "expiredLink": "Tautan ini sudah kedaluwarsa atau sudah dipakai",
+    "tooManyRequests": "Anda sudah mengirim banyak permintaan hari ini. Jika mendesak, silakan hubungi kami lewat telepon.",
+    "photoFailed": "Ada foto yang tidak dapat dilampirkan",
+    "photoAgain": "Unggah ulang fotonya"
   }
 }

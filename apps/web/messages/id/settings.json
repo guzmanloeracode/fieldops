@@ -52,6 +52,15 @@
       "4": "Kamis",
       "5": "Jumat",
       "6": "Sabtu"
+    },
+    "customerLocale": "Bahasa untuk pelanggan",
+    "customerLocaleHint": "Portal pelanggan, email, dan dokumen untuk pelanggan memakai bahasa ini, kecuali pelanggan memilih bahasanya sendiri.",
+    "errors": {
+      "time": "Gunakan format JJ:MM",
+      "closeAfterOpen": "Jam tutup harus setelah jam buka",
+      "taxName": "Nama wajib diisi",
+      "taxRate": "Masukkan persentase, misalnya 11 atau 8.25",
+      "taxRateMax": "Tidak boleh lebih dari 100%"
     }
   },
   "members": {
@@ -130,7 +139,10 @@
     "statusInactive": "Nonaktif",
     "empty": "Belum ada jenis layanan.",
     "emptyHint": "Tambahkan layanan yang Anda tawarkan agar dispatcher dapat memilihnya saat membuat pekerjaan baru.",
-    "cancel": "Batal"
+    "cancel": "Batal",
+    "errors": {
+      "price": "Masukkan harga"
+    }
   },
   "demoOutbox": {
     "title": "Kotak keluar demo",

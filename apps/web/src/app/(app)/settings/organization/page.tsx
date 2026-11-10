@@ -1,10 +1,14 @@
 import { organization } from "@fieldops/core";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { requireActor, runService } from "@/server/context";
 import { timeZones } from "@/lib/countries";
 import { OrganizationForm } from "./organization-form";
 
-export const metadata: Metadata = { title: "Organization settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("organization") };
+}
 
 export default async function OrganizationSettingsPage() {
   const actor = await requireActor();
@@ -22,6 +26,7 @@ export default async function OrganizationSettingsPage() {
         address: org.address,
         businessHours: org.businessHours,
         taxRates: org.taxRates,
+        locale: org.settings.locale,
       }}
     />
   );

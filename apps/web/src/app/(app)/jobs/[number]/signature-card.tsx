@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 
@@ -15,6 +15,7 @@ export async function SignatureCard({
   timeZone: string;
 }) {
   const t = await getTranslations("fieldwork.signature");
+  const locale = await getLocale();
   return (
     <Card data-testid="signature">
       <CardHeader>
@@ -30,7 +31,7 @@ export async function SignatureCard({
         ) : null}
         <p className="text-sm">
           <span className="font-medium">{signer ?? t("customer")}</span>
-          <span className="text-muted-foreground"> · {formatDateTime(signedAt, timeZone)}</span>
+          <span className="text-muted-foreground"> · {formatDateTime(signedAt, timeZone, locale)}</span>
         </p>
       </CardContent>
     </Card>

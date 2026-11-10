@@ -1,8 +1,8 @@
-import { formatMoney, STATUS_LABELS } from "@fieldops/core";
+import { formatMoney } from "@fieldops/core";
 import type { Currency, JobEventType, JobStatus } from "@fieldops/shared";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime, formatWindow } from "@/lib/format";
+import { formatDateTime, formatWindow, intlLocale } from "@/lib/format";
 
 type Event = {
   id: string;
@@ -25,9 +25,13 @@ export async function Timeline({
   members: Record<string, string>;
 }) {
   const t = await getTranslations("jobs");
+  const locale = await getLocale();
   const te = await getTranslations("expenses.timeline");
   const amount = (p: Record<string, unknown>) =>
-    formatMoney({ amountMinor: Number(p.total_minor ?? 0), currency: (p.currency as Currency) ?? "USD" });
+    formatMoney(
+      { amountMinor: Number(p.total_minor ?? 0), currency: (p.currency as Currency) ?? "USD" },
+      intlLocale(locale),
+    );
   const tf = await getTranslations("fieldwork.timeline");
   const tp = await getTranslations("portal.timeline");
   // Portal requests (POR-02) name the customer's contact and the times that suit them.
@@ -37,9 +41,10 @@ export async function Timeline({
     Array.isArray(e.payload.preferred_windows)
       ? (e.payload.preferred_windows as { start?: unknown; end?: unknown }[])
           .filter((w) => typeof w.start === "string" && typeof w.end === "string")
-          .map((w) => formatWindow(String(w.start), String(w.end), timeZone))
+          .map((w) => formatWindow(String(w.start), String(w.end), timeZone, locale))
       : [];
   const ta = await getTranslations("ai.timeline");
+  const tStatus = await getTranslations("common.status");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -47,15 +52,15 @@ export async function Timeline({
         return t("timeline.created", { source: t(`source.${String(e.payload.source ?? "manual")}`) });
       case "status_changed":
         return t("timeline.status", {
-          from: e.fromStatus ? STATUS_LABELS[e.fromStatus] : "—",
-          to: e.toStatus ? STATUS_LABELS[e.toStatus] : "—",
+          from: e.fromStatus ? tStatus(e.fromStatus) : "—",
+          to: e.toStatus ? tStatus(e.toStatus) : "—",
         });
       case "assigned": {
         const names = ((e.payload.member_ids as string[] | undefined) ?? [])
           .map((id) => members[id] ?? "?")
           .join(", ");
         const window = e.payload.scheduled_start
-          ? formatWindow(String(e.payload.scheduled_start), String(e.payload.scheduled_end), timeZone)
+          ? formatWindow(String(e.payload.scheduled_start), String(e.payload.scheduled_end), timeZone, locale)
           : null;
         return names
           ? window
@@ -143,7 +148,7 @@ export async function Timeline({
                 </p>
               ) : null}
               <time className="text-muted-foreground text-xs" dateTime={e.createdAt}>
-                {formatDateTime(e.createdAt, timeZone)}
+                {formatDateTime(e.createdAt, timeZone, locale)}
               </time>
             </li>
           ))}

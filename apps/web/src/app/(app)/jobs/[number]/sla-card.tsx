@@ -1,6 +1,6 @@
-import { PRIORITY_LABELS, sla, type JobView } from "@fieldops/core";
+import { sla, type JobView } from "@fieldops/core";
 import type { SlaState, SlaTarget } from "@fieldops/shared";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { SlaBadge } from "@/components/app/sla-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatRelative } from "@/lib/format";
@@ -9,6 +9,8 @@ import { runService } from "@/server/context";
 /** The job's response and resolution deadlines and where it stands against each (SLA-02). */
 export async function SlaCard({ job, timeZone }: { job: JobView; timeZone: string }) {
   const t = await getTranslations("sla");
+  const locale = await getLocale();
+  const tp = await getTranslations("common.priority");
   const policies = await runService((ctx) => sla.listPolicies(ctx));
   const policy = policies.find((p) => p.priority === job.priority);
   const rows: { target: SlaTarget; state: SlaState | null; dueAt: Date | null; doneAt: Date | null }[] = [
@@ -26,13 +28,13 @@ export async function SlaCard({ job, timeZone }: { job: JobView; timeZone: strin
     },
   ];
   const detail = (r: (typeof rows)[number]) => {
-    if (r.doneAt && r.state === "met") return t("card.metAt", { when: formatRelative(r.doneAt) });
-    if (r.doneAt) return t("card.missedAt", { when: formatRelative(r.doneAt) });
+    if (r.doneAt && r.state === "met") return t("card.metAt", { when: formatRelative(r.doneAt, locale) });
+    if (r.doneAt) return t("card.missedAt", { when: formatRelative(r.doneAt, locale) });
     if (!r.dueAt) return null;
     // The stored state says whether the deadline has passed (the monitor keeps it current).
     return r.state === "breached"
-      ? t("card.wasDue", { when: formatRelative(r.dueAt) })
-      : t("card.dueIn", { when: formatRelative(r.dueAt) });
+      ? t("card.wasDue", { when: formatRelative(r.dueAt, locale) })
+      : t("card.dueIn", { when: formatRelative(r.dueAt, locale) });
   };
   const tracked = job.status !== "canceled" && rows.some((r) => r.dueAt);
 
@@ -43,7 +45,7 @@ export async function SlaCard({ job, timeZone }: { job: JobView; timeZone: strin
         {policy ? (
           <CardDescription>
             {t("card.description", {
-              priority: PRIORITY_LABELS[job.priority],
+              priority: tp(job.priority),
               basis: policy.businessHours ? t("card.businessHours") : t("card.calendar"),
             })}
             {policy.isDefault ? ` · ${t("card.defaults")}` : ""}
@@ -66,7 +68,7 @@ export async function SlaCard({ job, timeZone }: { job: JobView; timeZone: strin
                 </dd>
                 {r.dueAt ? (
                   <dd className="text-muted-foreground text-xs">
-                    {t("card.deadline", { date: formatDateTime(r.dueAt, timeZone) })}
+                    {t("card.deadline", { date: formatDateTime(r.dueAt, timeZone, locale) })}
                   </dd>
                 ) : null}
               </div>

@@ -1,6 +1,7 @@
-import { expenses, notifications, ROLE_LABELS } from "@fieldops/core";
+import { expenses, notifications } from "@fieldops/core";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { CommandPalette, SearchButton } from "@/components/app/command-palette";
 import { Logo } from "@/components/app/logo";
 import { MobileNav } from "@/components/app/mobile-nav";
@@ -17,6 +18,7 @@ import { listMemberships } from "@/server/memberships";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const actor = await requireActor();
   const sidebarCollapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "collapsed";
+  const t = await getTranslations("common");
   const [memberships, pendingApprovals, unreadNotifications] = await Promise.all([
     listMemberships(actor.userId),
     // Pending approvals badge (EXP-03): one count query, zero for people who can't approve.
@@ -36,7 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <UserMenu
       name={actor.name}
       email={actor.email}
-      roleLabel={`${ROLE_LABELS[actor.role]} · ${actor.organization.name}`}
+      roleLabel={`${t(`role.${actor.role}`)} · ${actor.organization.name}`}
       organizations={memberships.map((m) => ({ id: m.organizationId, name: m.name, role: m.role }))}
       activeOrganizationId={actor.organizationId}
       canCreateOrganization={!actor.isDemoUser}
@@ -56,7 +58,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-dvh flex-col">
         {env.DEMO_MODE ? (
           <div className="bg-primary text-primary-foreground flex flex-wrap items-center justify-center gap-x-3 px-4 py-1.5 text-center text-xs">
-            <span>Public demo with fictional data. Demo data resets daily at 00:00 UTC.</span>
+            <span>{t("demoBanner")}</span>
             <span>
               v{env.APP_VERSION} · {env.APP_COMMIT.slice(0, 7)}
             </span>

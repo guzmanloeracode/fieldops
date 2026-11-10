@@ -1,5 +1,4 @@
 "use client";
-import { PRIORITY_LABELS } from "@fieldops/core";
 import { JOB_PRIORITIES, type JobPriority } from "@fieldops/shared";
 import { Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -55,6 +54,7 @@ export function JobMenu({
   timeZone: string;
 }) {
   const t = useTranslations("jobs");
+  const tp = useTranslations("common.priority");
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -152,7 +152,7 @@ export function JobMenu({
                   <SelectContent>
                     {JOB_PRIORITIES.map((p) => (
                       <SelectItem key={p} value={p}>
-                        {PRIORITY_LABELS[p]}
+                        {tp(p)}
                       </SelectItem>
                     ))}
                   </SelectContent>

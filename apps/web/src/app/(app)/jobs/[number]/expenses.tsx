@@ -1,4 +1,5 @@
 import { can, expenses, isOpen } from "@fieldops/core";
+import { getLocale } from "next-intl/server";
 import type { JobStatus } from "@fieldops/shared";
 import { requireActor, runService } from "@/server/context";
 import { toExpenseRows } from "../../approvals/_components/to-row";
@@ -29,6 +30,7 @@ export async function JobExpenses({
   const canWork = can(actor, "jobs.work", { assigned });
   const rows = toExpenseRows(data.rows, {
     actor,
+    locale: await getLocale(),
     settings: data.org.settings,
     receipts: data.receipts,
     canWork: () => canWork,

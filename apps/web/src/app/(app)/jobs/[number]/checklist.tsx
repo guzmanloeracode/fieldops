@@ -2,7 +2,7 @@
 import type { ChecklistItemKind } from "@fieldops/shared";
 import { Camera, CheckCircle2, Circle, ImageIcon, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,7 @@ function Row({
   timeZone: string;
 }) {
   const t = useTranslations("fieldwork.checklist");
+  const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const id = useId();
@@ -117,7 +118,10 @@ function Row({
   const meta = (
     <p className="text-muted-foreground mt-1 text-xs">
       {isDone
-        ? t("doneBy", { name: item.doneBy ?? t("someone"), when: formatDateTime(item.doneAt, timeZone) })
+        ? t("doneBy", {
+            name: item.doneBy ?? t("someone"),
+            when: formatDateTime(item.doneAt, timeZone, locale),
+          })
         : item.required
           ? t("required")
           : t("optional")}

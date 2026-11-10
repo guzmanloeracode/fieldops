@@ -1,13 +1,14 @@
 import type { dashboard } from "@fieldops/core";
 import { CalendarClock } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { formatMinutes } from "./format";
 
 /** A technician's own numbers (dashboard.own): visits completed and time on site. */
 export async function OwnStats({ data }: { data: dashboard.OwnStatsOverview }) {
   const t = await getTranslations("dashboard.own");
+  const locale = await getLocale();
   const tiles = [
     { key: "week-completed", label: `${t("completed")} · ${t("week")}`, value: String(data.week.completed) },
     {
@@ -15,8 +16,16 @@ export async function OwnStats({ data }: { data: dashboard.OwnStatsOverview }) {
       label: `${t("completed")} · ${t("month")}`,
       value: String(data.month.completed),
     },
-    { key: "week-hours", label: `${t("hours")} · ${t("week")}`, value: formatMinutes(data.week.workMin) },
-    { key: "month-hours", label: `${t("hours")} · ${t("month")}`, value: formatMinutes(data.month.workMin) },
+    {
+      key: "week-hours",
+      label: `${t("hours")} · ${t("week")}`,
+      value: formatMinutes(data.week.workMin, locale),
+    },
+    {
+      key: "month-hours",
+      label: `${t("hours")} · ${t("month")}`,
+      value: formatMinutes(data.month.workMin, locale),
+    },
   ];
   return (
     <section aria-labelledby="own-title" className="space-y-4">

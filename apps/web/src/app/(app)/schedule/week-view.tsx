@@ -1,18 +1,17 @@
 "use client";
 import { useDroppable } from "@dnd-kit/core";
-import { format } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatCalendarDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { BoardLane } from "./board-data";
 import { DraggableBlock } from "./block";
 import { OFF_HOURS, type ViewProps } from "./day-view";
 import { hhmm } from "./geometry";
 
-const label = (date: string, pattern: string) => format(new Date(`${date}T12:00:00Z`), pattern);
-
 /** SCH-01 week view: technicians × seven days, with compact job cards in time order. */
 export function WeekView(props: ViewProps & { dates: string[] }) {
   const t = useTranslations("dispatch");
+  const locale = useLocale();
   return (
     <div className="bg-card overflow-x-auto rounded-xl border" data-testid="board-week">
       <table className="w-full min-w-[1100px] table-fixed border-collapse text-sm">
@@ -34,8 +33,10 @@ export function WeekView(props: ViewProps & { dates: string[] }) {
                   d === props.today ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <span className="block">{label(d, "EEE")}</span>
-                <span className="text-foreground text-sm font-semibold">{label(d, "MMM d")}</span>
+                <span className="block">{formatCalendarDate(d, "weekday", locale)}</span>
+                <span className="text-foreground text-sm font-semibold">
+                  {formatCalendarDate(d, "monthDay", locale)}
+                </span>
               </th>
             ))}
           </tr>
@@ -69,6 +70,7 @@ export function WeekView(props: ViewProps & { dates: string[] }) {
 
 function WeekCell(props: ViewProps & { lane: BoardLane; date: string }) {
   const t = useTranslations("dispatch");
+  const locale = useLocale();
   const { lane, date } = props;
   const day = lane.days.find((d) => d.date === date);
   const dayOff = !day?.hours.length;
@@ -89,7 +91,7 @@ function WeekCell(props: ViewProps & { lane: BoardLane; date: string }) {
           isOver && "ring-primary ring-2 ring-inset",
         )}
         style={dayOff ? { backgroundImage: OFF_HOURS } : undefined}
-        aria-label={`${lane.name}, ${label(date, "EEEE MMM d")}`}
+        aria-label={`${lane.name}, ${formatCalendarDate(date, "weekdayMonthDay", locale)}`}
         role="group"
       >
         {day?.hours.length ? (

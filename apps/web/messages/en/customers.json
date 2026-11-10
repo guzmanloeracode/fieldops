@@ -85,7 +85,10 @@
     "duplicateBody": "These customers have the same email or phone. You can still save.",
     "duplicateMatch": "matches on {field}",
     "fieldEmail": "email",
-    "fieldPhone": "phone"
+    "fieldPhone": "phone",
+    "locale": "Language",
+    "localeDefault": "Same as the organization ({language})",
+    "localeHint": "Used for this customer's portal, emails and documents."
   },
   "detail": {
     "back": "Customers",

@@ -13,14 +13,14 @@ import { Building2, ExternalLink, KeyRound, Mail, MapPin, Phone, Plus, User } fr
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { EquipmentDialog } from "../_components/equipment-dialog";
 import { WarrantyBadge } from "../_components/warranty-badge";
 import { requireActor, runService } from "@/server/context";
@@ -28,7 +28,10 @@ import { DeleteCustomerButton } from "./delete-customer-button";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { SiteDialog } from "./site-dialog";
 
-export const metadata: Metadata = { title: "Customer" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("customer") };
+}
 
 function AddressLines({ address }: { address: Address }) {
   return (
@@ -47,6 +50,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const actor = await requireActor();
   const t = await getTranslations("customers");
   const te = await getTranslations("insights.equipment");
+  const locale = await getLocale();
   const tz = actor.organization.timezone;
   const today = dates.localDateString(new Date(), tz);
 
@@ -59,7 +63,13 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       Promise.all(detail.sites.map((s) => ctx.store.equipment.listBySite(s.id))),
     ]);
     const equipment = new Map(detail.sites.map((s, i) => [s.id, units[i]!]));
-    return { ...detail, recent: recent.rows, country: org.country, equipment };
+    return {
+      ...detail,
+      recent: recent.rows,
+      country: org.country,
+      orgLocale: org.settings.locale,
+      equipment,
+    };
   }, actor).catch((err) => {
     if (err instanceof NotFoundError) notFound();
     throw err;
@@ -71,10 +81,10 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const canCreateJob = can(actor, "jobs.create");
 
   const statItems = [
-    { label: t("detail.stats.jobs"), value: stats.jobCount.toLocaleString("en-US") },
-    { label: t("detail.stats.open"), value: stats.openJobCount.toLocaleString("en-US") },
-    { label: t("detail.stats.completed"), value: stats.completedJobCount.toLocaleString("en-US") },
-    { label: t("detail.stats.lastJob"), value: formatDate(stats.lastJobAt, tz) },
+    { label: t("detail.stats.jobs"), value: formatNumber(stats.jobCount, locale) },
+    { label: t("detail.stats.open"), value: formatNumber(stats.openJobCount, locale) },
+    { label: t("detail.stats.completed"), value: formatNumber(stats.completedJobCount, locale) },
+    { label: t("detail.stats.lastJob"), value: formatDate(stats.lastJobAt, tz, locale) },
   ];
 
   return (
@@ -95,7 +105,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             {customer.name}
           </span>
         }
-        description={`${t(`type.${customer.type}`)} · ${t("detail.since", { date: formatDate(customer.createdAt, tz) })}`}
+        description={`${t(`type.${customer.type}`)} · ${t("detail.since", { date: formatDate(customer.createdAt, tz, locale) })}`}
         actions={
           <>
             {canCreateJob ? (
@@ -108,6 +118,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             {canUpdate ? (
               <EditCustomerDialog
                 defaultCountry={data.country}
+                orgLocale={data.orgLocale}
                 customer={{
                   id: customer.id,
                   type: customer.type,
@@ -115,6 +126,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                   tags: customer.tags,
                   notes: customer.notes,
                   billingAddress: customer.billingAddress,
+                  locale: customer.locale,
                 }}
               />
             ) : null}
@@ -287,7 +299,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                       <PriorityBadge priority={j.priority} />
                       <StatusBadge status={j.status} />
                       <span className="text-muted-foreground w-full text-xs sm:w-auto">
-                        {formatDateTime(j.scheduledStart ?? j.createdAt, tz)} · {j.site.label}
+                        {formatDateTime(j.scheduledStart ?? j.createdAt, tz, locale)} · {j.site.label}
                       </span>
                     </li>
                   ))}

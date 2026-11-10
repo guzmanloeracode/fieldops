@@ -73,7 +73,8 @@
     "empty": "Tidak ada pekerjaan dalam periode ini.",
     "noTechnicians": "Belum ada teknisi.",
     "downloadCsv": "Unduh CSV",
-    "downloadCsvLabel": "Unduh CSV: {report}"
+    "downloadCsvLabel": "Unduh CSV: {report}",
+    "hourUnit": " jam"
   },
   "today": {
     "scheduled": "Kunjungan hari ini",

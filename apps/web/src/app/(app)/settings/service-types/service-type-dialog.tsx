@@ -26,12 +26,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { createServiceTypeAction, updateServiceTypeAction } from "./actions";
 
-const formSchema = serviceTypeInputSchema.omit({ default_price_minor: true, color: true }).extend({
-  price: z.string().trim().min(1, "Enter a price").max(20),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-});
-export type FormInput = z.input<typeof formSchema>;
-export type FormOutput = z.output<typeof formSchema>;
+const formSchema = (t: (key: string) => string) =>
+  serviceTypeInputSchema.omit({ default_price_minor: true, color: true }).extend({
+    price: z.string().trim().min(1, t("errors.price")).max(20),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  });
+export type FormInput = z.input<ReturnType<typeof formSchema>>;
+export type FormOutput = z.output<ReturnType<typeof formSchema>>;
 
 export interface ServiceTypeValues {
   id: string;
@@ -80,7 +81,7 @@ export function ServiceTypeDialog({
         checklist_template: [],
       };
   const form = useForm<FormInput, unknown, FormOutput>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema(t)),
     defaultValues: defaults,
   });
   const errors = form.formState.errors;

@@ -1,7 +1,7 @@
 import { notifications } from "@fieldops/core";
 import { Bell, Settings } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
@@ -27,6 +27,7 @@ export default async function NotificationsPage({
   const unreadOnly = one(sp.filter) === "unread";
   const actor = await requireActor();
   const t = await getTranslations("notifications");
+  const locale = await getLocale();
   const { list, unread } = await runService(async (ctx) => {
     const [list, unread] = await Promise.all([
       notifications.listNotifications(ctx, { page, limit: PAGE_SIZE, unread: unreadOnly }),
@@ -82,7 +83,7 @@ export default async function NotificationsPage({
         <>
           <ul className="bg-card divide-y rounded-xl border" data-testid="notification-list">
             {rows.map((n) => {
-              const text = describeNotification(t, n, actor.organization.timezone);
+              const text = describeNotification(t, n, actor.organization.timezone, locale);
               const isUnread = !n.read_at;
               return (
                 <li
@@ -109,9 +110,9 @@ export default async function NotificationsPage({
                     <p className="text-muted-foreground text-xs">
                       <time
                         dateTime={n.created_at}
-                        title={formatDateTime(n.created_at, actor.organization.timezone)}
+                        title={formatDateTime(n.created_at, actor.organization.timezone, locale)}
                       >
-                        {formatRelative(n.created_at)}
+                        {formatRelative(n.created_at, locale)}
                       </time>
                     </p>
                   </div>

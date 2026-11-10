@@ -1,5 +1,10 @@
 {
-  "nav": { "api": "Referensi API", "signIn": "Masuk", "openApp": "Buka aplikasi" },
+  "nav": {
+    "api": "Referensi API",
+    "signIn": "Masuk",
+    "openApp": "Buka aplikasi",
+    "label": "Situs"
+  },
   "hero": {
     "badge": "Rilis {version} · demo langsung",
     "title": "Manajemen layanan lapangan untuk tim servis kecil",
@@ -58,11 +63,20 @@
       "name": "0.5 Platform",
       "body": "Kunci API, webhook bertanda tangan, paket SaaS, dan server MCP."
     },
-    "site": { "name": "Situs 1.0", "body": "Situs pemasaran dengan animasi GSAP, SEO, dan aksesibilitas." },
+    "site": {
+      "name": "Situs 1.0",
+      "body": "Situs pemasaran dengan animasi GSAP, SEO, dan aksesibilitas."
+    },
     "mobile": {
       "name": "1.0 Mobile",
       "body": "Aplikasi Expo untuk teknisi dengan mode offline, kamera, dan notifikasi push."
     }
   },
-  "footer": { "credit": "Dibuat oleh Ahmad Izzat Maulana. Semua data demo bersifat fiktif." }
+  "footer": {
+    "credit": "Dibuat oleh Ahmad Izzat Maulana. Semua data demo bersifat fiktif."
+  },
+  "meta": {
+    "title": "FieldOps: manajemen layanan lapangan sumber terbuka",
+    "description": "Permintaan, penjadwalan, pekerjaan di lokasi, laporan, dan pembayaran untuk usaha jasa kecil. Sumber terbuka, dengan demo langsung."
+  }
 }

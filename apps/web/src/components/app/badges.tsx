@@ -1,6 +1,6 @@
-import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
 import type { JobPriority, JobStatus } from "@fieldops/shared";
 import { ArrowDown, ArrowUp, ChevronsUp, Minus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLES: Record<JobStatus, string> = {
@@ -28,6 +28,7 @@ export function StatusBadge({
   /** Overrides the label, e.g. with the customer's wording in the portal. */
   label?: string;
 }) {
+  const t = useTranslations("common.status");
   return (
     <span
       className={cn(
@@ -37,7 +38,7 @@ export function StatusBadge({
       )}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current opacity-70" />
-      {label ?? STATUS_LABELS[status]}
+      {label ?? t(status)}
     </span>
   );
 }
@@ -52,6 +53,7 @@ const PRIORITY_STYLE: Record<JobPriority, string> = {
 
 export function PriorityBadge({ priority, className }: { priority: JobPriority; className?: string }) {
   const Icon = PRIORITY_ICON[priority];
+  const t = useTranslations("common.priority");
   return (
     <span
       className={cn(
@@ -61,7 +63,7 @@ export function PriorityBadge({ priority, className }: { priority: JobPriority; 
       )}
     >
       <Icon aria-hidden className="size-3.5" />
-      {PRIORITY_LABELS[priority]}
+      {t(priority)}
     </span>
   );
 }

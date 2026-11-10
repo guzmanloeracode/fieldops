@@ -85,7 +85,10 @@
     "duplicateBody": "Pelanggan berikut memiliki email atau telepon yang sama. Anda tetap bisa menyimpan.",
     "duplicateMatch": "{field} sama",
     "fieldEmail": "email",
-    "fieldPhone": "telepon"
+    "fieldPhone": "telepon",
+    "locale": "Bahasa",
+    "localeDefault": "Sama dengan organisasi ({language})",
+    "localeHint": "Dipakai untuk portal, email, dan dokumen pelanggan ini."
   },
   "detail": {
     "back": "Pelanggan",
