@@ -22,6 +22,9 @@ docker tag fieldops-web:rollback fieldops-web:prev && docker tag fieldops-worker
 TAG=prev docker compose --env-file /etc/fieldops/fieldops.env -f infra/compose/compose.yml up -d --no-build web worker
 ```
 
+A release that changes the demo seed should reset the demo right away instead of waiting for 00:00 UTC:
+`RESEED=1 infra/deploy/release.sh`.
+
 Migrations are forward-only: a rollback runs old code against the new schema, so every migration must stay
 compatible with the previous release.
 
@@ -47,6 +50,15 @@ Manual dump and restore:
 ```bash
 $C exec -T postgres pg_dump -U fieldops -Fc fieldops > fieldops-$(date +%F).dump
 $C exec -T postgres pg_restore -U fieldops -d fieldops --clean --if-exists < fieldops-YYYY-MM-DD.dump
+```
+
+## Uploads without R2
+
+Until R2 is enabled, uploads are stored on the `fieldops_files` volume (`/data/files` in the web and worker
+containers) through signed `/api/files/…` URLs (ADR 015). The nightly reset empties it. Size check:
+
+```bash
+docker run --rm -v fieldops_files:/f alpine du -sh /f
 ```
 
 ## Placeholder page

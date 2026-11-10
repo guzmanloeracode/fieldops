@@ -2,6 +2,7 @@
 # Builds and deploys FieldOps on this server (PRD §15.4). Runs the checks itself: there is no hosted CI.
 #   infra/deploy/release.sh            # verify, build HEAD, E2E on the new images, migrate, restart, health check, auto-rollback
 #   SKIP_VERIFY=1 SKIP_E2E=1 SKIP_BUILD=1 infra/deploy/release.sh   # skip individual gates
+#   RESEED=1 infra/deploy/release.sh   # also reset the demo data now (after a release that changes the seed)
 # There is no hosted CI: these gates are the pipeline (PRD §18.2).
 # Full log: /var/log/fieldops-release.log
 set -euo pipefail
@@ -72,4 +73,7 @@ code="$(curl -s -o /dev/null -w '%{http_code}' "$PUBLIC_URL/")"
 api="$(curl -s -o /dev/null -w '%{http_code}' "$PUBLIC_URL/api/v1/openapi.json")"
 [ "$code" = 200 ] && [ "$api" = 200 ] || rollback
 say "live: $PUBLIC_URL (/: $code, openapi: $api)"
+if [ "${RESEED:-0}" = "1" ]; then
+  "${COMPOSE[@]}" run --rm worker node dist/index.js reset && say "demo data reset" || say "warning: demo reset failed (see $LOG)"
+fi
 docker image prune -f --filter "label!=keep" >/dev/null 2>&1 || true
