@@ -5,6 +5,7 @@ import { resetDemo } from "./demo";
 import { drainOutbox, releaseStuck } from "./email";
 import { env } from "./env";
 import { log } from "./log";
+import { runSlaMonitor } from "./sla";
 
 const command = process.argv[2] ?? "run";
 
@@ -47,6 +48,11 @@ async function run() {
     await pool.query(`delete from session where expires_at < now()`);
     log.info("maintenance done");
   });
+
+  // SLA monitor (SLA-03): moves jobs along their deadlines and raises at-risk and breached alerts once.
+  await boss.createQueue("sla-monitor");
+  await boss.schedule("sla-monitor", "*/5 * * * *", {}, { tz: "UTC" });
+  await boss.work("sla-monitor", async () => runSlaMonitor(db));
 
   if (env.demoMode) {
     await boss.createQueue("demo-reset");
