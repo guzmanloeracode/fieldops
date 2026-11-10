@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { claimPendingAiDrafts, failAiDraft, releaseStuckAiDrafts } from "../src/ai-queue";
 import { withStore } from "../src/store";
 import { createOrgWithData, freshDatabase, type OrgData, type TestDb } from "./helpers";
 
@@ -113,6 +114,35 @@ describe("needs_review filter", () => {
     await withStore(t.app, a.orgId, async (store) => {
       const page = await store.jobs.list({ sort: "-created_at", limit: 50, needs_review: true, page: 1 });
       expect(page.total).toBe(0);
+    });
+  });
+});
+
+describe("AI draft queue", () => {
+  it("claims pending portal requests once, across organizations, and releases stuck claims", async () => {
+    await t.owner.execute(sql`update job set ai_status = 'pending' where id in (${a.ids.job}, ${b.ids.job})`);
+    const [first, second] = await Promise.all([
+      claimPendingAiDrafts(t.owner, 5),
+      claimPendingAiDrafts(t.owner, 5),
+    ]);
+    const claimed = [...first!, ...second!];
+    expect(claimed.map((c) => c.id).sort()).toEqual([a.ids.job, b.ids.job].sort());
+    expect(claimed.find((c) => c.id === a.ids.job)?.organizationId).toBe(a.orgId);
+    expect(await claimPendingAiDrafts(t.owner)).toEqual([]);
+
+    expect(await releaseStuckAiDrafts(t.owner)).toBe(0);
+    await t.owner.execute(
+      sql`update job set updated_at = now() - interval '11 minutes' where id = ${a.ids.job}`,
+    );
+    expect(await releaseStuckAiDrafts(t.owner)).toBe(1);
+    await failAiDraft(t.owner, b.ids.job);
+    await failAiDraft(t.owner, a.ids.job); // pending again: not touched
+    const rows = await t.owner.execute<{ id: string; ai_status: string }>(
+      sql`select id, ai_status from job where id in (${a.ids.job}, ${b.ids.job})`,
+    );
+    expect(Object.fromEntries(rows.rows.map((r) => [r.id, r.ai_status]))).toEqual({
+      [a.ids.job]: "pending",
+      [b.ids.job]: "failed",
     });
   });
 });
