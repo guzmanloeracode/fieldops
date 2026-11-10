@@ -33,9 +33,15 @@ async function axe(page: Page) {
 
 /** Opens the panel and waits until it knows whether AI is on; skips without an AI provider. */
 async function openPanel(page: Page, how: "keyboard" | "button") {
-  if (how === "keyboard") await page.keyboard.press("ControlOrMeta+j");
-  else await page.getByTestId("assistant-open").locator("visible=true").click();
-  await expect(page.getByTestId("assistant-panel")).toBeVisible();
+  const panel = page.getByTestId("assistant-panel");
+  // The shortcut and the button work once the page has hydrated; retry until the panel opens.
+  await page.waitForLoadState("networkidle");
+  await expect(async () => {
+    if (await panel.isVisible()) return;
+    if (how === "keyboard") await page.keyboard.press("ControlOrMeta+j");
+    else await page.getByTestId("assistant-open").locator("visible=true").click();
+    await expect(panel).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
   await expect(
     page.getByTestId("assistant-starter").first().or(page.getByTestId("assistant-unavailable")),
   ).toBeVisible();
@@ -138,8 +144,11 @@ test.describe.serial("Ask FieldOps", () => {
 
   test("the API streams an answer, and conversations stay private", async () => {
     const dispatcher = await api("dispatcher");
+    // A development server compiles each route on first use, which can take longer than the default timeout.
+    const slow = { timeout: 60_000 };
     const res = await dispatcher.post("/api/v1/ai/assistant", {
       data: { message: "How many urgent jobs are scheduled?" },
+      ...slow,
     });
     expect(res.status(), await res.text()).toBe(200);
     expect(res.headers()["content-type"]).toContain("text/event-stream");
@@ -157,19 +166,21 @@ test.describe.serial("Ask FieldOps", () => {
     expect(finished.summary).toMatch(/^Looked up \d+ jobs?$/);
     const id = events[0]!.conversation_id as string;
 
-    const list = await json<{ data: { id: string }[] }>(await dispatcher.get("/api/v1/ai/conversations"));
+    const list = await json<{ data: { id: string }[] }>(
+      await dispatcher.get("/api/v1/ai/conversations", slow),
+    );
     expect(list.data[0]?.id).toBe(id);
     const detail = await json<{ messages: { role: string; tools: unknown[] }[] }>(
-      await dispatcher.get(`/api/v1/ai/conversations/${id}`),
+      await dispatcher.get(`/api/v1/ai/conversations/${id}`, slow),
     );
     expect(detail.messages.map((m) => m.role)).toEqual(["user", "assistant"]);
     expect(detail.messages[1]!.tools).toHaveLength(1);
 
     // Someone else's conversation is a 404, even in the same organization.
     const owner = await api("owner");
-    expect((await owner.get(`/api/v1/ai/conversations/${id}`)).status()).toBe(404);
-    expect((await owner.delete(`/api/v1/ai/conversations/${id}`)).status()).toBe(404);
-    const invalid = await owner.post("/api/v1/ai/assistant", { data: { message: "   " } });
+    expect((await owner.get(`/api/v1/ai/conversations/${id}`, slow)).status()).toBe(404);
+    expect((await owner.delete(`/api/v1/ai/conversations/${id}`, slow)).status()).toBe(404);
+    const invalid = await owner.post("/api/v1/ai/assistant", { data: { message: "   " }, ...slow });
     expect(invalid.status()).toBe(422);
     expect(invalid.headers()["content-type"]).toContain("application/problem+json");
     await owner.dispose();
