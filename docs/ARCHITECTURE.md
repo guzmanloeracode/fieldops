@@ -5,12 +5,12 @@ reasons are in [adr/](adr).
 
 ## Containers
 
-| Container  | What it runs                                                             | Database role                 | Limits        |
-| ---------- | ------------------------------------------------------------------------ | ----------------------------- | ------------- |
-| `web`      | Next.js standalone server: pages, server actions, `/api/v1`, `/docs/api` | `fieldops_app` (RLS enforced) | 512 MB, 1 CPU |
-| `worker`   | pg-boss schedules (nightly demo reset, maintenance), email outbox loop   | owner                         | 384 MB, 1 CPU |
-| `migrate`  | One-shot: SQL migrations, then sets the `fieldops_app` password          | owner                         | exits         |
-| `postgres` | PostgreSQL 18, internal network only                                     | —                             | 384 MB, 1 CPU |
+| Container  | What it runs                                                                                                     | Database role                 | Limits        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------- |
+| `web`      | Next.js standalone server: pages, server actions, `/api/v1`, `/docs/api`                                         | `fieldops_app` (RLS enforced) | 512 MB, 1 CPU |
+| `worker`   | pg-boss schedules (SLA monitor every 5 min, nightly demo reset, maintenance), email outbox and AI drafting loops | owner                         | 384 MB, 1 CPU |
+| `migrate`  | One-shot: SQL migrations, then sets the `fieldops_app` password                                                  | owner                         | exits         |
+| `postgres` | PostgreSQL 18, internal network only                                                                             | —                             | 384 MB, 1 CPU |
 
 nginx on the host terminates TLS (Let's Encrypt, Cloudflare in front with Full (strict)) and proxies
 `fieldops.tinggalpake.com` to `127.0.0.1:8097`. The site config is in `infra/proxy/`.
@@ -20,8 +20,8 @@ nginx on the host terminates TLS (Let's Encrypt, Cloudflare in front with Full (
 1. `src/proxy.ts` redirects signed-out visitors away from app pages (a cookie check only).
 2. A server component or server action calls `requireActor()`, which resolves the Better Auth session to an
    `Actor` (user, member, organization, role).
-3. `runService()` opens a transaction with `app.org_id` set (`withTenant`), builds the `Store`, and calls a core
-   service.
+3. `runService()` opens a transaction with `app.org_id` set (`withTenant`), plus the actor, IP address and user
+   agent for the audit log (`app.user_id`, `app.ip`, `app.ua`), builds the `Store`, and calls a core service.
 4. The service checks permissions with `can()` / `assertCan()`, validates input with the shared Zod schema, applies
    business rules and calls repositories.
 5. Repositories add `organization_id` to every query; PostgreSQL RLS enforces it again.
@@ -45,7 +45,39 @@ skeleton must not wrap the detail pages next to them.
   actions, search). No framework dependencies.
 - **`packages/db`**: Drizzle schema, migrations (`drizzle/`), RLS policies, the `Store` implementation, the demo
   seed and the migration runner.
-- **`packages/email`**: React Email templates rendered by the web app into the outbox.
+- **`packages/email`**: React Email templates rendered by the web app and the worker into the outbox.
+- **`packages/ai`**: the intake model (Claude through the official SDK, and a test double), its prompt and the
+  evaluation set (`pnpm eval:intake`).
+
+## Audit log and live updates
+
+Business tables carry two triggers. `audit_row()` writes the change (changed columns before and after) to
+`audit_log` in the same transaction, with the actor, IP address and user agent from the transaction settings; the
+runtime role can read the log but not write it (ADR 016). `live_notify()` publishes a small message (organization,
+kind, id) on the `fieldops_live` channel, which PostgreSQL delivers on commit. Each web process listens on one
+connection and forwards messages over server-sent events (`GET /api/v1/stream`) to the signed-in users they
+concern; the page then fetches what changed through the normal path (ADR 011). Seeds and resets call `quiet()`
+and write neither.
+
+Notifications are written by `notify()` in the transaction of the change: an in-app row (which publishes a live
+event) and, where the event has one, an email in the outbox, each following the user's settings.
+
+## SLA and AI
+
+Each job stores its response and resolution deadlines, the moments they turn "at risk" and their states,
+computed by `domain/sla.ts` in calendar time or business hours. The worker's monitor moves open jobs along them
+every 5 minutes and records each alert once in `sla_alert`; only new rows notify.
+
+AI intake runs behind the `IntakeModel` port (`packages/ai`): Claude when `ANTHROPIC_API_KEY` is set, a
+deterministic test double for E2E (`AI_PROVIDER=fixture`), otherwise "not configured". A draft is two short
+transactions with the model call between them, so no transaction waits on the model. Portal requests are drafted
+by the worker, which claims them like outbox rows. Rate limits are fixed-window counters in `rate_limit`.
+
+## Customer portal
+
+`/portal/<slug>` resolves the organization by slug and runs every request in that tenant's transaction, scoped to
+the signed-in contact's customer. Customers aren't app users: one-time links and sessions live in `portal_token`
+and `portal_session`, which store only SHA-256 hashes of the tokens.
 
 ## Job lifecycle
 

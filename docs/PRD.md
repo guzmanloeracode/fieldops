@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.5 · release 0.2.1 live, repository public |
+| **Status** | Draft 1.6 · release 0.3 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -20,6 +20,7 @@
 | 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
 | 1.4 | 10 Nov 2026 | Release 0.2.1: route-level loading skeletons for every page that loads data (§13 *As built (0.2.1)*). |
 | 1.5 | 10 Nov 2026 | Summary, market (§2), delivery goals (§4.2) and documentation and launch (§21) rewritten around the product and its customers. |
+| 1.6 | 10 Nov 2026 | Release 0.3 built and live. Recorded the decisions made while building it in *As built (0.3)* notes: Google sign-in (§8.1), the live board (§8.4), SLA time basis, the monitor and notification rules (§8.7), the portal sign-in and requests (§8.9), real SLA figures and CSV export (§8.10), the audit log written by database triggers (§8.11, ADR 016), SLA and AI settings (§8.12), AI rate limits (§8.14), AI intake (§9.2), live updates through PostgreSQL instead of Redis (§14.3, §15.3, ADR 011), new tables and endpoints (§16.3, §17.2) and the 0.3 seed (§19). |
 
 ## Contents
 
@@ -306,6 +307,8 @@ flowchart LR
 | AUTH-08 | Active session list with "sign out other sessions". | C | 0.5 |
 | AUTH-09 | Demo sign-in: one click as Owner, Dispatcher or Technician of a demo organization (demo environment only). | M | 0.1 |
 
+*As built (0.3), AUTH-02:* Google sign-in is turned on by setting `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; until then the button is hidden. Google always asks which account to use, and a Google account links to an existing FieldOps account with the same email. A new user without an organization goes to onboarding.
+
 *As built (0.2), AUTH-06:* the user menu lists every membership with its role and switches the active organization in the same session. A signed-in member can create another organization at `/onboarding?new=1`; demo accounts can't. In the demo, Olivia is also an Admin of Acme Teknik.
 
 **Acceptance criteria: tenant isolation (AUTH-05)**
@@ -393,6 +396,8 @@ stateDiagram-v2
 - **Map:** MapLibre loads only when the Map tab opens; a status legend and a plain list of the day's visits sit beside it for screen readers and phones.
 - **Limits:** `GET /schedule` covers at most 31 days and 3,000 jobs and is office-only; `GET /me/agenda` covers today plus 7 days.
 
+*As built (0.3), SCH-06:* the board and the dispatcher's *Today* view refresh when another user changes a job, an assignment or time off (server-sent events, [§8.7](#87-sla-and-notifications-sla-not)). A refresh waits while a drag, a save or the conflict dialog is in progress. The approvals inbox doesn't refresh live, so a selection in progress is never lost.
+
 ### 8.5 Technician workspace (TEC)
 
 Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile)).
@@ -447,6 +452,19 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | Job completed | Customer (with report) | – | ✓ | – |
 | Quote sent, invoice sent, payment received | Customer; Owner for payments | ✓ | ✓ | – |
 
+*As built (0.3), SLA:*
+- **Policies** (`/settings/sla`, Owner and Admin): one row per priority; a priority without a row uses the defaults (urgent 2 h / 1 day, high 8 h / 3 days, normal 1 day / 7 days, low 3 days / 14 days, calendar time). The response target must be shorter than the resolution target. Changes apply to new jobs and to priority changes.
+- **Time basis:** business-hours targets count minutes of business time in the organization's time zone, so "1 day" means 24 business hours, not one working day; without business hours they fall back to calendar time. The "at risk" moment (75% of the window) is computed in the same basis and stored on the job (`response_at_risk_at`, `resolution_at_risk_at`).
+- **States:** a priority change recomputes both deadlines from the creation time; the first scheduling settles the response target and completion the resolution target (met, or breached when late); reopening restarts the resolution target; canceling clears both. A job's *current* SLA, used by the jobs filter and the dashboard, is the worse of its open targets.
+- **Monitor:** one SQL pass per organization every 5 minutes moves open jobs along their deadlines, then inserts `sla_alert` rows with `ON CONFLICT DO NOTHING`; only new rows notify. At risk goes to dispatchers (owners and admins when there is none); breached goes to dispatchers and owners. On an existing installation the first run alerts every job already at risk.
+
+*As built (0.3), NOT:*
+- **Events per role:** office roles receive portal requests, SLA alerts and part or expense requests; technicians receive assignments, reschedules and decisions on their requests. Nobody is notified about their own action. *Assigned* goes to technicians newly added to a job (board, keyboard, bulk and API all included); *rescheduled* goes to the job's technicians when the window of a scheduled job moves; *requested* goes to the members who may approve that amount; auto-approved requests notify nobody.
+- **Center and settings:** a bell in the header (phones included) with the latest notifications, `/notifications` with an unread filter, and `/notifications/preferences` with in-app and email per event. Deep links open the job (expenses included).
+- **Email:** one template, written to the outbox in the same transaction as the change; captured in the demo.
+- **Live updates (NOT-05):** `GET /api/v1/stream` (server-sent events, a heartbeat every 25 s). Messages carry ids only; office roles receive board events, everyone receives only their own notifications (ADR 011).
+- **Retention:** read notifications are kept 90 days, unread ones a year.
+
 ### 8.8 Quotes, invoices and payments (FIN)
 
 | ID | Requirement | Pri | Rel |
@@ -469,6 +487,12 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | POR-04 | Approve quotes, pay invoices, download reports. | S | 0.4 |
 | POR-05 | Embeddable request form for the business's own website, with no sign-in needed. | C | 0.5 |
 
+*As built (0.3), POR:*
+- **Customers are contacts,** not app users: the portal has its own one-time links and sessions (`portal_token`, `portal_session`), storing only SHA-256 hashes. A link lasts 15 minutes and works once; it opens a *Continue* page, so email link scanners can't spend it. The session cookie is httpOnly, scoped to `/portal/<slug>`, and lasts 30 days.
+- **Sign-in** answers the same way whether or not the email is on file. Limits: 5 links per hour per email, 20 per hour per IP address, 10 requests per day per contact. The demo offers a one-click demo customer per organization.
+- **Requests:** a description, one of the customer's sites or a new address, 1–3 preferred visit windows (a day and a slot: morning, afternoon or any time, in the organization's time zone) and up to 3 photos. The request becomes a *New* job from the portal, marked *Needs review*, with SLA deadlines like any job; dispatchers are notified, and the staff timeline names the requesting contact and the windows.
+- **Tracking:** open jobs first, customer-friendly status labels, the visit window and the lead technician's first name; a job page with a customer-facing history, the request, the customer's own photos and notes marked for the customer. Another customer's job answers 404.
+
 ### 8.10 Dashboard and reports (DSH)
 
 | ID | Requirement | Pri | Rel |
@@ -481,11 +505,12 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | DSH-06 | Aggregations run in SQL on indexed columns. Dashboard responses stay under 800 ms (p95) on demo data. | M | 0.2 |
 
 *As built (0.2):*
-- **Provisional SLA:** until SLA policies ship (SLA-01, 0.3), SLA compliance and the at-risk list use fixed per-priority targets (response / resolution): urgent 2 h / 1 day, high 8 h / 3 days, normal 1 day / 7 days, low 3 days / 14 days. The dashboard labels these figures as provisional.
+- **SLA figures (as built 0.3):** compliance comes from the states stored on each job ([§8.7](#87-sla-and-notifications-sla-not)): resolution compliance = met ÷ (met + breached) for jobs completed in the period, with response compliance next to it. The at-risk list is open jobs whose current SLA is at risk or breached. Until 0.3 these figures used fixed per-priority targets and were labeled provisional.
 - **Definitions:** response time = first time the job was scheduled − created, over jobs created in the period. First-visit completion = completed jobs that were never rescheduled from On hold or reopened (`job.revisit = false`). Utilization doesn't subtract time off yet.
 - **Accessibility:** charts (Recharts) are hidden from screen readers; each has a "Show data as a table" view with drill-down links into `/jobs`.
 - **DSH-04:** the *Today* tab is the default for dispatchers: today's status counts, each technician's load against working hours, unassigned and at-risk jobs, and pending approvals. Technicians get their own numbers instead.
-- **DSH-06:** `pnpm --filter @fieldops/db bench:dashboard` runs the queries as the RLS role; measured p95 is 35–76 ms per organization on the demo seed.
+- **DSH-06:** `pnpm --filter @fieldops/db bench:dashboard` runs the queries as the RLS role; measured p95 is 35–76 ms per organization on the demo seed (0.3, with SLA states: worst p95 146 ms).
+- **DSH-05 (0.3):** every KPI, chart and *Today* list downloads as CSV (`/dashboard/export?report=…` with the page's filters, UTF-8 with a byte order mark for Excel; office roles). The jobs export gained the SLA columns.
 
 ### 8.11 Audit (AUD)
 
@@ -494,6 +519,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | AUD-01 | Append-only audit log covering business record changes, role changes, approvals, settings, API keys and sign-ins: actor, action, entity, before and after values, IP address, user agent and time. | M | 0.3 |
 | AUD-02 | Each audit entry is written in the same database transaction as the change it records. | M | 0.3 |
 | AUD-03 | Audit log viewer for Owners and Admins with filters and CSV export. | S | 0.3 |
+
+*As built (0.3):* database triggers write the log in the same transaction as each change, with the actor, IP address and user agent taken from transaction settings; the app can read the log but never write, edit or delete it (ADR 016). Staff sign-ins and sign-outs are recorded too. `/settings/audit` shows entries newest first with filters (person or system, record type, action, dates, record id), the changed fields before and after, a link to the record (updates to a job's assignments, notes and other parts link to the job), and a CSV export of the filtered entries, capped at 10,000 rows. Jobs created from the portal show *Customer portal* as the actor. In demo mode the IP address isn't recorded: visitors share the demo accounts, so the owner's log would otherwise show each visitor's address to the next (the seeded history uses documentation IP ranges).
 
 ### 8.12 Settings (SET)
 
@@ -506,7 +533,9 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | SET-05 | English and Bahasa Indonesia, chosen per user. The app is translation-ready from 0.1. | S | 0.4 |
 | SET-06 | Export all organization data (JSON and CSV archive). Delete the organization after a 30-day grace period. | C | 0.5 |
 
-*As built (0.2), SET-03:* service types carry required skills and a checklist template; `/settings/operations` (Owner, Admin) sets the two approval thresholds in the organization's currency and the *Require a customer signature* switch. SLA policies and number prefixes follow in 0.3.
+*As built (0.2), SET-03:* service types carry required skills and a checklist template; `/settings/operations` (Owner, Admin) sets the two approval thresholds in the organization's currency and the *Require a customer signature* switch. *0.3:* SLA policies at `/settings/sla`; number prefixes are still to come.
+
+*As built (0.3), SET-04:* `/settings/ai` (Owner, Admin) turns AI on or off, sets the monthly quota (every call counts, failures included, per calendar month in UTC), and shows this month's calls, tokens and acceptance rate, the provider status and the active rate limits.
 
 ### 8.13 SaaS plans and billing (BIL)
 
@@ -528,6 +557,8 @@ Details are in [§17](#17-api-and-integrations).
 | PLT-03 | Outgoing webhooks: endpoints subscribe to events. Deliveries are signed and retried, logged, and can be redelivered by hand. Relay delivers them. | S | 0.5 |
 | PLT-04 | Rate limits per API key and per user, with standard rate-limit headers. AI endpoints are rate-limited from 0.3. | M | 0.3 / 0.5 |
 | PLT-05 | MCP server that exposes read-only FieldOps tools to MCP clients, authenticated with an API key. | C | 0.5 |
+
+*As built (0.3), PLT-04 for AI:* fixed-window counters in a PostgreSQL table: 20 drafts per user per hour, 15 per visitor (IP address) per day in the demo, and 300 per day across all organizations (each set by an environment variable; 0 turns it off). `POST /api/v1/ai/intake` sends `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`, answers 429 with `Retry-After` when a limit is reached and 503 when AI isn't available.
 
 ---
 
@@ -558,6 +589,14 @@ Turns free text (a pasted chat message, an email, or a portal request), plus up 
   - A draft returns in under 6 seconds (p95).
   - The output always matches the schema, or the user sees a clear fallback to the manual form.
   - Evaluation set of 40 messages (20 English, 20 Indonesian): service type ≥ 90% correct, priority ≥ 80% exact and ≥ 95% within one level.
+
+*As built (0.3):*
+- **Providers:** the model sits behind an interface with three implementations: Claude through the official SDK when `ANTHROPIC_API_KEY` is set, a deterministic keyword-based test double for the E2E suite (`AI_PROVIDER=fixture`), and "not configured", where the panel says so and the manual form works as usual. The live demo runs without a key until one is provided ([§23](#23-open-questions)).
+- **Calls:** `claude-opus-5-5` (override with `AI_MODEL_INTAKE`), effort `low`, output constrained to the shared Zod schema and validated again on the server, server-side model fallback on, and the system prompt and service catalog cached (about 900 tokens). Refusals, truncation and errors come back as results and show the manual form. The model can't introduce ids it wasn't given: an unknown service type becomes empty, and customers are suggested by an ordinary database search on the extracted contact details.
+- **No transaction waits on the model:** a draft is two short transactions (checks and catalog; then validation and the usage log) with the model call between them.
+- **Form:** *Draft with AI* on `/jobs/new` takes a message and up to 3 photos (downsized in the browser), prefills the form, marks AI-filled fields, highlights fields below 0.6 confidence, lists questions to ask and offers checklist suggestions to keep. Saving records whether the dispatcher accepted or edited the draft, compared on the server. A job a dispatcher saves from a draft counts as reviewed.
+- **Portal requests:** the worker claims pending requests (`drafting`, like the email outbox), drafts them with their photos and marks them `drafted` or `failed` (`skipped` without AI). The job page shows a review panel to office roles: the request, the current values next to the suggestions, *Apply selected* and *Confirm request*. The jobs list has a *Needs review* filter.
+- **Evaluations:** the 40-message set (20 English, 20 Indonesian) is in `packages/ai/evals`; `pnpm eval:intake` runs it only with an API key and hasn't been run yet.
 
 ### 9.3 AI-02 *Ask FieldOps* assistant (S, 0.4)
 
@@ -818,8 +857,8 @@ Server actions and API routes call the same services, so the web app, mobile app
 | ORM and migrations | Drizzle ORM + drizzle-kit | Typed SQL with readable migrations |
 | Contracts | Zod schemas in `packages/shared`; OpenAPI 3.1 generated from them; Scalar API reference | One source of truth for validation, types and docs |
 | Background jobs | pg-boss (PostgreSQL job queue with cron schedules) in a `worker` container | Durable, transactional, no extra infrastructure |
-| Cache and rate limits | Redis | Rate limiting, short-lived caches, pub/sub for live updates |
-| Live updates | Server-sent events from Next.js route handlers, fed by Redis pub/sub | Simple, works through Cloudflare, no WebSocket server needed |
+| Cache and rate limits | ~~Redis~~ **As built (0.3):** a PostgreSQL table with fixed windows; Redis deferred | Rate limits without another service on the shared server |
+| Live updates | Server-sent events from Next.js route handlers, fed by PostgreSQL `LISTEN/NOTIFY` (ADR 011, as built 0.3) | Simple, works through Cloudflare, no WebSocket server or extra service needed |
 | Files | Cloudflare R2 (S3 API) with presigned uploads | Cheap storage with no egress fees; standard S3 API |
 | Email | Resend with React Email templates (Mailpit locally) | Good deliverability, templates as components |
 | Payments | Stripe Checkout, Billing and webhooks (test mode) | Widely used, hosted checkout, a full test mode |
@@ -914,7 +953,7 @@ DNS is managed in Cloudflare. Records are proxied for CDN, TLS at the edge and D
 | `web` | `ghcr.io/<owner>/fieldops-web:<version>` | Next.js standalone, non-root user, health check on `/api/health` |
 | `worker` | `ghcr.io/<owner>/fieldops-worker:<version>` | pg-boss workers and cron schedules |
 | `postgres` | Official PostgreSQL image | Named volume. Not exposed outside the Docker network. |
-| `redis` | Official Redis image | Password-protected and internal only. **Added in 0.3**, when rate limits and live updates need it; 0.1 runs without it to save memory on the shared server. |
+| `redis` | Official Redis image | Password-protected and internal only. *As built (0.3): not added.* Live updates use PostgreSQL `LISTEN/NOTIFY` and rate limits a PostgreSQL table (ADR 011). Redis comes back with a second web replica or a measured need. |
 | `migrate` | Worker image, `migrate` command | One-shot container that runs the SQL migrations and sets the runtime role's password before `web` and `worker` start |
 | `relay`, `relay-worker` | From release 0.5 | See [§11](#11-relay-backend-service) |
 
@@ -1021,6 +1060,8 @@ erDiagram
 
 *As built (0.2):* `member.working_hours` (JSON, null = business hours) and `member.skills`; `time_off` (member, starts at, ends at, reason); `saved_view` (member, resource, name, query, shared); `job.first_scheduled_at` and `job.revisit` for the KPIs; `attachment.caption`; `organization.settings` holds `approval` thresholds and `require_signature`. Every new table has an `organization_id` and the row-level security policy (migration `0002_dispatch`).
 
+*As built (0.3)* (migration `0003_automate`): `sla_policy` (priority, response and resolution minutes, business-hours flag); `sla_alert` (job, target, kind: one row per alert raised); `notification` and `notification_preference`; `audit_log` (actor, action, entity type and id, before, after, IP, user agent); `portal_token` and `portal_session` (hashed tokens, contact, customer, expiry); `ai_interaction` (feature, model, tokens including cache reads and writes, latency, stop reason, outcome, the validated draft); `rate_limit` (key, window start, count; not tenant-scoped). `job` gained `sla_policy_id`, the response and resolution deadlines and at-risk times, the two SLA states and `ai_status` (pending, drafting, drafted, failed, skipped). The tenant tables have the row-level security policy; `audit_log` is read-only for the runtime role.
+
 ---
 
 ## 17. API and integrations
@@ -1057,6 +1098,8 @@ erDiagram
 | System | `GET /health` |
 
 Internal routes such as `/api/webhooks/stripe` are not part of the public API.
+
+*As built (0.3):* `GET/PUT /sla-policies`, `GET /notifications`, `POST /notifications/read`, `GET/PUT /notifications/preferences`, `GET /stream`, `POST /ai/intake` and `POST /jobs/{id}/review` (confirm a portal request, optionally applying AI suggestions). Jobs gained `ai_status`, `response_due_at`, `resolution_due_at`, `sla_response_state` and `sla_resolution_state`, and the list filters `sla` and `needs_review`. The portal and the audit viewer have no public API yet.
 
 ### 17.3 Webhook events
 
@@ -1178,6 +1221,8 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 
 *As built (0.2):* the seed adds per-member working hours, skills with deliberate gaps and time off (the board's "today" has no conflicts, but overriding is easy to try); checklist templates for all 14 service types (Indonesian for Acme Teknik) with answers and time entries derived from each job's status history; about 590 expense requests for Acme Air and 170 for Acme Teknik, including a few pending ones above the dispatcher limit; four shared saved views per organization; and Olivia's second membership. Acme Air requires a customer signature. A full reset takes about 30 seconds.
 
+*As built (0.3):* explicit SLA policies for both organizations (low priority at Acme Air and normal and low at Acme Teknik count business hours); deadlines and states for every job, consistent with its timeline (about 7% of completed jobs breached their resolution target, and each organization has a few at-risk and breached open jobs today), with past alerts recorded so the first monitor run raises nothing new. A demo portal customer per organization (Jamie Rivera at Acme Air, Dewi Lestari at Acme Teknik) and at least three open portal requests per organization with visit windows and AI drafts; 30 days of AI usage history; recent notifications for the demo users (the newest unread); about 7 days of audit history (job changes, customer and site edits, a role change, a settings change, sign-ins from documentation IP ranges). The seed runs with the audit log and live events turned off.
+
 ---
 
 ## 20. Release plan
@@ -1188,7 +1233,7 @@ The plan builds the web product first, then the event delivery service (Relay), 
 |---|---|---|---|
 | **0.1** Core ✅ live 10 Nov 2026, repository public | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
 | **0.2** Dispatch ✅ live 10 Nov 2026 | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
-| **0.3** Automate | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes) | 2 weeks |
+| **0.3** Automate ✅ live 10 Nov 2026 | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes), SET-04, DEM-06 | 2 weeks |
 | **0.4** Get paid | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
 | | **Core product complete** | | |
 | **Relay 1.0** | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
@@ -1249,6 +1294,8 @@ The plan builds the web product first, then the event delivery service (Relay), 
 | 9 | GitHub account and visibility for the public repositories (E1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops. |
 | 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | **Decided 10 Nov 2026: no hosted CI or Actions deploy.** Release gates run on the server (§15.4). |
 | 11 | Real email for non-demo sign-ups: Resend account and a sending domain (SPF/DKIM)? | Demo mode captures every email, so none is needed for the demo |
+| 12 | Anthropic API key with a spend limit for the live demo (AI-01) | AI shows as not configured and the manual forms work; the demo's portal requests carry seeded drafts |
+| 13 | Google OAuth client for sign-in (AUTH-02) | The *Continue with Google* button stays hidden |
 
 ---
 
