@@ -25,6 +25,8 @@ A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that t
 
 ## What's in release 0.2
 
+![A dispatcher drags a queued job onto a technician's lane, overrides the outside-hours conflict with a reason, then searches with the command palette](docs/screenshots/release-0.2.gif)
+
 - **Dispatch board:** day and week views with a lane per technician and an unscheduled queue. Drag to schedule,
   move, reassign or resize, or do the same with the keyboard. A map tab shows the day's visits.
 - **Conflict checks:** overlapping visits, outside working hours, time off and missing skills, each overridable
@@ -52,7 +54,7 @@ The [roadmap](#roadmap) adds SLAs and AI, payments, a Go event-delivery service,
   code, and generate the OpenAPI document.
 - **Framework-free domain.** Permissions, the job lifecycle, money and numbering live in `packages/core` as plain
   TypeScript behind repository interfaces: 388 unit tests, 100% line coverage.
-- **Real database tests.** 110 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
+- **Real database tests.** 111 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
   pagination over 12 sort orders, concurrent numbering and the seed itself.
 - **Accessible drag and drop.** Every board action has a keyboard path and a screen-reader announcement, and
   every chart has a data table. Playwright runs axe (WCAG 2.2 AA) on every page against the production images.
