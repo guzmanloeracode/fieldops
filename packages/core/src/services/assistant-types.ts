@@ -41,7 +41,7 @@ export interface RevenueQuery {
   groupBy: "month" | "service_type" | null;
 }
 
-export interface RevenueTotals {
+export interface AssistantRevenueTotals {
   /** Invoices issued in the period that aren't void. */
   invoicedMinor: number;
   invoiceCount: number;
@@ -96,7 +96,7 @@ export interface AssistantRepo {
   listMessages(conversationId: string, opts?: { last?: number }): Promise<AssistantMessageRecord[]>;
   revenue(
     q: RevenueQuery,
-  ): Promise<{ currency: string | null; totals: RevenueTotals; rows: RevenueBreakdownRow[] }>;
+  ): Promise<{ currency: string | null; totals: AssistantRevenueTotals; rows: RevenueBreakdownRow[] }>;
   /** A customer's sent and overdue invoices with a balance, oldest due first. */
   openInvoices(customerId: string, limit: number): Promise<OpenInvoiceRow[]>;
 }
