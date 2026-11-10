@@ -20,6 +20,8 @@ export const env = {
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
   },
+  /** Local upload directory shared with the web container when R2 isn't configured (ADR 015). */
+  filesDir: process.env.FILES_DIR,
   migrationsFolder: process.env.MIGRATIONS_FOLDER ?? "/app/drizzle",
   appDbPassword: process.env.APP_DB_PASSWORD,
   logLevel: process.env.LOG_LEVEL ?? "info",

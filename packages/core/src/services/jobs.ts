@@ -14,16 +14,16 @@ import {
 import { ConflictError, NotFoundError, PreconditionFailedError, ValidationError } from "../domain/errors";
 import { assertTransition, availableTransitions, findTransition } from "../domain/job-status";
 import { assertCan, seesOnlyAssigned } from "../domain/permissions";
-import { parseJobNumber } from "../domain/numbering";
 import { assertValidWindow } from "../domain/schedule";
+import * as checklist from "./checklist";
+import { getJob, isAssigned } from "./job-access";
+import * as signatures from "./signature";
+import * as time from "./time";
+import { conflictSummary, detectConflicts } from "./conflicts";
 import { parseInput } from "./validate";
 import type { JobRecord, JobView, ServiceContext } from "./types";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isAssigned(ctx: ServiceContext, job: Pick<JobView, "assignees">): boolean {
-  return job.assignees.some((a) => a.memberId === ctx.actor.memberId);
-}
+export { getJob } from "./job-access";
 
 export async function listJobs(ctx: ServiceContext, query: JobListQuery) {
   assertCan(ctx.actor, "jobs.view", { assigned: true });
@@ -31,21 +31,6 @@ export async function listJobs(ctx: ServiceContext, query: JobListQuery) {
     ...query,
     ...(seesOnlyAssigned(ctx.actor) ? { assignedMemberId: ctx.actor.memberId } : {}),
   });
-}
-
-/** Loads a job by id or number ("JOB-000123"). Jobs a technician isn't assigned to are reported as not found. */
-export async function getJob(ctx: ServiceContext, idOrNumber: string): Promise<JobView> {
-  let job: JobView | null = null;
-  if (UUID.test(idOrNumber)) job = await ctx.store.jobs.get(idOrNumber);
-  else {
-    const n = parseJobNumber(idOrNumber);
-    if (n) job = await ctx.store.jobs.getByNumber(n);
-  }
-  if (!job) throw new NotFoundError("Job");
-  const assigned = isAssigned(ctx, job);
-  if (seesOnlyAssigned(ctx.actor) && !assigned) throw new NotFoundError("Job");
-  assertCan(ctx.actor, "jobs.view", { assigned });
-  return job;
 }
 
 export async function getJobActions(ctx: ServiceContext, job: JobView) {
@@ -104,6 +89,7 @@ export async function createJob(ctx: ServiceContext, raw: unknown): Promise<JobV
     actorUserId: ctx.actor.userId,
     payload: { source: input.source },
   });
+  if (job.serviceTypeId) await checklist.generateForJob(ctx, job.id, job.serviceTypeId);
   return (await ctx.store.jobs.get(job.id))!;
 }
 
@@ -148,6 +134,9 @@ export async function updateJob(ctx: ServiceContext, id: string, raw: unknown, e
   if (changed.length === 0) return current;
   const updated = await ctx.store.jobs.update(current.id, patch, current.version);
   if (!updated) throw new PreconditionFailedError();
+  if (changed.includes("serviceTypeId")) {
+    await checklist.regenerateIfUntouched(ctx, current.id, updated.serviceTypeId);
+  }
   await ctx.store.jobs.addEvent({
     jobId: current.id,
     type: "updated",
@@ -173,6 +162,10 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       hasSchedule: Boolean(job.scheduledStart && job.scheduledEnd),
       missingRequiredItems:
         input.to === "completed" ? await ctx.store.jobs.missingRequiredChecklistItems(job.id) : [],
+      signatureMissing:
+        input.to === "completed" &&
+        (await ctx.store.organization.get()).settings.requireSignature &&
+        !(await signatures.hasSignature(ctx, job.id)),
     },
   );
 
@@ -187,9 +180,13 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
     patch.scheduledEnd = null;
   }
   if (rule.to === "in_progress" || rule.to === "completed") patch.needsReview = false;
+  if (rule.to === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
+  // A job that needs another visit doesn't count as a first-visit completion (DSH-01).
+  if (rule.name === "reschedule" || rule.name === "reopen") patch.revisit = true;
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
+  await time.recordTransition(ctx, job, rule.name);
   await ctx.store.jobs.addEvent({
     jobId: job.id,
     type: "status_changed",
@@ -227,15 +224,10 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
   const end = input.scheduled_end ? new Date(input.scheduled_end) : null;
   if (start && end) assertValidWindow(start, end);
 
-  if (start && end && !input.override_reason) {
-    const conflicts: { memberId: string; jobs: number[] }[] = [];
-    for (const memberId of memberIds) {
-      const overlapping = await ctx.store.jobs.overlapping(memberId, start, end, job.id);
-      if (overlapping.length) conflicts.push({ memberId, jobs: overlapping.map((j) => j.number) });
-    }
-    if (conflicts.length) {
-      throw new ConflictError("This visit overlaps another job for the same technician", { conflicts });
-    }
+  // Overlaps, working hours, time off and skills (SCH-03): warnings that need an override reason.
+  const conflicts = await detectConflicts(ctx, job, memberIds, start, end);
+  if (conflicts.length && !input.override_reason) {
+    throw new ConflictError(conflictSummary(conflicts), { conflicts });
   }
 
   const lead = input.lead_member_id ?? memberIds[0] ?? null;
@@ -251,7 +243,11 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
   if (job.status === "scheduled" && !hasAll) toStatus = "new";
   if (job.status === "on_hold" && hasAll && findTransition("on_hold", "scheduled")) toStatus = "scheduled";
   if (toStatus !== job.status) patch.status = toStatus;
-  if (job.status === "on_hold" && toStatus === "scheduled") patch.holdReason = null;
+  if (job.status === "on_hold" && toStatus === "scheduled") {
+    patch.holdReason = null;
+    patch.revisit = true;
+  }
+  if (toStatus === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
@@ -266,10 +262,25 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
       lead_member_id: lead,
       scheduled_start: start?.toISOString() ?? null,
       scheduled_end: end?.toISOString() ?? null,
-      ...(input.override_reason ? { override_reason: input.override_reason } : {}),
+      ...(input.override_reason && conflicts.length
+        ? {
+            override_reason: input.override_reason,
+            overridden: conflicts.map((c) => ({ kind: c.kind, member_id: c.member_id })),
+          }
+        : {}),
     },
   });
   return (await ctx.store.jobs.get(job.id))!;
+}
+
+/** The conflicts an assignment would raise, without saving anything (for the dispatch board). */
+export async function previewConflicts(ctx: ServiceContext, id: string, raw: unknown) {
+  assertCan(ctx.actor, "jobs.assign");
+  const input = parseInput(jobAssignmentSchema, raw);
+  const job = await getJob(ctx, id);
+  const start = input.scheduled_start ? new Date(input.scheduled_start) : null;
+  const end = input.scheduled_end ? new Date(input.scheduled_end) : null;
+  return detectConflicts(ctx, job, [...new Set(input.member_ids)], start, end);
 }
 
 export async function deleteJob(ctx: ServiceContext, id: string) {
@@ -352,6 +363,7 @@ export async function requestAttachmentUpload(ctx: ServiceContext, jobId: string
     mimeType: input.mime_type,
     sizeBytes: input.size_bytes,
     tag: input.tag ?? null,
+    caption: input.caption ?? null,
     status: "pending",
     uploadedBy: ctx.actor.userId,
   });

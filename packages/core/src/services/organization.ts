@@ -1,4 +1,5 @@
 import {
+  operationsSettingsSchema,
   organizationUpdateSchema,
   serviceTypeInputSchema,
   serviceTypeUpdateSchema,
@@ -27,6 +28,30 @@ export async function updateOrganization(ctx: ServiceContext, raw: unknown) {
     ...(input.business_hours !== undefined && { businessHours: input.business_hours }),
     ...(input.tax_rates !== undefined && { taxRates: input.tax_rates }),
   });
+}
+
+// ------------------------------------------------------------------ operations (EXP-02, JOB-10)
+
+/** Approval thresholds and the signature rule, in the organization's currency. Owners and admins. */
+export async function getOperationsSettings(ctx: ServiceContext) {
+  assertCan(ctx.actor, "settings.operations");
+  const org = await ctx.store.organization.get();
+  return { currency: org.currency, ...org.settings };
+}
+
+export async function updateOperationsSettings(ctx: ServiceContext, raw: unknown) {
+  assertCan(ctx.actor, "settings.operations");
+  const input = parseInput(operationsSettingsSchema, raw);
+  const org = await ctx.store.organization.update({
+    settings: {
+      approval: {
+        autoApproveBelowMinor: input.auto_approve_below_minor,
+        dispatcherLimitMinor: input.dispatcher_limit_minor,
+      },
+      requireSignature: input.require_signature,
+    },
+  });
+  return { currency: org.currency, ...org.settings };
 }
 
 // ------------------------------------------------------------------ members (SET-02)
@@ -87,6 +112,8 @@ export async function createServiceType(ctx: ServiceContext, raw: unknown) {
     currency: org.currency,
     color: input.color ?? null,
     active: input.active,
+    requiredSkills: [...new Set(input.required_skills)],
+    checklistTemplate: input.checklist_template,
   });
 }
 
@@ -98,6 +125,8 @@ export async function updateServiceType(ctx: ServiceContext, id: string, raw: un
     ...(input.description !== undefined && { description: input.description ?? null }),
     ...(input.default_duration_min !== undefined && { defaultDurationMin: input.default_duration_min }),
     ...(input.default_price_minor !== undefined && { defaultPriceMinor: input.default_price_minor }),
+    ...(input.required_skills !== undefined && { requiredSkills: [...new Set(input.required_skills)] }),
+    ...(input.checklist_template !== undefined && { checklistTemplate: input.checklist_template }),
     ...(input.color !== undefined && { color: input.color ?? null }),
     ...(input.active !== undefined && { active: input.active }),
   });

@@ -1,15 +1,53 @@
 import type {
+  MemberRecord,
   MemberRepo,
   OrganizationRecord,
+  OrganizationSettings,
   OrganizationRepo,
   ServiceTypeRecord,
   ServiceTypeRepo,
 } from "@fieldops/core";
-import type { Address, Currency, Role } from "@fieldops/shared";
+import {
+  DEFAULT_APPROVAL_THRESHOLDS,
+  type Address,
+  type ChecklistTemplateItem,
+  type Currency,
+  type Role,
+} from "@fieldops/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import type { Tx } from "../client";
 import { member, organization, serviceType, user } from "../schema";
 import { definedOnly } from "./util";
+
+interface StoredSettings {
+  approval?: { auto_approve_below_minor?: number; dispatcher_limit_minor?: number };
+  require_signature?: boolean;
+  [key: string]: unknown;
+}
+
+/** Reads the settings JSON (snake_case) and fills in defaults. */
+export function toSettings(raw: unknown, currency: Currency): OrganizationSettings {
+  const s = (raw ?? {}) as StoredSettings;
+  const d = DEFAULT_APPROVAL_THRESHOLDS[currency] ?? DEFAULT_APPROVAL_THRESHOLDS.USD;
+  return {
+    approval: {
+      autoApproveBelowMinor: s.approval?.auto_approve_below_minor ?? d.autoApproveBelowMinor,
+      dispatcherLimitMinor: s.approval?.dispatcher_limit_minor ?? d.dispatcherLimitMinor,
+    },
+    requireSignature: s.require_signature ?? false,
+  };
+}
+
+function fromSettings(settings: OrganizationSettings, existing: unknown): StoredSettings {
+  return {
+    ...((existing ?? {}) as StoredSettings),
+    approval: {
+      auto_approve_below_minor: settings.approval.autoApproveBelowMinor,
+      dispatcher_limit_minor: settings.approval.dispatcherLimitMinor,
+    },
+    require_signature: settings.requireSignature,
+  };
+}
 
 export function toOrganization(r: typeof organization.$inferSelect): OrganizationRecord {
   return {
@@ -24,6 +62,7 @@ export function toOrganization(r: typeof organization.$inferSelect): Organizatio
     address: (r.address as Address | null) ?? null,
     businessHours: r.businessHours as OrganizationRecord["businessHours"],
     taxRates: r.taxRates as OrganizationRecord["taxRates"],
+    settings: toSettings(r.settings, r.currency as Currency),
     isDemo: r.isDemo,
   };
 }
@@ -36,9 +75,18 @@ export function organizationRepo(tx: Tx, orgId: string): OrganizationRepo {
       return toOrganization(r);
     },
     async update(patch) {
+      const { settings, ...rest } = patch;
+      let storedSettings: StoredSettings | undefined;
+      if (settings) {
+        const [cur] = await tx
+          .select({ settings: organization.settings })
+          .from(organization)
+          .where(eq(organization.id, orgId));
+        storedSettings = fromSettings(settings, cur?.settings);
+      }
       const [r] = await tx
         .update(organization)
-        .set(definedOnly({ ...patch, updatedAt: new Date() }))
+        .set(definedOnly({ ...rest, settings: storedSettings, updatedAt: new Date() }))
         .where(eq(organization.id, orgId))
         .returning();
       return toOrganization(r!);
@@ -56,6 +104,9 @@ export function memberRepo(tx: Tx, orgId: string): MemberRepo {
         email: user.email,
         role: member.role,
         isDemo: user.isDemo,
+        skills: member.skills,
+        workingHours: member.workingHours,
+        phone: member.phone,
         createdAt: member.createdAt,
       })
       .from(member)
@@ -63,6 +114,7 @@ export function memberRepo(tx: Tx, orgId: string): MemberRepo {
   const map = (r: Awaited<ReturnType<ReturnType<typeof select>["execute"]>>[number]) => ({
     ...r,
     role: r.role as Role,
+    workingHours: (r.workingHours as MemberRecord["workingHours"]) ?? null,
   });
   return {
     async list() {
@@ -107,6 +159,8 @@ function toServiceType(r: typeof serviceType.$inferSelect): ServiceTypeRecord {
     currency: r.currency as Currency,
     color: r.color,
     active: r.active,
+    requiredSkills: r.requiredSkills,
+    checklistTemplate: (r.checklistTemplate as ChecklistTemplateItem[]) ?? [],
   };
 }
 

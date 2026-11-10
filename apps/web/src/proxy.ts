@@ -3,7 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Fast redirect for signed-out visitors. Real authorization happens on the server for every page,
 // action and API call; this only checks that a session cookie exists.
-const APP_PREFIXES = ["/dashboard", "/jobs", "/customers", "/settings", "/onboarding"];
+const APP_PREFIXES = [
+  "/dashboard",
+  "/jobs",
+  "/schedule",
+  "/approvals",
+  "/customers",
+  "/equipment",
+  "/settings",
+  "/onboarding",
+];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

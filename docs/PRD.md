@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.2 · release 0.1 live, repository public |
+| **Status** | Draft 1.3 · release 0.2 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -17,6 +17,7 @@
 | 1.0 | 10 Nov 2026 | First draft. |
 | 1.1 | 10 Nov 2026 | Release 0.1 built. Recorded the decisions made while building it: pinned versions (§14.3), services behind repository interfaces (§14.2), OpenFreeMap as the default map style (§14.3), Redis deferred to 0.3 (§15.3), the on-server release script until the Actions deploy is approved (§15.4), backups blocked until R2 is enabled (§15.5), the server capacity check (§23), and new open questions (§23). |
 | 1.2 | 10 Nov 2026 | Repository published at github.com/guzmanloeracode/fieldops. **No hosted CI** (owner's decision): GitHub Actions is disabled and the checks run on the server as release gates — `pnpm verify` before the build, `infra/deploy/e2e.sh` on the new images before they go live (§15.4, §18.2, ADR 014). |
+| 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
 
 ## Contents
 
@@ -308,6 +309,8 @@ flowchart LR
 | AUTH-08 | Active session list with "sign out other sessions". | C | 0.5 |
 | AUTH-09 | Demo sign-in: one click as Owner, Dispatcher or Technician of a demo organization (demo environment only). | M | 0.1 |
 
+*As built (0.2), AUTH-06:* the user menu lists every membership with its role and switches the active organization in the same session. A signed-in member can create another organization at `/onboarding?new=1`; demo accounts can't. In the demo, Olivia is also an Admin of Acme Teknik.
+
 **Acceptance criteria: tenant isolation (AUTH-05)**
 - *Given* a user in organization A and a record in organization B, *when* the user requests that record by ID through any page, server action or API endpoint, *then* the response is "not found" and no data from B is returned.
 - An automated test runs this check for every tenant-scoped resource and fails CI if one is missing.
@@ -322,6 +325,8 @@ flowchart LR
 | CUS-04 | Customer page showing sites, equipment, job history, invoices and lifetime value. | M | 0.1 (invoices 0.4) |
 | CUS-05 | Server-side search, filter and pagination. Warn about duplicates on matching email or phone. | M | 0.1 |
 | CUS-06 | CSV import with column mapping, a validation preview and per-row errors. CSV export. | S | 0.5 |
+
+*As built (0.2), CUS-03:* equipment is added, edited and soft-deleted from the customer page, with a warranty badge; `/equipment/{id}` shows details and the service history (jobs on that unit).
 
 ### 8.3 Jobs (JOB)
 
@@ -364,6 +369,13 @@ stateDiagram-v2
 - *Given* a job with a required checklist item that is not done, *when* the technician taps **Complete**, *then* the request is rejected and the missing items are listed.
 - *Given* a completed job, *when* a dispatcher reopens it, *then* a reason is required and the reopen appears in the timeline and audit log.
 
+*As built (0.2):*
+- **JOB-04:** saved views store the jobs-list query string, per person or shared with the office (`views.share`). Bulk assign and status changes run one transaction per job through the same services as single edits; skipped jobs are listed with the reason. CSV export is office-only, streamed in keyset pages, capped at 10,000 rows, and neutralizes spreadsheet formulas. The list gained `unassigned`, `revisit` and `date_field` (scheduled, created or completed) filters.
+- **JOB-08:** a job's checklist is copied from its service type's template when the job is created. If the service type changes, the checklist follows only until the first item is done. Answers that aren't done are stored as null; *done* is decided by `done_at`. A photo answer must be a ready photo of the same job.
+- **JOB-09:** one lead and any number of helpers; a job shows in every assignee's lane on the board.
+- **JOB-10:** the signature is an attachment of kind `signature` (caption = signer's name), uploaded like any file and confirmed through `POST /jobs/{id}/signature`. It is required only when the organization turns on *Require a customer signature* (§8.12); the demo's Acme Air does.
+- **JOB-11:** ⌘K / Ctrl+K opens a palette that searches job numbers and titles, customers and sites, and lists page shortcuts for the role. Technicians only find their assigned work.
+
 ### 8.4 Scheduling and dispatch (SCH)
 
 | ID | Requirement | Pri | Rel |
@@ -375,6 +387,14 @@ stateDiagram-v2
 | SCH-05 | Map of the day's jobs, colored by status, filterable by technician. | S | 0.2 |
 | SCH-06 | Live board: changes by other users appear within 5 seconds without reloading. | S | 0.3 |
 | SCH-07 | Assignment suggestion that ranks technicians by skill match, workload and distance, with the reasoning shown. The scoring is deterministic. | C | 0.5 |
+
+*As built (0.2):*
+- **Board:** day view rows run from 06:00 to 20:00 (wider when visits or hours need it), with off-hours, days off and time off shaded and a "now" line. The week view shows compact cards per technician per day; a drop there takes the first free 15-minute slot after the technician's day starts. Times snap to 15 minutes. Rows are technicians plus any office staff with visits in the range. The unscheduled queue shows up to 50 new jobs, urgent first, then oldest.
+- **Drag and drop (dnd-kit):** moving to another technician swaps that one member and keeps the lead flag and helpers; dropping a scheduled job on the queue unschedules it. Keyboard: Space picks up, arrows move by 15 minutes or one lane (one day in the week view), Space/Enter/Tab drops, Escape cancels, Shift+←/→ resizes, Enter opens a reschedule dialog. Moves are announced through a live region.
+- **Conflicts:** all four kinds (overlap, outside working hours, time off, missing skills) are warnings. Without `override_reason` the API answers 409 with `details.conflicts[]`; with one, the assignment is saved and the `assigned` event records the reason and the overridden conflicts. Overlap ignores completed and canceled jobs. Skills match case-insensitively and are checked even without a time. A visit is inside working hours when it fits one working window on the local date it starts; a visit past midnight is always outside. Members with their own hours replace the business hours entirely. With no hours set anywhere, there is no restriction.
+- **Availability:** time off is entered in whole days in the UI (the API accepts any instants). Existing time off is removed and re-added rather than edited.
+- **Map:** MapLibre loads only when the Map tab opens; a status legend and a plain list of the day's visits sit beside it for screen readers and phones.
+- **Limits:** `GET /schedule` covers at most 31 days and 3,000 jobs and is office-only; `GET /me/agenda` covers today plus 7 days.
 
 ### 8.5 Technician workspace (TEC)
 
@@ -388,6 +408,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | TEC-04 | Travel and work time recorded from status changes. Editable with a reason. | S | 0.2 |
 | TEC-05 | Technicians only see their assigned jobs and those jobs' customers and sites. | M | 0.2 |
 
+*As built (0.2):* *My day* highlights the next visit with one-tap En route / Start / Resume and directions. On phones the job's status actions sit in a sticky bottom bar, and photos can be taken with the camera directly. Time (TEC-04) is driven by status changes: En route starts a travel clock, Start and Resume a work clock; Hold, Complete, Cancel and Unschedule stop every clock on the job. Time is charged to the person tapping if they are assigned, otherwise to the lead. Corrections and manual entries need a reason and appear as `time_edited` in the timeline; technicians edit only their own entries. Reopening a job doesn't restart a clock.
+
 ### 8.6 Parts and expenses (EXP)
 
 | ID | Requirement | Pri | Rel |
@@ -396,6 +418,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | EXP-02 | Owners and Admins approve or reject with a comment. Dispatchers can approve below a threshold. Requests below a second threshold are approved automatically. | M | 0.2 |
 | EXP-03 | Approvals inbox with filters and bulk approve. | S | 0.2 |
 | EXP-04 | Approved items become billable invoice lines, with an optional markup percentage. | M | 0.4 |
+
+*As built (0.2):* thresholds live in `organization.settings` and compare strictly ("below"). Defaults: auto-approve below $50 / Rp500,000, dispatchers approve below $250 / Rp2,500,000. A request can be decided once (a second decision is a 409, race-safe). Requests are allowed on any open job, including new and scheduled ones, so parts can be ordered before a visit. Receipts are ordinary job attachments captioned "Receipt". Approved parts can be marked used (TEC-03). Bulk decisions are a web action only, with a result per request; there is no bulk API endpoint. Notifications to requesters and approvers wait for NOT-01 (0.3).
 
 ### 8.7 SLA and notifications (SLA, NOT)
 
@@ -459,6 +483,13 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | DSH-05 | CSV export of any report. | S | 0.3 |
 | DSH-06 | Aggregations run in SQL on indexed columns. Dashboard responses stay under 800 ms (p95) on demo data. | M | 0.2 |
 
+*As built (0.2):*
+- **Provisional SLA:** until SLA policies ship (SLA-01, 0.3), SLA compliance and the at-risk list use fixed per-priority targets (response / resolution): urgent 2 h / 1 day, high 8 h / 3 days, normal 1 day / 7 days, low 3 days / 14 days. The dashboard labels these figures as provisional.
+- **Definitions:** response time = first time the job was scheduled − created, over jobs created in the period. First-visit completion = completed jobs that were never rescheduled from On hold or reopened (`job.revisit = false`). Utilization doesn't subtract time off yet.
+- **Accessibility:** charts (Recharts) are hidden from screen readers; each has a "Show data as a table" view with drill-down links into `/jobs`.
+- **DSH-04:** the *Today* tab is the default for dispatchers: today's status counts, each technician's load against working hours, unassigned and at-risk jobs, and pending approvals. Technicians get their own numbers instead.
+- **DSH-06:** `pnpm --filter @fieldops/db bench:dashboard` runs the queries as the RLS role; measured p95 is 35–76 ms per organization on the demo seed.
+
 ### 8.11 Audit (AUD)
 
 | ID | Requirement | Pri | Rel |
@@ -477,6 +508,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | SET-04 | AI settings: turn AI features on or off, and set a monthly AI quota. | S | 0.3 |
 | SET-05 | English and Bahasa Indonesia, chosen per user. The app is translation-ready from 0.1. | S | 0.4 |
 | SET-06 | Export all organization data (JSON and CSV archive). Delete the organization after a 30-day grace period. | C | 0.5 |
+
+*As built (0.2), SET-03:* service types carry required skills and a checklist template; `/settings/operations` (Owner, Admin) sets the two approval thresholds in the organization's currency and the *Require a customer signature* switch. SLA policies and number prefixes follow in 0.3.
 
 ### 8.13 SaaS plans and billing (BIL)
 
@@ -845,6 +878,10 @@ fieldops/
 | 009 | Money as integer minor units with ISO currency codes |
 | 010 | Offset pagination in the UI (users expect page numbers), cursor pagination in the API |
 | 011 | Server-sent events instead of WebSockets for live updates in the web app |
+| 012 | TypeScript 6.0, not 7.0, for now |
+| 013 | Services in `packages/core` depend on repository interfaces |
+| 014 | No hosted CI; checks run on the server as release gates |
+| 015 | Local file storage behind the same presigned-URL interface until R2 is enabled |
 
 ---
 
@@ -908,6 +945,7 @@ The target downtime per deploy is under 10 seconds. The demo's banner shows the 
 | Server hardening | SSH keys only, a non-root deploy user, a firewall that allows only ports 22, 80 and 443, fail2ban and automatic security updates. Changes to an existing server are agreed with its owner first. |
 | Secrets | A `.env` file on the server readable only by its owner, never committed. An `.env.example` in the repo documents every variable. |
 | Resources | Container memory limits so FieldOps cannot starve other services on the server. |
+| Uploads | *As built (0.2):* until R2 is enabled, files live on the `fieldops_files` Docker volume behind HMAC-signed `/api/files/…` URLs (PUT 10 minutes, GET 1 hour) with type and size checks; the nightly reset empties it (ADR 015). |
 
 ---
 
@@ -982,6 +1020,8 @@ erDiagram
 | `ai_interaction` | feature, model, input, output and cache tokens, latency, stop reason, outcome |
 | `subscription` | Stripe customer and subscription IDs, plan, status, current period end |
 
+*As built (0.2):* `member.working_hours` (JSON, null = business hours) and `member.skills`; `time_off` (member, starts at, ends at, reason); `saved_view` (member, resource, name, query, shared); `job.first_scheduled_at` and `job.revisit` for the KPIs; `attachment.caption`; `organization.settings` holds `approval` thresholds and `require_signature`. Every new table has an `organization_id` and the row-level security policy (migration `0002_dispatch`).
+
 ---
 
 ## 17. API and integrations
@@ -1005,11 +1045,11 @@ erDiagram
 
 | Resource | Endpoints |
 |---|---|
-| Jobs | `GET/POST /jobs`, `GET/PATCH/DELETE /jobs/{id}`, `POST /jobs/{id}/transitions`, `PUT /jobs/{id}/assignments`, `GET/PATCH /jobs/{id}/checklist`, `GET/POST /jobs/{id}/notes`, `POST /jobs/{id}/attachments` (presigned upload), `GET /jobs/{id}/events` |
+| Jobs | `GET/POST /jobs`, `GET/PATCH/DELETE /jobs/{id}`, `POST /jobs/{id}/transitions`, `PUT /jobs/{id}/assignments`, `GET/PATCH /jobs/{id}/checklist`, `GET/POST /jobs/{id}/time-entries`, `PATCH /time-entries/{id}`, `POST /jobs/{id}/signature`, `GET/POST /jobs/{id}/notes`, `POST /jobs/{id}/attachments` (presigned upload), `GET /jobs/{id}/events` |
 | Customers | `GET/POST /customers`, `GET/PATCH/DELETE /customers/{id}`, `GET/POST /customers/{id}/sites` |
 | Sites and equipment | `GET/PATCH /sites/{id}`, `GET/POST /sites/{id}/equipment`, `GET/PATCH /equipment/{id}` |
 | Schedule | `GET /schedule?from=&to=&member=`, `GET /me/agenda` |
-| Expenses | `GET/POST /jobs/{id}/expenses`, `POST /expenses/{id}/decision` |
+| Expenses | `GET/POST /jobs/{id}/expenses`, `GET /expenses`, `POST /expenses/{id}/decision`, `POST /expenses/{id}/used` |
 | Quotes and invoices | `GET/POST /quotes`, `POST /quotes/{id}/send`, `GET/POST /invoices`, `POST /invoices/{id}/send`, `POST /invoices/{id}/checkout` |
 | Members | `GET /members`, `GET /me` |
 | Notifications | `GET /notifications`, `POST /notifications/read`, `GET /stream` (server-sent events) |
@@ -1137,6 +1177,8 @@ The data follows realistic patterns:
 
 Sample photos are license-free (CC0). Every person, company and address is fictional.
 
+*As built (0.2):* the seed adds per-member working hours, skills with deliberate gaps and time off (the board's "today" has no conflicts, but overriding is easy to try); checklist templates for all 14 service types (Indonesian for Acme Teknik) with answers and time entries derived from each job's status history; about 590 expense requests for Acme Air and 170 for Acme Teknik, including a few pending ones above the dispatcher limit; four shared saved views per organization; and Olivia's second membership. Acme Air requires a customer signature. A full reset takes about 30 seconds.
+
 ---
 
 ## 20. Release plan
@@ -1146,7 +1188,7 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 | Release | Theme | Scope | Target |
 |---|---|---|---|
 | **0.1** Core ✅ live 10 Nov 2026, repository public | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
-| **0.2** Dispatch | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
+| **0.2** Dispatch ✅ live 10 Nov 2026 | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
 | **0.3** Automate | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes) | 2 weeks |
 | **0.4** Get paid | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
 | | **Full-stack showcase complete** | | |

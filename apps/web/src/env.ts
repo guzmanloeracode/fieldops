@@ -18,6 +18,8 @@ const schema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+  /** Local upload directory, used when R2 isn't configured (ADR 015). */
+  FILES_DIR: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   APP_VERSION: z.string().default("dev"),
   APP_COMMIT: z.string().default("local"),
@@ -25,6 +27,7 @@ const schema = z.object({
 });
 
 export const env = schema.parse(process.env);
-export const fileStorageConfigured = Boolean(
+/** Cloudflare R2 is configured. Without it, uploads go to the local disk (ADR 015). */
+export const r2Configured = Boolean(
   env.S3_ENDPOINT && env.S3_BUCKET && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY,
 );

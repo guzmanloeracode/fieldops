@@ -33,6 +33,14 @@ export type Action =
   | "serviceTypes.view"
   | "serviceTypes.manage"
   | "expenses.approve"
+  | "expenses.request"
+  | "expenses.view"
+  | "schedule.view"
+  | "availability.manage"
+  | "time.edit"
+  | "views.share"
+  | "settings.operations"
+  | "dashboard.own"
   | "billing.manage"
   | "dashboard.operational"
   | "dashboard.financial"
@@ -83,6 +91,16 @@ const RULES: Record<Action, Rule> = {
   "expenses.approve": (role, scope) =>
     (MANAGERS as readonly Role[]).includes(role) ||
     (role === "dispatcher" && scope.belowDispatcherThreshold === true),
+  // Technicians request parts on, and see the requests of, jobs they're assigned to (EXP-01).
+  "expenses.request": officeOrAssigned,
+  "expenses.view": officeOrAssigned,
+  "schedule.view": OFFICE,
+  "availability.manage": OFFICE,
+  // Technicians correct their own recorded time on their jobs, with a reason (TEC-04).
+  "time.edit": officeOrAssigned,
+  "views.share": OFFICE,
+  "settings.operations": MANAGERS,
+  "dashboard.own": ["owner", "admin", "dispatcher", "technician"],
   "billing.manage": OFFICE,
   "dashboard.operational": OFFICE,
   "dashboard.financial": MANAGERS,

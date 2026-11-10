@@ -1,15 +1,24 @@
 import "server-only";
 import {
+  agendaSchema,
   attachmentSchema,
   attachmentUploadResponseSchema,
   attachmentUploadSchema,
+  checklistListSchema,
+  checklistUpdateSchema,
   customerCreateSchema,
   customerCreatedSchema,
   customerListQuerySchema,
   customerSchema,
   customerSummarySchema,
   customerUpdateSchema,
+  equipmentCreateSchema,
   equipmentSchema,
+  expenseCreateSchema,
+  expenseDecisionSchema,
+  expenseListQuerySchema,
+  expenseSchema,
+  equipmentUpdateSchema,
   jobAssignmentSchema,
   jobCreateSchema,
   jobDetailSchema,
@@ -24,10 +33,16 @@ import {
   noteSchema,
   pageOf,
   problemSchema,
+  scheduleSchema,
   serviceTypeSchema,
   siteCreateSchema,
   siteSchema,
   siteUpdateSchema,
+  signatureCaptureSchema,
+  timeEntryCreateSchema,
+  timeEntryListSchema,
+  timeEntrySchema,
+  timeEntryUpdateSchema,
 } from "@fieldops/shared";
 import { z } from "zod";
 import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponsesObject } from "zod-openapi";
@@ -155,6 +170,8 @@ export function openApiDocument() {
     tags: [
       { name: "Jobs", description: "Work orders and their lifecycle" },
       { name: "Customers", description: "Customers, contacts, sites and equipment" },
+      { name: "Expenses", description: "Parts and expenses requested on jobs, and their approval" },
+      { name: "Schedule", description: "The dispatch board's data and each member's agenda" },
       { name: "Organization", description: "The current user, members and service types" },
     ],
     components: {
@@ -231,7 +248,7 @@ export function openApiDocument() {
         put: op("Jobs", "Assign technicians and schedule", {
           operationId: "assignJob",
           description:
-            "Replaces the assignees and visit window. A new job with both becomes scheduled. Overlapping visits return 409 with `conflicts` unless `override_reason` is set.",
+            "Replaces the assignees and visit window. A new job with both becomes scheduled. Scheduling conflicts (an overlapping visit, outside working hours, time off, missing required skills) return 409 with `conflicts` unless `override_reason` is set; the reason and the overridden conflicts are kept in the timeline.",
           requestParams: { path: jobId },
           requestBody: body(jobAssignmentSchema),
           responses: {
@@ -263,6 +280,61 @@ export function openApiDocument() {
           },
         }),
       },
+      "/jobs/{id}/checklist": {
+        get: op("Jobs", "Get the checklist", {
+          operationId: "getChecklist",
+          description: "Items come from the service type's template when the job is created (JOB-08).",
+          requestParams: { path: jobId },
+          responses: { "200": json(checklistListSchema, "Items and progress"), ...errors(404) },
+        }),
+        patch: op("Jobs", "Answer checklist items", {
+          operationId: "updateChecklist",
+          description:
+            "Values by kind: checkbox → boolean, number → number, text → string, photo → id of a ready photo attachment of the job; `null` clears an item. A job can't be completed while required items are open (409 with `missing`).",
+          requestParams: { path: jobId },
+          requestBody: body(checklistUpdateSchema),
+          responses: {
+            "200": json(checklistListSchema, "The checklist after the change"),
+            ...errors(404, 409, 415, 422),
+          },
+        }),
+      },
+      "/jobs/{id}/time-entries": {
+        get: op("Jobs", "List time entries", {
+          operationId: "listTimeEntries",
+          description:
+            "Travel and work time recorded from status changes (en route, start, hold, resume, complete), with totals per technician (TEC-04).",
+          requestParams: { path: jobId },
+          responses: { "200": json(timeEntryListSchema, "Entries in time order and totals"), ...errors(404) },
+        }),
+        post: op("Jobs", "Add a time entry", {
+          operationId: "addTimeEntry",
+          description: "For time no status change recorded. Technicians can only add their own time.",
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(timeEntryCreateSchema),
+          responses: { "201": json(timeEntrySchema, "The new entry"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/time-entries/{id}": {
+        patch: op("Jobs", "Correct a time entry", {
+          operationId: "updateTimeEntry",
+          description:
+            "Needs a reason, which appears in the job timeline. Technicians can only correct their own entries.",
+          requestParams: { path: uuidParam("Time entry") },
+          requestBody: body(timeEntryUpdateSchema),
+          responses: { "200": json(timeEntrySchema, "The corrected entry"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/jobs/{id}/signature": {
+        post: op("Jobs", "Capture the customer's signature", {
+          operationId: "captureSignature",
+          description:
+            'Upload the signature image with `POST /jobs/{id}/attachments` (`kind: "signature"`, `caption`: signer\'s name), PUT the file, then call this. When the organization requires a signature, completing the job without one returns 409 with `missing: ["signature"]` (JOB-10).',
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(signatureCaptureSchema),
+          responses: { "201": json(attachmentSchema, "The signature"), ...errors(404, 409, 415, 422) },
+        }),
+      },
       "/jobs/{id}/attachments": {
         get: op("Jobs", "List attachments", {
           operationId: "listAttachments",
@@ -289,6 +361,53 @@ export function openApiDocument() {
           operationId: "confirmAttachmentUpload",
           requestParams: { path: uuidParam("Attachment"), header: idempotencyHeader },
           responses: { "200": json(attachmentSchema, "The ready attachment"), ...errors(404, 409, 503) },
+        }),
+      },
+      "/jobs/{id}/expenses": {
+        get: op("Expenses", "List a job's parts and expenses", {
+          operationId: "listJobExpenses",
+          requestParams: { path: jobId },
+          responses: {
+            "200": json(list(expenseSchema, "JobExpensePage"), "Requests, newest first"),
+            ...errors(404),
+          },
+        }),
+        post: op("Expenses", "Request a part or expense", {
+          operationId: "requestExpense",
+          description:
+            "Open jobs only. Requests below the organization's auto-approve threshold are approved at once; the rest wait for an approver. Attach a receipt by uploading it to the job first and passing its `receipt_attachment_id`.",
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(expenseCreateSchema),
+          responses: { "201": json(expenseSchema, "The new request"), ...errors(404, 409, 415, 422) },
+        }),
+      },
+      "/expenses": {
+        get: op("Expenses", "List parts and expense requests", {
+          operationId: "listExpenses",
+          description: "The approvals inbox. Technicians only see requests on jobs assigned to them.",
+          requestParams: { query: expenseListQuerySchema.omit({ page: true }) },
+          responses: {
+            "200": json(list(expenseSchema, "ExpensePage"), "Requests, newest first"),
+            ...errors(422),
+          },
+        }),
+      },
+      "/expenses/{id}/decision": {
+        post: op("Expenses", "Approve or reject a request", {
+          operationId: "decideExpense",
+          description:
+            "Owners and admins decide any amount; dispatchers only below the organization's dispatcher limit. A rejection needs a `comment`. Only pending requests can be decided (409 otherwise).",
+          requestParams: { path: uuidParam("Expense"), header: idempotencyHeader },
+          requestBody: body(expenseDecisionSchema),
+          responses: { "200": json(expenseSchema, "The decided request"), ...errors(404, 409, 415, 422) },
+        }),
+      },
+      "/expenses/{id}/used": {
+        post: op("Expenses", "Record a part as used", {
+          operationId: "markExpenseUsed",
+          description: "Approved parts only. Repeating the call keeps the first time.",
+          requestParams: { path: uuidParam("Expense"), header: idempotencyHeader },
+          responses: { "200": json(expenseSchema, "The request with `used_at` set"), ...errors(404, 409) },
         }),
       },
       "/customers": {
@@ -363,6 +482,49 @@ export function openApiDocument() {
           operationId: "listSiteEquipment",
           requestParams: { path: uuidParam("Site") },
           responses: { "200": json(list(equipmentSchema, "EquipmentPage"), "Equipment"), ...errors(404) },
+        }),
+        post: op("Customers", "Add equipment to a site", {
+          operationId: "createEquipment",
+          description: "Owners, admins and dispatchers.",
+          requestParams: { path: uuidParam("Site"), header: idempotencyHeader },
+          requestBody: body(equipmentCreateSchema),
+          responses: { "201": json(equipmentSchema, "The new unit"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/equipment/{id}": {
+        get: op("Customers", "Get a unit of equipment", {
+          operationId: "getEquipment",
+          requestParams: { path: uuidParam("Equipment") },
+          responses: { "200": json(equipmentSchema, "The unit"), ...errors(404) },
+        }),
+        patch: op("Customers", "Update a unit of equipment", {
+          operationId: "updateEquipment",
+          requestParams: { path: uuidParam("Equipment") },
+          requestBody: body(equipmentUpdateSchema),
+          responses: { "200": json(equipmentSchema, "The updated unit"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/schedule": {
+        get: op("Schedule", "Visits and availability in a date range", {
+          operationId: "getSchedule",
+          description:
+            "Scheduled visits overlapping the range (dates in the organization's time zone, at most 31 days), " +
+            "with every technician's working hours and time off. Office roles only.",
+          requestParams: {
+            query: z.object({
+              from: z.iso.date().meta({ example: "2026-11-10" }),
+              to: z.iso.date().meta({ example: "2026-11-16" }),
+              member: z.uuid().optional().meta({ description: "Only this member's lane and visits" }),
+            }),
+          },
+          responses: { "200": json(scheduleSchema, "The schedule"), ...errors(404, 422) },
+        }),
+      },
+      "/me/agenda": {
+        get: op("Schedule", "My agenda", {
+          operationId: "getMyAgenda",
+          description: "The caller's assigned visits from today through the next seven days.",
+          responses: { "200": json(agendaSchema, "The agenda"), ...errors() },
         }),
       },
       "/me": {

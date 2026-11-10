@@ -5,6 +5,12 @@ import { v7 as uuidv7 } from "uuid";
 import type { Database, Tx } from "../client";
 import * as s from "../schema";
 import { ORGS, ROOMS, ROOMS_ID, type OrgSpec } from "./data";
+import { seedDispatch } from "./dispatch";
+import { seedExpenses } from "./expenses";
+import { seedFieldwork } from "./fieldwork";
+import { seedInsights } from "./insights";
+import type { SeedContext } from "./context";
+import { DAY, insertBatches, localDate, zoned } from "./time";
 export { DEMO_LOGINS, ORGS, type DemoOrg, type DemoRole } from "./data";
 
 /**
@@ -25,65 +31,12 @@ export interface SeedResult {
 }
 
 const SEED = 20261110;
-const DAY = 86_400_000;
-
-/** Offset of a time zone from UTC in ms at a given instant. */
-function tzOffsetMs(instant: number, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(new Date(instant));
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  const asUtc = Date.UTC(
-    get("year"),
-    get("month") - 1,
-    get("day"),
-    get("hour"),
-    get("minute"),
-    get("second"),
-  );
-  return asUtc - instant;
-}
-
-/** The UTC instant of a wall-clock time in a time zone. */
-function zoned(y: number, m: number, d: number, minutes: number, timeZone: string): Date {
-  const guess = Date.UTC(y, m, d, 0, minutes);
-  const offset = tzOffsetMs(guess, timeZone);
-  return new Date(guess - offset);
-}
-
-function localDate(instant: Date, timeZone: string): { y: number; m: number; d: number; dow: number } {
-  const shifted = new Date(instant.getTime() + tzOffsetMs(instant.getTime(), timeZone));
-  return {
-    y: shifted.getUTCFullYear(),
-    m: shifted.getUTCMonth(),
-    d: shifted.getUTCDate(),
-    dow: shifted.getUTCDay(),
-  };
-}
-
-async function insertBatches<T extends Record<string, unknown>>(
-  tx: Tx,
-  table: Parameters<Tx["insert"]>[0],
-  rows: T[],
-  size = 500,
-) {
-  for (let i = 0; i < rows.length; i += size) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await tx.insert(table).values(rows.slice(i, i + size) as any);
-  }
-}
 
 /** Removes all data. Used by the nightly demo reset before seeding again (DEM-04). */
 export async function wipeAll(db: Database) {
   await db.execute(sql`truncate table
-    "email_outbox", "idempotency_key", "attachment", "note", "job_event", "checklist_item", "job_assignment", "job",
+    "email_outbox", "idempotency_key", "saved_view", "expense_request", "time_entry", "time_off",
+    "attachment", "note", "job_event", "checklist_item", "job_assignment", "job",
     "equipment", "site", "contact", "customer", "service_type", "org_counter",
     "invitation", "member", "session", "account", "verification", "organization", "user" cascade`);
 }
@@ -696,6 +649,38 @@ async function seedOrg(
     jobs.flatMap((j) => j.notes),
   );
   await tx.insert(s.orgCounter).values({ organizationId: orgId, name: "job", value: jobs.length });
+
+  // KPI columns derived from the timeline (same rules as the services, DSH-01).
+  await tx.execute(sql`
+    update job j set first_scheduled_at = e.first_at
+    from (select job_id, min(created_at) as first_at from job_event
+          where organization_id = ${orgId} and to_status = 'scheduled' group by job_id) e
+    where j.organization_id = ${orgId} and e.job_id = j.id`);
+  await tx.execute(sql`
+    update job j set revisit = true
+    where j.organization_id = ${orgId} and exists (
+      select 1 from job_event e where e.organization_id = ${orgId} and e.job_id = j.id and e.type = 'status_changed'
+        and ((e.from_status = 'on_hold' and e.to_status = 'scheduled') or (e.from_status = 'completed' and e.to_status = 'in_progress')))`);
+
+  // 0.2 extensions, each with its own deterministic random stream so they don't shift each other.
+  const ext: SeedContext = {
+    tx,
+    orgId,
+    spec,
+    now: ctx.now,
+    seed: ctx.seed,
+    timeZone: tz,
+    members,
+    serviceTypes: serviceTypes.map(({ spec: st, ...row }) => ({ ...row, spec: st })),
+    customers,
+    sites,
+    equipment,
+    jobs,
+  };
+  await seedDispatch(ext);
+  await seedFieldwork(ext);
+  await seedExpenses(ext);
+  await seedInsights(ext);
 
   return {
     org: { id: orgId, slug: spec.slug, name: spec.name, jobs: jobs.length, customers: customers.length },

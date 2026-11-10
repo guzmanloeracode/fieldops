@@ -28,7 +28,8 @@ ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
 ARG APP_VERSION=dev
 ARG APP_COMMIT=local
 ENV APP_VERSION=$APP_VERSION APP_COMMIT=$APP_COMMIT
-RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
+RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app \
+  && mkdir -p /data/files && chown app:app /data/files
 COPY --from=builder --chown=app:app /repo/apps/web/.next/standalone ./
 COPY --from=builder --chown=app:app /repo/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=app:app /repo/apps/web/public ./apps/web/public

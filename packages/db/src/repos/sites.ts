@@ -1,4 +1,5 @@
-import type { EquipmentRepo, SiteRecord, SiteRepo } from "@fieldops/core";
+import type { EquipmentHistoryRow, EquipmentRepo, SiteRecord, SiteRepo } from "@fieldops/core";
+import type { JobPriority, JobStatus } from "@fieldops/shared";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import type { Tx } from "../client";
 import { equipment, job, jobAssignment, site } from "../schema";
@@ -97,6 +98,7 @@ export function equipmentRepo(tx: Tx, orgId: string): EquipmentRepo {
     serial: r.serial,
     installDate: r.installDate,
     warrantyEnd: r.warrantyEnd,
+    notes: r.notes,
   });
   return {
     async get(id) {
@@ -113,6 +115,73 @@ export function equipmentRepo(tx: Tx, orgId: string): EquipmentRepo {
         .where(and(scope, eq(equipment.siteId, siteId)))
         .orderBy(asc(equipment.type), sql`${equipment.installDate} nulls last`);
       return rows.map(map);
+    },
+    async create(siteId, data) {
+      const [r] = await tx
+        .insert(equipment)
+        .values({ organizationId: orgId, siteId, ...data })
+        .returning();
+      return map(r!);
+    },
+    async update(id, patch) {
+      const [r] = await tx
+        .update(equipment)
+        .set(definedOnly({ ...patch, updatedAt: new Date() }))
+        .where(and(scope, eq(equipment.id, id)))
+        .returning();
+      return r ? map(r) : null;
+    },
+    async softDelete(id) {
+      const rows = await tx
+        .update(equipment)
+        .set({ deletedAt: new Date() })
+        .where(and(scope, eq(equipment.id, id)))
+        .returning({ id: equipment.id });
+      return rows.length > 0;
+    },
+    async history(id, opts) {
+      const me = opts.assignedMemberId ?? null;
+      const res = await tx.execute<{
+        id: string;
+        number: number;
+        title: string;
+        status: JobStatus;
+        priority: JobPriority;
+        service_type_name: string | null;
+        scheduled_start: Date | string | null;
+        completed_at: Date | string | null;
+        created_at: Date | string;
+        technicians: string[];
+      }>(sql`
+        select j.id, j.number, j.title, j.status, j.priority, st.name as service_type_name,
+               j.scheduled_start, j.completed_at, j.created_at,
+               coalesce((
+                 select array_agg(u.name order by ja.is_lead desc, u.name)
+                   from job_assignment ja
+                   join member m on m.id = ja.member_id
+                   join "user" u on u.id = m.user_id
+                  where ja.organization_id = ${orgId} and ja.job_id = j.id
+               ), '{}') as technicians
+          from job j
+          left join service_type st on st.id = j.service_type_id
+         where j.organization_id = ${orgId} and j.deleted_at is null and j.equipment_id = ${id}
+           and (${me}::uuid is null or exists (
+             select 1 from job_assignment ja where ja.organization_id = ${orgId} and ja.job_id = j.id and ja.member_id = ${me}::uuid))
+         order by j.created_at desc
+         limit ${opts.limit}`);
+      const date = (v: Date | string | null) => (v ? new Date(v) : null);
+      return res.rows.map((r): EquipmentHistoryRow => ({
+        id: r.id,
+        number: Number(r.number),
+        title: r.title,
+        status: r.status,
+        priority: r.priority,
+        serviceTypeName: r.service_type_name,
+        scheduledStart: date(r.scheduled_start),
+        completedAt: date(r.completed_at),
+        createdAt: new Date(r.created_at),
+        technicians: r.technicians,
+      }));
     },
   };
 }

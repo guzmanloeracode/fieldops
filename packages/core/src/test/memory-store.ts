@@ -1,5 +1,6 @@
 import type { Role } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
+import { insightsMemory } from "./memory-insights";
 import type {
   AssigneeRef,
   AttachmentRecord,
@@ -19,6 +20,11 @@ import type {
   SiteRecord,
   Store,
 } from "../services/types";
+import { fieldworkRepos, type MemoryChecklistItem, type MemoryTimeEntry } from "./memory-fieldwork";
+
+import { memoryExpenses } from "./memory-expenses";
+import type { TimeOffRecord } from "../services/dispatch-types";
+import { memoryDispatch } from "./memory-dispatch";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -42,8 +48,10 @@ export interface MemoryData {
   notes: NoteRecord[];
   attachments: AttachmentRecord[];
   members: MemberRecord[];
-  checklist: { jobId: string; label: string; required: boolean; done: boolean }[];
+  checklist: MemoryChecklistItem[];
+  timeEntries: MemoryTimeEntry[];
   counter: number;
+  timeOff?: TimeOffRecord[];
 }
 
 export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; data: MemoryData } {
@@ -61,6 +69,10 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
       address: null,
       businessHours: [],
       taxRates: [],
+      settings: {
+        approval: { autoApproveBelowMinor: 5000, dispatcherLimitMinor: 25000 },
+        requireSignature: false,
+      },
       isDemo: false,
     },
     customers: [],
@@ -75,10 +87,12 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     attachments: [],
     members: [],
     checklist: [],
+    timeEntries: [],
     counter: 0,
     ...seed,
   };
 
+  const insights = insightsMemory(data); // 0.2 insights repositories
   const memberName = (memberId: string) => data.members.find((m) => m.id === memberId);
   const userName = (userId: string | null) => data.members.find((m) => m.userId === userId)?.name;
 
@@ -110,8 +124,11 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
   const memberLinkedJobs = (memberId: string) =>
     liveJobs().filter((j) => data.assignments.some((a) => a.jobId === j.id && a.memberId === memberId));
 
+  const dispatch = memoryDispatch(data, async () => liveJobs().map(view));
   const store: Store = {
     organizationId: data.org.id,
+    availability: dispatch.availability,
+    schedule: dispatch.schedule,
     customers: {
       async list(f) {
         let rows = data.customers.filter((c) => !c.deleted);
@@ -205,6 +222,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
       },
     },
     equipment: {
+      ...insights.equipment,
       async get(id) {
         return data.equipment.find((e) => e.id === id) ?? null;
       },
@@ -260,6 +278,8 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
           scheduledEnd: null,
           completedAt: null,
           canceledAt: null,
+          firstScheduledAt: null,
+          revisit: false,
           createdAt: now(),
           updatedAt: now(),
           version: 1,
@@ -384,6 +404,9 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         return data.org;
       },
     },
+    expenses: memoryExpenses(data, uuid),
+    ...insights.repos,
+    ...fieldworkRepos(data, uuid),
   };
   return { store, data };
 }
@@ -397,6 +420,9 @@ export function member(role: Role, name = `${role} person`, extra: Partial<Membe
     email: `${role}${id.slice(-4)}@example.com`,
     role,
     isDemo: false,
+    skills: [],
+    workingHours: null,
+    phone: null,
     createdAt: new Date(),
     ...extra,
   };

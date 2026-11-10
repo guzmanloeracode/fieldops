@@ -1,4 +1,4 @@
-import { can, jobs, organization } from "@fieldops/core";
+import { can, jobs, organization, views } from "@fieldops/core";
 import { jobListQuerySchema } from "@fieldops/shared";
 import { format } from "date-fns";
 import { Briefcase, Plus } from "lucide-react";
@@ -13,6 +13,7 @@ import { requireActor, runService } from "@/server/context";
 import { JobFilters } from "./job-filters";
 import { JobsTable, type JobRow } from "./jobs-table";
 import { MyDay } from "./my-day";
+import { SavedViews } from "./saved-views";
 import { formatJobNumber } from "@fieldops/core";
 
 export const metadata: Metadata = { title: "Jobs" };
@@ -38,6 +39,9 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     customer: one(sp.customer) || undefined,
     from: myDay ? today : one(sp.from) || undefined,
     to: myDay ? today : one(sp.to) || undefined,
+    date_field: one(sp.date_field) || undefined,
+    unassigned: one(sp.unassigned) || undefined,
+    revisit: one(sp.revisit) || undefined,
     sort: myDay ? "scheduled_start" : one(sp.sort) || undefined,
     limit: one(sp.limit) || 25,
     page: one(sp.page) || 1,
@@ -47,13 +51,27 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const office = can(actor, "jobs.update");
 
   const data = await runService(async (ctx) => {
-    const [page, members, serviceTypes, customer] = await Promise.all([
+    const [page, members, serviceTypes, customer, savedViews] = await Promise.all([
       jobs.listJobs(ctx, query),
       office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
       organization.listServiceTypes(ctx),
       query.customer ? ctx.store.customers.get(query.customer) : Promise.resolve(null),
+      views.listViews(ctx),
     ]);
-    return { page, members, serviceTypes, customer };
+    return {
+      page,
+      members,
+      serviceTypes,
+      customer,
+      savedViews: savedViews.map((v) => ({
+        id: v.id,
+        name: v.name,
+        query: v.query,
+        shared: v.shared,
+        ownerName: v.ownerName,
+        canDelete: views.canDeleteView(ctx, v),
+      })),
+    };
   });
 
   const rows: JobRow[] = data.page.rows.map((j) => ({
@@ -92,7 +110,9 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     query.service_type ||
     query.customer ||
     query.from ||
-    query.to,
+    query.to ||
+    query.unassigned ||
+    query.revisit,
   );
 
   return (
@@ -117,6 +137,11 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         }
       />
       {!myDay ? (
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SavedViews views={data.savedViews} canShare={can(actor, "views.share")} />
+        </div>
+      ) : null}
+      {!myDay ? (
         <JobFilters
           members={data.members.map((m) => ({ id: m.id, name: m.name }))}
           serviceTypes={data.serviceTypes.map((s) => ({ id: s.id, name: s.name }))}
@@ -139,7 +164,20 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         />
       ) : (
         <>
-          <JobsTable rows={rows} sort={query.sort} timeZone={actor.organization.timezone} sortable={!myDay} />
+          <JobsTable
+            rows={rows}
+            sort={query.sort}
+            timeZone={actor.organization.timezone}
+            sortable={!myDay}
+            bulk={
+              office
+                ? {
+                    members: data.members.map((m) => ({ id: m.id, name: m.name })),
+                    exportHref: `/jobs/export${params.size ? `?${params.toString()}` : ""}`,
+                  }
+                : undefined
+            }
+          />
           <Pagination
             page={query.page ?? 1}
             pageSize={query.limit}

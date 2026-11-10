@@ -519,6 +519,7 @@ describe("other repositories", () => {
         mimeType: "image/jpeg",
         sizeBytes: 5,
         tag: "after",
+        caption: null,
         status: "pending",
         uploadedBy: o.users.tech,
       });
@@ -539,6 +540,8 @@ describe("other repositories", () => {
         currency: "USD",
         color: null,
         active: false,
+        requiredSkills: [],
+        checklistTemplate: [],
       });
       expect((await st.serviceTypes.list()).map((x) => x.name)).toEqual(["AC repair"]);
       expect((await st.serviceTypes.list({ includeInactive: true })).map((x) => x.name)).toEqual([

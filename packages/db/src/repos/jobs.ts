@@ -90,7 +90,7 @@ const assigneesSql = sql<AssigneeRef[]>`coalesce((
   where ja.job_id = "job"."id" and ja.organization_id = "job"."organization_id"
 ), '[]'::json)`;
 
-const viewColumns = {
+export const viewColumns = {
   j: job,
   customerName: customer.name,
   site: site,
@@ -98,7 +98,7 @@ const viewColumns = {
   assignees: assigneesSql,
 };
 
-type ViewRow = {
+export type ViewRow = {
   j: typeof job.$inferSelect;
   customerName: string;
   site: typeof site.$inferSelect;
@@ -127,6 +127,8 @@ export function toJobRecord(r: typeof job.$inferSelect): JobRecord {
     completedAt: r.completedAt,
     canceledAt: r.canceledAt,
     estimatedDurationMin: r.estimatedDurationMin,
+    firstScheduledAt: r.firstScheduledAt,
+    revisit: r.revisit,
     aiDrafted: r.aiDrafted,
     needsReview: r.needsReview,
     createdBy: r.createdBy,
@@ -136,7 +138,7 @@ export function toJobRecord(r: typeof job.$inferSelect): JobRecord {
   };
 }
 
-function toView(r: ViewRow): JobView {
+export function toView(r: ViewRow): JobView {
   return {
     ...toJobRecord(r.j),
     customer: { id: r.j.customerId, name: r.customerName },
@@ -193,15 +195,21 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       }
       // Technicians who filter by another technician still only see their own jobs.
       if (f.assignedMemberId && f.technician && f.technician !== f.assignedMemberId) where.push(sql`false`);
+      if (f.unassigned) {
+        where.push(
+          sql`not exists (select 1 from ${jobAssignment} ja where ja.organization_id = ${orgId} and ja.job_id = "job"."id")`,
+        );
+      }
+      if (f.revisit) where.push(eq(job.revisit, true));
       const tz = sql`(select o.timezone from organization o where o.id = ${orgId})`;
-      if (f.from)
-        where.push(
-          sql`coalesce(${job.scheduledStart}, ${job.createdAt}) >= (${f.from}::date)::timestamp at time zone ${tz}`,
-        );
-      if (f.to)
-        where.push(
-          sql`coalesce(${job.scheduledStart}, ${job.createdAt}) < ((${f.to}::date) + 1)::timestamp at time zone ${tz}`,
-        );
+      const dateCol =
+        f.date_field === "created"
+          ? sql`${job.createdAt}`
+          : f.date_field === "completed"
+            ? sql`${job.completedAt}`
+            : sql`coalesce(${job.scheduledStart}, ${job.createdAt})`;
+      if (f.from) where.push(sql`${dateCol} >= (${f.from}::date)::timestamp at time zone ${tz}`);
+      if (f.to) where.push(sql`${dateCol} < ((${f.to}::date) + 1)::timestamp at time zone ${tz}`);
 
       const sorts = parseSort(f.sort, SORT_FIELDS);
       const orderBy = [

@@ -23,7 +23,8 @@ WORKDIR /app
 ENV NODE_ENV=production MIGRATIONS_FOLDER=/app/drizzle
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
-RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
+RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app \
+  && mkdir -p /data/files && chown app:app /data/files
 COPY --from=builder --chown=app:app /repo/apps/worker/dist ./dist
 COPY --from=builder --chown=app:app /repo/packages/db/drizzle ./drizzle
 USER app
