@@ -301,6 +301,27 @@ describe("demo seed", () => {
     expect(r.rows.reduce((n, x) => n + x.unread, 0)).toBeGreaterThan(0);
   });
 
+  it("speaks each organization's language: Acme Teknik in Indonesian but for one English speaker (SET-05)", async () => {
+    const r = await first.owner.execute<{
+      slug: string;
+      locale: string;
+      users: number;
+      customer_locale: string;
+    }>(sql`
+      select o.slug, u.locale, count(*)::int as users, o.settings->>'locale' as customer_locale
+      from "user" u
+      join member m on m.user_id = u.id
+      join organization o on o.id = m.organization_id
+      where u.email like '%@' || o.slug || '.example'
+      group by o.slug, u.locale, o.settings->>'locale'
+      order by o.slug, u.locale`);
+    expect(r.rows).toEqual([
+      { slug: "acme-air", locale: "en", users: 10, customer_locale: "en" },
+      { slug: "acme-teknik", locale: "en", users: 1, customer_locale: "id" },
+      { slug: "acme-teknik", locale: "id", users: 6, customer_locale: "id" },
+    ]);
+  });
+
   it("wipes everything before a reset", async () => {
     await wipeAll(second.owner);
     const r = await second.owner.execute<{ n: number }>(

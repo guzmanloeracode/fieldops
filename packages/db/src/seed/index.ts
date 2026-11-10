@@ -110,6 +110,8 @@ async function seedOrg(
       .map((day) => ({ day, open: "08:00", close: "17:00" }))
       .concat(spec.key === "acme-teknik" ? [{ day: 6, open: "08:00", close: "13:00" }] : []),
     taxRates: spec.taxRates,
+    // Customers get the organization's language unless they have their own (SET-05).
+    settings: { locale: spec.locale },
     isDemo: true,
     plan: "pro",
     createdAt: new Date(ctx.now.getTime() - 400 * DAY),
@@ -126,7 +128,7 @@ async function seedOrg(
       name: t.name,
       email,
       emailVerified: true,
-      locale: spec.locale,
+      locale: t.locale ?? spec.locale,
       isDemo: true,
       createdAt: new Date(ctx.now.getTime() - 380 * DAY),
     });
