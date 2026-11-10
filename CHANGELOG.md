@@ -6,8 +6,8 @@
   drag and drop to schedule, move, reassign or resize. Every drag has a keyboard equivalent, and moves are
   announced to screen readers. A map tab shows the day's visits by status.
 - **Conflict checks:** overlapping visits, outside working hours, time off and missing skills. A dispatcher can
-  override any of them with a reason, which is kept in the timeline. The 409 `details.conflicts` shape changed
-  to a list of `{kind, member_id, member_name, message, job_numbers?, missing_skills?}`.
+  override any of them with a reason, which is kept in the timeline. In the API's 409 problem, `conflicts[]` changed
+  from `{member_id, jobs}` to `{kind, member_id, member_name, message, job_numbers?, missing_skills?}`.
 - **Team availability** (`/schedule/team`): working hours per weekday, skills and time off per member.
 - **Several technicians per job**, with a lead.
 - **Technician workspace:** _My day_ highlights the next visit with one-tap actions, a sticky action bar on
@@ -28,6 +28,8 @@
 - **Operations settings:** approval thresholds and the signature requirement.
 - **API:** schedule, agenda, checklist, time entries, signature, expenses and equipment endpoints, all in the
   OpenAPI document.
+- **Demo seed:** working hours, skills and time off, checklists and time entries, expense requests, shared saved
+  views, and about 5% of past jobs that needed a second visit.
 - **Uploads without R2:** files are stored on a Docker volume behind signed URLs until object storage is enabled
   (ADR 015).
 - Fixes: the note form no longer wipes text typed while a note is saving; editing a service type no longer clears

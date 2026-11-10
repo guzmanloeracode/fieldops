@@ -62,7 +62,7 @@ stateDiagram-v2
 
 Assigning technicians and a window to a New job schedules it; clearing either sends it back to New. An assignment
 is checked for four conflicts per technician: overlapping visits, outside working hours, time off and missing
-skills. Any of them is rejected (409 with `details.conflicts`) unless the dispatcher gives an override reason, which
+skills. Any of them is rejected (a 409 problem with a `conflicts` list) unless the dispatcher gives an override reason, which
 is kept in the timeline with the overridden conflicts.
 
 Status changes also drive the clocks: En route starts travel time, Start and Resume start work time, and Hold,

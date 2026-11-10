@@ -51,8 +51,8 @@ The [roadmap](#roadmap) adds SLAs and AI, payments, a Go event-delivery service,
 - **One contract.** Zod schemas in `packages/shared` validate forms, server actions and API requests, type the
   code, and generate the OpenAPI document.
 - **Framework-free domain.** Permissions, the job lifecycle, money and numbering live in `packages/core` as plain
-  TypeScript behind repository interfaces: 258 unit tests, 100% line coverage.
-- **Real database tests.** 74 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
+  TypeScript behind repository interfaces: 388 unit tests, 100% line coverage.
+- **Real database tests.** 110 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
   pagination over 12 sort orders, concurrent numbering and the seed itself.
 - **Accessible drag and drop.** Every board action has a keyboard path and a screen-reader announcement, and
   every chart has a data table. Playwright runs axe (WCAG 2.2 AA) on every page against the production images.
