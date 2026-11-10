@@ -90,3 +90,29 @@ export type SignatureCapture = z.output<typeof signatureCaptureSchema>;
 export const completionSettingsSchema = z
   .object({ require_signature: z.boolean() })
   .meta({ id: "CompletionSettings" });
+
+export const timeTotalsSchema = z
+  .object({
+    member: z.object({ id: z.uuid(), name: z.string() }),
+    travel_minutes: z.number().int(),
+    work_minutes: z.number().int(),
+    running: z.enum(TIME_ENTRY_KINDS).nullable().meta({ description: "The clock running now, if any" }),
+  })
+  .meta({ id: "TimeTotals" });
+
+export const timeEntryListSchema = z
+  .object({
+    data: z.array(timeEntrySchema),
+    totals: z.array(timeTotalsSchema),
+    next_cursor: z.string().nullable(),
+  })
+  .meta({ id: "TimeEntryList" });
+
+export const checklistListSchema = z
+  .object({
+    data: z.array(checklistItemSchema),
+    total: z.number().int(),
+    done: z.number().int(),
+    required_left: z.number().int(),
+  })
+  .meta({ id: "Checklist" });

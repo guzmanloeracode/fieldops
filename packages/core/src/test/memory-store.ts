@@ -20,6 +20,7 @@ import type {
   SiteRecord,
   Store,
 } from "../services/types";
+import { fieldworkRepos, type MemoryChecklistItem, type MemoryTimeEntry } from "./memory-fieldwork";
 
 import { memoryExpenses } from "./memory-expenses";
 
@@ -45,7 +46,8 @@ export interface MemoryData {
   notes: NoteRecord[];
   attachments: AttachmentRecord[];
   members: MemberRecord[];
-  checklist: { jobId: string; label: string; required: boolean; done: boolean }[];
+  checklist: MemoryChecklistItem[];
+  timeEntries: MemoryTimeEntry[];
   counter: number;
 }
 
@@ -82,6 +84,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     attachments: [],
     members: [],
     checklist: [],
+    timeEntries: [],
     counter: 0,
     ...seed,
   };
@@ -397,6 +400,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     },
     expenses: memoryExpenses(data, uuid),
     ...insights.repos,
+    ...fieldworkRepos(data, uuid),
   };
   return { store, data };
 }

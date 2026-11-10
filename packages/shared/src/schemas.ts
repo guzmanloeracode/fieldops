@@ -279,6 +279,16 @@ export const checklistTemplateItemSchema = z
   .meta({ id: "ChecklistTemplateItem" });
 export type ChecklistTemplateItem = z.output<typeof checklistTemplateItemSchema>;
 
+/** The template item as the API returns it (no input transforms, so it can describe a response). */
+export const checklistTemplateItemDtoSchema = z
+  .object({
+    label: z.string(),
+    kind: z.enum(CHECKLIST_ITEM_KINDS),
+    unit: z.string().nullable(),
+    required: z.boolean(),
+  })
+  .meta({ id: "ChecklistTemplateItemOut" });
+
 export const serviceTypeInputSchema = z
   .object({
     name: trimmed(120).min(1),
@@ -520,17 +530,7 @@ export const serviceTypeSchema = z
     currency: currencySchema,
     active: z.boolean(),
     required_skills: z.array(z.string()),
-    // Output shape without the input transforms: zod-openapi rejects transforms in response schemas.
-    checklist_template: z.array(
-      z
-        .object({
-          label: z.string(),
-          kind: z.enum(CHECKLIST_ITEM_KINDS),
-          unit: z.string().nullable(),
-          required: z.boolean(),
-        })
-        .meta({ id: "ChecklistTemplateItemOut" }),
-    ),
+    checklist_template: z.array(checklistTemplateItemDtoSchema),
   })
   .meta({ id: "ServiceType" });
 

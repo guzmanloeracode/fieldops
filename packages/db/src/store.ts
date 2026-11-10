@@ -5,6 +5,7 @@ import { expenseRepo } from "./repos/expenses";
 import { dashboardRepo } from "./repos/dashboard";
 import { searchRepo } from "./repos/search";
 import { savedViewRepo } from "./repos/views";
+import { checklistRepo, timeEntryRepo } from "./repos/fieldwork";
 import { jobRepo } from "./repos/jobs";
 import { attachmentRepo, noteRepo } from "./repos/notes";
 import { memberRepo, organizationRepo, serviceTypeRepo } from "./repos/organization";
@@ -28,6 +29,8 @@ export function createStore(tx: Tx, organizationId: string): Store {
     dashboard: dashboardRepo(tx, organizationId),
     savedViews: savedViewRepo(tx, organizationId),
     search: searchRepo(tx, organizationId),
+    checklist: checklistRepo(tx, organizationId),
+    timeEntries: timeEntryRepo(tx, organizationId),
   };
 }
 

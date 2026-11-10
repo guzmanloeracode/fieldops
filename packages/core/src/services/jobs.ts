@@ -14,16 +14,15 @@ import {
 import { ConflictError, NotFoundError, PreconditionFailedError, ValidationError } from "../domain/errors";
 import { assertTransition, availableTransitions, findTransition } from "../domain/job-status";
 import { assertCan, seesOnlyAssigned } from "../domain/permissions";
-import { parseJobNumber } from "../domain/numbering";
 import { assertValidWindow } from "../domain/schedule";
+import * as checklist from "./checklist";
+import { getJob, isAssigned } from "./job-access";
+import * as signatures from "./signature";
+import * as time from "./time";
 import { parseInput } from "./validate";
 import type { JobRecord, JobView, ServiceContext } from "./types";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isAssigned(ctx: ServiceContext, job: Pick<JobView, "assignees">): boolean {
-  return job.assignees.some((a) => a.memberId === ctx.actor.memberId);
-}
+export { getJob } from "./job-access";
 
 export async function listJobs(ctx: ServiceContext, query: JobListQuery) {
   assertCan(ctx.actor, "jobs.view", { assigned: true });
@@ -31,21 +30,6 @@ export async function listJobs(ctx: ServiceContext, query: JobListQuery) {
     ...query,
     ...(seesOnlyAssigned(ctx.actor) ? { assignedMemberId: ctx.actor.memberId } : {}),
   });
-}
-
-/** Loads a job by id or number ("JOB-000123"). Jobs a technician isn't assigned to are reported as not found. */
-export async function getJob(ctx: ServiceContext, idOrNumber: string): Promise<JobView> {
-  let job: JobView | null = null;
-  if (UUID.test(idOrNumber)) job = await ctx.store.jobs.get(idOrNumber);
-  else {
-    const n = parseJobNumber(idOrNumber);
-    if (n) job = await ctx.store.jobs.getByNumber(n);
-  }
-  if (!job) throw new NotFoundError("Job");
-  const assigned = isAssigned(ctx, job);
-  if (seesOnlyAssigned(ctx.actor) && !assigned) throw new NotFoundError("Job");
-  assertCan(ctx.actor, "jobs.view", { assigned });
-  return job;
 }
 
 export async function getJobActions(ctx: ServiceContext, job: JobView) {
@@ -104,6 +88,7 @@ export async function createJob(ctx: ServiceContext, raw: unknown): Promise<JobV
     actorUserId: ctx.actor.userId,
     payload: { source: input.source },
   });
+  if (job.serviceTypeId) await checklist.generateForJob(ctx, job.id, job.serviceTypeId);
   return (await ctx.store.jobs.get(job.id))!;
 }
 
@@ -148,6 +133,9 @@ export async function updateJob(ctx: ServiceContext, id: string, raw: unknown, e
   if (changed.length === 0) return current;
   const updated = await ctx.store.jobs.update(current.id, patch, current.version);
   if (!updated) throw new PreconditionFailedError();
+  if (changed.includes("serviceTypeId")) {
+    await checklist.regenerateIfUntouched(ctx, current.id, updated.serviceTypeId);
+  }
   await ctx.store.jobs.addEvent({
     jobId: current.id,
     type: "updated",
@@ -173,6 +161,10 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       hasSchedule: Boolean(job.scheduledStart && job.scheduledEnd),
       missingRequiredItems:
         input.to === "completed" ? await ctx.store.jobs.missingRequiredChecklistItems(job.id) : [],
+      signatureMissing:
+        input.to === "completed" &&
+        (await ctx.store.organization.get()).settings.requireSignature &&
+        !(await signatures.hasSignature(ctx, job.id)),
     },
   );
 
@@ -193,6 +185,7 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
+  await time.recordTransition(ctx, job, rule.name);
   await ctx.store.jobs.addEvent({
     jobId: job.id,
     type: "status_changed",

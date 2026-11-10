@@ -1,12 +1,13 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseMajor, toMajor } from "@fieldops/core";
-import { serviceTypeInputSchema, type Currency } from "@fieldops/shared";
+import { serviceTypeInputSchema, type ChecklistTemplateItem, type Currency } from "@fieldops/shared";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { useForm, type Path } from "react-hook-form";
+import { ChecklistTemplateEditor, SkillsEditor } from "./template-editor";
 import { toast } from "sonner";
 import { z } from "zod";
 import { FieldError } from "@/components/app/field-error";
@@ -29,8 +30,8 @@ const formSchema = serviceTypeInputSchema.omit({ default_price_minor: true, colo
   price: z.string().trim().min(1, "Enter a price").max(20),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
-type FormInput = z.input<typeof formSchema>;
-type FormOutput = z.output<typeof formSchema>;
+export type FormInput = z.input<typeof formSchema>;
+export type FormOutput = z.output<typeof formSchema>;
 
 export interface ServiceTypeValues {
   id: string;
@@ -41,6 +42,8 @@ export interface ServiceTypeValues {
   color: string | null;
   active: boolean;
   currency: Currency;
+  requiredSkills: string[];
+  checklistTemplate: ChecklistTemplateItem[];
 }
 
 export function ServiceTypeDialog({
@@ -63,8 +66,19 @@ export function ServiceTypeDialog({
         price: String(toMajor(serviceType.defaultPriceMinor, serviceType.currency)),
         color: serviceType.color ?? "#0369a1",
         active: serviceType.active,
+        required_skills: serviceType.requiredSkills,
+        checklist_template: serviceType.checklistTemplate.map((i) => ({ ...i, unit: i.unit ?? "" })),
       }
-    : { name: "", description: "", default_duration_min: 60, price: "0", color: "#0369a1", active: true };
+    : {
+        name: "",
+        description: "",
+        default_duration_min: 60,
+        price: "0",
+        color: "#0369a1",
+        active: true,
+        required_skills: [],
+        checklist_template: [],
+      };
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(formSchema),
     defaultValues: defaults,
@@ -113,7 +127,7 @@ export function ServiceTypeDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{serviceType ? t("edit") : t("new")}</DialogTitle>
         </DialogHeader>
@@ -176,6 +190,12 @@ export function ServiceTypeDialog({
           <p id={`${idp}-active-hint`} className="text-muted-foreground text-xs">
             {t("activeHint")}
           </p>
+          <SkillsEditor
+            idPrefix={idp}
+            value={form.watch("required_skills") ?? []}
+            onChange={(v) => form.setValue("required_skills", v, { shouldDirty: true })}
+          />
+          <ChecklistTemplateEditor idPrefix={idp} form={form} />
           <DialogFooter>
             <Button type="submit" disabled={pending}>
               {pending ? <Loader2 className="animate-spin" /> : null} {t("save")}

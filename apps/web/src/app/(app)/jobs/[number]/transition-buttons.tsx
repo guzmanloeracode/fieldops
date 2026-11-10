@@ -28,7 +28,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { transitionJobAction } from "../actions";
+import { CompleteDialog, type CompletionInfo } from "./complete-dialog";
 
 type Action = { to: JobStatus; name: string; requiresReason: boolean };
 
@@ -46,15 +48,23 @@ const ICONS: Record<string, typeof Play> = {
 };
 const PRIMARY = new Set(["depart", "start", "resume", "complete"]);
 
-/** Status actions allowed for this user (from core `availableTransitions`), with large touch targets (TEC-02). */
+/**
+ * Status actions allowed for this user (from core `availableTransitions`), with large touch targets (TEC-02).
+ * Complete opens the completion dialog with the checklist status and the customer signature (JOB-10).
+ * With `bar`, the buttons fill a phone-width action bar.
+ */
 export function TransitionButtons({
   jobId,
   version,
   actions,
+  completion,
+  bar = false,
 }: {
   jobId: string;
   version: number;
   actions: Action[];
+  completion?: CompletionInfo;
+  bar?: boolean;
 }) {
   const t = useTranslations("jobs");
   const router = useRouter();
@@ -63,6 +73,7 @@ export function TransitionButtons({
   const [reason, setReason] = useState("");
   const [holdReason, setHoldReason] = useState<HoldReason>("parts");
   const [error, setError] = useState<string | null>(null);
+  const [completing, setCompleting] = useState(false);
   // "schedule" and "reschedule" happen through the schedule card, where a time and technician are chosen.
   const visible = actions.filter((a) => a.name !== "schedule" && a.name !== "reschedule");
 
@@ -98,16 +109,31 @@ export function TransitionButtons({
           <Button
             key={a.name + a.to}
             size="lg"
+            className={cn(bar && "h-12 flex-1 text-base lg:h-10 lg:flex-none lg:text-sm")}
             variant={PRIMARY.has(a.name) ? "default" : a.name === "cancel" ? "ghost" : "outline"}
             disabled={pending}
             data-testid={`transition-${a.name}`}
-            onClick={() => (a.requiresReason || a.name === "hold" ? setDialog(a) : run(a, {}))}
+            onClick={() =>
+              a.name === "complete" && completion
+                ? setCompleting(true)
+                : a.requiresReason || a.name === "hold"
+                  ? setDialog(a)
+                  : run(a, {})
+            }
           >
             {pending && !dialog ? <Loader2 className="animate-spin" /> : <Icon />}
             {t(`transition.${a.name}`)}
           </Button>
         );
       })}
+      {completion && completing ? (
+        <CompleteDialog
+          jobId={jobId}
+          version={version}
+          info={completion}
+          onClose={() => setCompleting(false)}
+        />
+      ) : null}
       <Dialog open={dialog !== null} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent>
           <DialogHeader>

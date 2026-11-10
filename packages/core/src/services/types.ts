@@ -18,6 +18,7 @@ import type {
 import type { Actor } from "../domain/permissions";
 import type { ExpenseRepo } from "./expense-types";
 import type { DashboardRepo, EquipmentHistoryRow, SavedViewRepo, SearchRepo } from "./insights-types";
+import type { ChecklistRepo, TimeEntryRepo } from "./fieldwork-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -392,6 +393,8 @@ export interface Store {
   dashboard: DashboardRepo;
   savedViews: SavedViewRepo;
   search: SearchRepo;
+  checklist: ChecklistRepo;
+  timeEntries: TimeEntryRepo;
 }
 
 export interface FileStorage {

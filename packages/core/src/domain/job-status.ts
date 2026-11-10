@@ -64,6 +64,8 @@ export interface TransitionFacts {
   hasSchedule: boolean;
   /** Labels of required checklist items that are not done (JOB-08). */
   missingRequiredItems: readonly string[];
+  /** The organization requires a customer signature and none has been captured (JOB-10). */
+  signatureMissing?: boolean;
 }
 
 export interface TransitionRequest {
@@ -131,6 +133,9 @@ export function assertTransition(
     throw new InvalidTransitionError("Finish the required checklist items first", {
       missing: [...facts.missingRequiredItems],
     });
+  }
+  if (rule.name === "complete" && facts.signatureMissing) {
+    throw new InvalidTransitionError("Capture the customer's signature first", { missing: ["signature"] });
   }
   return rule;
 }
