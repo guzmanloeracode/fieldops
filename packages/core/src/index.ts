@@ -50,3 +50,5 @@ export * as notifications from "./services/notifications";
 // 0.4 ops: maintenance plans (JOB-13) and the daily digest (NOT-04).
 export * as recurrences from "./services/recurrences";
 export * as digest from "./services/digest";
+export * as assistant from "./services/assistant";
+export * as assistantTools from "./services/assistant-tools";

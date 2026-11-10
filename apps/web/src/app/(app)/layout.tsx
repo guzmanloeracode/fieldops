@@ -1,6 +1,7 @@
 import { expenses, notifications, ROLE_LABELS } from "@fieldops/core";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { AssistantButton, AssistantPanel } from "@/components/app/assistant/assistant-panel";
 import { CommandPalette, SearchButton } from "@/components/app/command-palette";
 import { Logo } from "@/components/app/logo";
 import { MobileNav } from "@/components/app/mobile-nav";
@@ -71,6 +72,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <SearchButton className="min-w-0 flex-1 group-data-[collapsed=true]/sidebar:hidden" />
                 <SearchButton compact className="hidden group-data-[collapsed=true]/sidebar:inline-flex" />
                 {bell(false)}
+                <AssistantButton />
               </>
             }
             footer={userMenu}
@@ -83,6 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {orgHeader}
               <SearchButton compact className="ml-auto" />
               {bell(true)}
+              <AssistantButton />
             </header>
             <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
               {children}
@@ -90,6 +93,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <CommandPalette role={actor.role} />
+        <AssistantPanel />
       </div>
     </LiveEventsProvider>
   );

@@ -1,5 +1,13 @@
-import type { IntakeModel, IntakeModelResult, ReportModel } from "@fieldops/core";
+import type {
+  AssistantModel,
+  AssistantModelResult,
+  IntakeModel,
+  IntakeModelResult,
+  ReportModel,
+} from "@fieldops/core";
 import { AnthropicIntakeModel } from "./anthropic";
+import { AnthropicAssistantModel } from "./assistant-anthropic";
+import { FixtureAssistantModel } from "./assistant-fixture";
 import { FixtureIntakeModel } from "./fixture";
 import { AnthropicReportModel, FixtureReportModel, unavailableReportModel } from "./report";
 
@@ -19,6 +27,14 @@ export {
   reportRecordText,
   unavailableReportModel,
 } from "./report";
+export {
+  AnthropicAssistantModel,
+  DEFAULT_ASSISTANT_MODEL,
+  strictInputSchema,
+  toRunnableTool,
+} from "./assistant-anthropic";
+export { FixtureAssistantModel, fixtureAnswer, monthRange, planAssistantTools } from "./assistant-fixture";
+export { ASSISTANT_SYSTEM_PROMPT, contextText } from "./assistant-prompt";
 
 /** No key and no fixture: every call fails, and the core reports AI as not configured before calling it. */
 export const unavailableModel: IntakeModel = {
@@ -45,6 +61,8 @@ export interface AiEnv {
   intakeModel?: string;
   /** AI_MODEL_REPORT: the model for service reports (AI-03). */
   reportModel?: string;
+  /** AI_MODEL_ASSISTANT: the model for Ask FieldOps (AI-02). */
+  assistantModel?: string;
 }
 
 export function createIntakeModel(env: AiEnv): IntakeModel {
@@ -58,4 +76,27 @@ export function createReportModel(env: AiEnv): ReportModel {
   if (env.provider === "fixture") return new FixtureReportModel();
   if (env.apiKey) return new AnthropicReportModel({ apiKey: env.apiKey, model: env.reportModel });
   return unavailableReportModel;
+}
+
+/** Ask FieldOps without a key or fixture: the core reports AI as not configured before calling it. */
+export const unavailableAssistantModel: AssistantModel = {
+  provider: "unavailable",
+  model: "none",
+  async answer(): Promise<AssistantModelResult> {
+    return {
+      kind: "failed",
+      model: "none",
+      usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 },
+      stopReason: null,
+      latencyMs: 0,
+      text: "",
+      error: "AI isn't configured",
+    };
+  },
+};
+
+export function createAssistantModel(env: AiEnv): AssistantModel {
+  if (env.provider === "fixture") return new FixtureAssistantModel();
+  if (env.apiKey) return new AnthropicAssistantModel({ apiKey: env.apiKey, model: env.assistantModel });
+  return unavailableAssistantModel;
 }

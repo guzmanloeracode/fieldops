@@ -15,6 +15,7 @@
     "test": "turbo run test",
     "test:int": "pnpm --filter @fieldops/db test:int",
     "eval:intake": "pnpm --filter @fieldops/ai eval:intake",
+    "eval:assistant": "pnpm --filter @fieldops/ai eval:assistant",
     "test:e2e": "pnpm --filter @fieldops/web test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
