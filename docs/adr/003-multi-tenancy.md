@@ -13,7 +13,7 @@ enough to leak it.
    `app.org_id` is set with `set_config(..., true)` at the start of each request transaction (`withTenant`).
 4. The web app connects as `fieldops_app` (no `BYPASSRLS`, not the table owner). Migrations, the seed and the
    worker use the owner role.
-5. A test fails CI if any table with `organization_id` is missing from `TENANT_TABLES` or lacks the policy.
+5. A test fails the release gate if any table with `organization_id` is missing from `TENANT_TABLES` or lacks the policy.
 
 **Consequences.** Every request runs in a transaction. Cross-tenant jobs (nightly reset, SLA monitor) must use the
 worker's owner connection deliberately. Better Auth tables (`user`, `session`, `member`, `invitation`) are not

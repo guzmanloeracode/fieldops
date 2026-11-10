@@ -8,5 +8,5 @@
 packages are consumed as TypeScript source (`transpilePackages` in Next.js, esbuild bundling for the worker), so
 there is no separate build step per package.
 
-**Consequences.** One lockfile and one CI pipeline. `turbo prune` builds minimal Docker contexts. Root-level config
+**Consequences.** One lockfile and one set of release gates. `turbo prune` builds minimal Docker contexts. Root-level config
 that packages extend must be copied into pruned builds explicitly.

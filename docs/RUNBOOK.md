@@ -9,8 +9,9 @@ Production runs on the owner's Linux server as Compose project `fieldops`. Secre
 cd /root/fieldops && git pull && infra/deploy/release.sh
 ```
 
-The script tags the running images as `:rollback` first (the containerd image store drops an image as soon as its
-tag moves), builds `fieldops-web` and `fieldops-worker` from `git archive HEAD`, runs `migrate`, restarts `web` and
+The script runs `pnpm verify` (format, lint, typecheck, unit and integration tests), then tags the running images as `:rollback` first (the containerd image store drops an image as soon as its
+tag moves), builds `fieldops-web` and `fieldops-worker` from `git archive HEAD`, runs the Playwright + axe suite
+against the new images with a throwaway database (`infra/deploy/e2e.sh`), runs `migrate`, restarts `web` and
 `worker`, waits for `/api/health` to report the new commit, checks the public URL, and rolls back automatically if
 any check fails.
 

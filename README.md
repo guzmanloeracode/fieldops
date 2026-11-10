@@ -43,7 +43,7 @@ mobile app.
 ## Engineering highlights
 
 - **Tenant isolation in two layers.** Repositories scope every query by `organization_id`, and PostgreSQL
-  row-level security enforces it again for the runtime role. A test fails CI if any table with an
+  row-level security enforces it again for the runtime role. A test fails the release gate if any table with an
   `organization_id` column lacks a policy. ([ADR 003](docs/adr/003-multi-tenancy.md))
 - **One contract.** Zod schemas in `packages/shared` validate forms, server actions and API requests, type the
   code, and generate the OpenAPI document.
@@ -85,7 +85,7 @@ More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the [ADRs](docs/adr).
 
 TypeScript (strict) · Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · shadcn/ui (Radix) · TanStack Table ·
 Better Auth · PostgreSQL 18 · Drizzle ORM · Zod 4 · zod-openapi + Scalar · pg-boss · MapLibre GL · React Email ·
-Vitest · Testcontainers · Playwright + axe-core · pnpm + Turborepo · Docker Compose · GitHub Actions
+Vitest · Testcontainers · Playwright + axe-core · pnpm + Turborepo · Docker Compose
 
 ## Run it locally
 
@@ -106,11 +106,14 @@ Open http://localhost:3000 and use the demo buttons. Emails go to Mailpit at htt
 ## Tests
 
 ```bash
-pnpm lint && pnpm typecheck
-pnpm --filter @fieldops/core test        # unit tests with coverage
-pnpm --filter @fieldops/db test:int      # PostgreSQL integration tests (Docker)
-pnpm --filter @fieldops/web test:e2e     # Playwright journeys and axe checks
+pnpm verify          # format, lint, typecheck, unit tests (coverage) and PostgreSQL integration tests (Docker)
+pnpm e2e:image       # Playwright journeys + axe on the production images, with a throwaway database
+pnpm security        # gitleaks over the full git history and a production dependency audit
 ```
+
+There is no hosted CI. The same checks are the release pipeline: `infra/deploy/release.sh` runs `pnpm verify`,
+builds the images, runs the E2E suite against them, and only then deploys, with an automatic rollback if the health
+check fails.
 
 ## Project layout
 

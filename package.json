@@ -19,7 +19,10 @@
     "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @fieldops/db generate",
     "db:migrate": "pnpm --filter @fieldops/db migrate",
-    "db:seed": "pnpm --filter @fieldops/db seed"
+    "db:seed": "pnpm --filter @fieldops/db seed",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:int",
+    "e2e:image": "bash infra/deploy/e2e.sh",
+    "security": "bash infra/deploy/security.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

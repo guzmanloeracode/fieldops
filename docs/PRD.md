@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.1 · release 0.1 built and deployed |
+| **Status** | Draft 1.2 · release 0.1 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -16,6 +16,7 @@
 |---|---|---|
 | 1.0 | 10 Nov 2026 | First draft. |
 | 1.1 | 10 Nov 2026 | Release 0.1 built. Recorded the decisions made while building it: pinned versions (§14.3), services behind repository interfaces (§14.2), OpenFreeMap as the default map style (§14.3), Redis deferred to 0.3 (§15.3), the on-server release script until the Actions deploy is approved (§15.4), backups blocked until R2 is enabled (§15.5), the server capacity check (§23), and new open questions (§23). |
+| 1.2 | 10 Nov 2026 | Repository published at github.com/guzmanloeracode/fieldops. **No hosted CI** (owner's decision): GitHub Actions is disabled and the checks run on the server as release gates — `pnpm verify` before the build, `infra/deploy/e2e.sh` on the new images before they go live (§15.4, §18.2, ADR 014). |
 
 ## Contents
 
@@ -163,7 +164,7 @@ A real, growing vertical means the demo looks like software clients already unde
 | Performance | Lighthouse on key app pages (performance, accessibility, best practices) | ≥ 90 each |
 | Accessibility | Serious or critical axe violations on key pages | 0 |
 | Quality | Line coverage on the `core` domain package | ≥ 90% |
-| Quality | CI duration for a pull request | < 12 min |
+| Quality | Duration of the release gates (`pnpm verify` + E2E on the images) | < 12 min (measured: about 1 min + 2 min, plus the image build) |
 | Security | Open high or critical vulnerabilities older than 7 days | 0 |
 | Operations | Demo uptime per month | ≥ 99.5% |
 | Operations | Restore from backup, tested quarterly | < 30 min |
@@ -796,7 +797,7 @@ Server actions and API routes call the same services, so the web app, mobile app
 | Internationalization | next-intl | Translation for both server and client components |
 | Observability | Sentry, pino JSON logs, external uptime monitor | Errors, traces and alerts |
 | Testing | Vitest, Testing Library, Playwright, axe-core | Unit, integration, end-to-end and accessibility tests |
-| CI/CD | GitHub Actions, GHCR images, SSH deploy, release-please, Renovate | Repeatable builds and releases |
+| CI/CD | ~~GitHub Actions, GHCR images, SSH deploy, release-please, Renovate~~ **No hosted CI (1.2):** release gates in `infra/deploy/release.sh` on the server; images built and kept locally | Repeatable builds and releases without a hosted pipeline |
 | Mobile | Expo, Expo Router, TanStack Query, NativeWind, EAS | See [§10](#10-fieldops-mobile) |
 
 **Versions in use (release 0.1, November 2026):** Node 24 (images) / 22 (local), pnpm 10, Turborepo 2.11, Next.js 16.4, React 19.3, TypeScript 6.0 (7.0's native compiler isn't supported by Next.js tooling yet, ADR 012), Tailwind CSS 4.3, Better Auth 1.7, Drizzle ORM 0.45, Zod 4.6, zod-openapi 6, pg-boss 12, PostgreSQL 18, Vitest 5, Playwright 1.65, TanStack Table 8.
@@ -826,7 +827,7 @@ fieldops/
 │   ├── ARCHITECTURE.md
 │   ├── RUNBOOK.md      Deploy, rollback, backup and restore steps
 │   └── adr/            Architecture decision records
-└── .github/workflows/  CI, deploy, release
+└── infra/deploy/       release.sh (gates + deploy), e2e.sh, security.sh
 ```
 
 ### 14.5 Architecture decisions to record (ADRs)
@@ -895,7 +896,7 @@ Only the reverse proxy listens on ports 80 and 443. Every other service is reach
 
 The target downtime per deploy is under 10 seconds. The demo's banner shows the running version and commit.
 
-*Interim (until the owner approves the Actions deploy):* releases run on the server with `infra/deploy/release.sh`. It builds both images from `git archive HEAD`, tags the running images for rollback first (the server's containerd image store drops an image as soon as its tag moves), runs `migrate`, restarts `web` and `worker`, waits for `/api/health` to report the new commit, checks the public URL and rolls back automatically on failure. Switching to steps 2–4 above needs a `deploy` user, an SSH key stored as a GitHub secret, and GHCR images; see §23.
+*As built (1.2): there is no hosted CI, by the owner's decision.* Steps 1–5 above are replaced by one script on the server. `infra/deploy/release.sh` first runs `pnpm verify` (format, lint, typecheck, unit and integration tests), builds the images, runs `infra/deploy/e2e.sh` (Playwright + axe against the new images with a throwaway database), and only then deploys. Previously described interim flow: releases run on the server with `infra/deploy/release.sh`. It builds both images from `git archive HEAD`, tags the running images for rollback first (the server's containerd image store drops an image as soon as its tag moves), runs `migrate`, restarts `web` and `worker`, waits for `/api/health` to report the new commit, checks the public URL and rolls back automatically on failure. No `deploy` user, GitHub secret or GHCR registry is needed.
 
 ### 15.5 Operations
 
@@ -1074,6 +1075,8 @@ Each delivery carries a `FieldOps-Signature: t=<unix>,v1=<hex HMAC-SHA256>` head
 
 ### 18.2 Continuous integration
 
+> **As built (1.2):** no hosted CI. The list below runs on the server as release gates: steps 1–4 are `pnpm verify`, steps 5–6 are `infra/deploy/e2e.sh`, step 8 is `pnpm security` (gitleaks over the full history and `pnpm audit`). Lighthouse CI (step 7) and CodeQL are not run. Branch protection and required checks don't apply while the owner pushes to `main` directly.
+
 On every pull request:
 
 1. Install with the pnpm cache.
@@ -1142,7 +1145,7 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 | Release | Theme | Scope | Target |
 |---|---|---|---|
-| **0.1** Core ✅ built and deployed 10 Nov 2026 (repository not yet public, see §23) | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
+| **0.1** Core ✅ live 10 Nov 2026, repository public | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
 | **0.2** Dispatch | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
 | **0.3** Automate | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes) | 2 weeks |
 | **0.4** Get paid | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
@@ -1154,7 +1157,7 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 **Definition of done for every release**
 - All Must items for the release are complete, with tests.
-- CI is green, and the release is deployed to production and verified on the live demo.
+- The release gates pass (`pnpm verify`, E2E with axe on the built images), and the release is deployed to production and verified on the live demo.
 - The demo seed covers the new features.
 - README, screenshots and changelog are updated.
 - A GitHub Release is published with release notes and a short GIF.
@@ -1203,8 +1206,8 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 | 6 | License: MIT, or AGPL to discourage closed forks? | MIT |
 | 7 | WhatsApp Business integration, which is valuable in the Indonesian market? | Backlog |
 | 8 | Enable Cloudflare R2 on the account (dashboard only; it asks for a payment method even on the free tier). Needed for attachments and backups. | Uploads are off in the demo until enabled; the bucket `fieldops-demo` and its CORS rules are scripted and ready. |
-| 9 | GitHub account and visibility for the public repositories (P1 requires them public). | Repository stays private until the owner confirms the account and the switch to public. |
-| 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | On-server release script (§15.4) |
+| 9 | GitHub account and visibility for the public repositories (P1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops. |
+| 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | **Decided 10 Nov 2026: no hosted CI or Actions deploy.** Release gates run on the server (§15.4). |
 | 11 | Real email for non-demo sign-ups: Resend account and a sending domain (SPF/DKIM)? | Demo mode captures every email, so none is needed for the demo |
 
 ---

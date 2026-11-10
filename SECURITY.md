@@ -12,6 +12,7 @@ repository. Expect a first reply within 5 working days.
 
 - Server-side authorization for every page, server action and API call through one function in `packages/core`.
 - Tenant isolation in two layers: tenant-scoped repositories and PostgreSQL row-level security, with tests that
-  fail CI when a tenant table lacks a policy.
+  fail the release gate when a tenant table lacks a policy.
 - Zod validation on every input, parameterized queries only, secure HTTP-only cookies, security headers.
-- Secrets only in environment files on the server; gitleaks and dependency audits in CI.
+- Secrets only in environment files on the server; `pnpm security` (gitleaks over the full history and a
+  dependency audit) runs before releases.

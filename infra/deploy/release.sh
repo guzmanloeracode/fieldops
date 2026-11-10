@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Builds and deploys FieldOps on this server (PRD §15.4, local variant until the GitHub Actions deploy is enabled).
-#   infra/deploy/release.sh            # build HEAD, migrate, restart, health check, auto-rollback
-#   SKIP_BUILD=1 infra/deploy/release.sh
+# Builds and deploys FieldOps on this server (PRD §15.4). Runs the checks itself: there is no hosted CI.
+#   infra/deploy/release.sh            # verify, build HEAD, E2E on the new images, migrate, restart, health check, auto-rollback
+#   SKIP_VERIFY=1 SKIP_E2E=1 SKIP_BUILD=1 infra/deploy/release.sh   # skip individual gates
+# There is no hosted CI: these gates are the pipeline (PRD §18.2).
 # Full log: /var/log/fieldops-release.log
 set -euo pipefail
 
@@ -28,6 +29,11 @@ for svc in web worker; do
   if [ -n "$current" ] && [[ "$current" == fieldops-* ]]; then docker tag "$current" "fieldops-$svc:rollback"; fi
 done
 
+if [ "${SKIP_VERIFY:-0}" != "1" ]; then
+  pnpm verify || { say "verify failed: nothing deployed (see $LOG)"; exit 1; }
+  say "verify passed"
+fi
+
 if [ "${SKIP_BUILD:-0}" != "1" ]; then
   ctx="$(mktemp -d)"
   trap 'rm -rf "$ctx"' EXIT
@@ -37,6 +43,11 @@ if [ "${SKIP_BUILD:-0}" != "1" ]; then
   docker build -q -f "$ctx/infra/docker/worker.Dockerfile" -t "fieldops-worker:$TAG" \
     --build-arg APP_VERSION="$VERSION" "$ctx" >/dev/null
   say "built images $TAG"
+fi
+
+if [ "${SKIP_E2E:-0}" != "1" ]; then
+  TAG="$TAG" "$ROOT/infra/deploy/e2e.sh" || { say "e2e failed: nothing deployed (see $LOG)"; exit 1; }
+  say "e2e passed"
 fi
 
 rollback() {
