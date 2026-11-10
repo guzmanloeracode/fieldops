@@ -88,7 +88,7 @@ export function SlaChart({ data, name }: { data: SlaPoint[]; name: string }) {
         <LineChart
           data={rows}
           accessibilityLayer={false}
-          margin={{ left: -12, right: 8 }}
+          margin={{ top: 8, left: 0, right: 8 }}
           onClick={(s: ChartClick) => {
             const i = indexOf(s);
             if (i !== null && data[i]) router.push(data[i].href);

@@ -2,8 +2,7 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
-
-const STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL ?? "https://tiles.openfreemap.org/styles/liberty";
+import { MAP_STYLE } from "@/lib/map-style";
 
 export function SiteMapInner({
   latitude,
@@ -19,7 +18,7 @@ export function SiteMapInner({
     if (!ref.current) return;
     const map = new maplibregl.Map({
       container: ref.current,
-      style: STYLE,
+      style: MAP_STYLE,
       center: [longitude, latitude],
       zoom: 13.5,
       attributionControl: { compact: true },

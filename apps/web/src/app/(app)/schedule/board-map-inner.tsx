@@ -2,8 +2,7 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
-
-const STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL ?? "https://tiles.openfreemap.org/styles/liberty";
+import { MAP_STYLE } from "@/lib/map-style";
 
 export interface MapMarker {
   id: string;
@@ -41,7 +40,7 @@ export function BoardMapInner({ markers, label }: { markers: MapMarker[]; label:
     for (const m of markers) bounds.extend([m.longitude, m.latitude]);
     const map = new maplibregl.Map({
       container: ref.current,
-      style: STYLE,
+      style: MAP_STYLE,
       bounds,
       fitBoundsOptions: { padding: 48, maxZoom: 14 },
       attributionControl: { compact: true },
