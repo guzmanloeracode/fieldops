@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.6 · release 0.3 live, repository public |
+| **Status** | Draft 1.7 · release 0.3.1 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -20,6 +20,7 @@
 | 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
 | 1.4 | 10 Nov 2026 | Release 0.2.1: route-level loading skeletons for every page that loads data (§13 *As built (0.2.1)*). |
 | 1.5 | 10 Nov 2026 | Summary, market (§2), delivery goals (§4.2) and documentation and launch (§21) rewritten around the product and its customers. |
+| 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
 | 1.6 | 10 Nov 2026 | Release 0.3 built and live. Recorded the decisions made while building it in *As built (0.3)* notes: Google sign-in (§8.1), the live board (§8.4), SLA time basis, the monitor and notification rules (§8.7), the portal sign-in and requests (§8.9), real SLA figures and CSV export (§8.10), the audit log written by database triggers (§8.11, ADR 016), SLA and AI settings (§8.12), AI rate limits (§8.14), AI intake (§9.2), live updates through PostgreSQL instead of Redis (§14.3, §15.3, ADR 011), new tables and endpoints (§16.3, §17.2) and the 0.3 seed (§19). |
 
 ## Contents
@@ -783,6 +784,8 @@ sequenceDiagram
 
 *As built (0.2.1):* every page that loads data has a route-level skeleton (`loading.tsx`) shaped like the page, built from shared parts in `apps/web/src/components/app/skeletons.tsx`. It carries one polite "Loading…" status for screen readers, hides its shapes from them and stops pulsing under reduced motion. Changing filters, search or the date within a page is a transition, so the current page stays on screen and the skeleton only shows when moving to another page. Because a streamed skeleton fixes the HTTP status at 200, checks that must answer 404 (roles, other organizations' records) run in the segment's layout before the skeleton (`apps/web/src/server/guards.ts`), and list pages sit in route groups so their skeleton doesn't wrap the detail pages.
 
+*As built (0.3.1):* on desktop the sidebar collapses to an icon rail and expands again with its button or Ctrl/⌘ B (not while typing in a field). Collapsed links keep their names for screen readers and show them as tooltips, and the pending-approvals count turns into a dot that is still announced. A cookie keeps the choice, so the server renders the sidebar in the same state and the page doesn't shift on load. The mobile menu is unchanged.
+
 ---
 
 ## 14. Architecture and tech stack
@@ -1222,6 +1225,8 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 *As built (0.2):* the seed adds per-member working hours, skills with deliberate gaps and time off (the board's "today" has no conflicts, but overriding is easy to try); checklist templates for all 14 service types (Indonesian for Acme Teknik) with answers and time entries derived from each job's status history; about 590 expense requests for Acme Air and 170 for Acme Teknik, including a few pending ones above the dispatcher limit; four shared saved views per organization; and Olivia's second membership. Acme Air requires a customer signature. A full reset takes about 30 seconds.
 
 *As built (0.3):* explicit SLA policies for both organizations (low priority at Acme Air and normal and low at Acme Teknik count business hours); deadlines and states for every job, consistent with its timeline (about 7% of completed jobs breached their resolution target, and each organization has a few at-risk and breached open jobs today), with past alerts recorded so the first monitor run raises nothing new. A demo portal customer per organization (Jamie Rivera at Acme Air, Dewi Lestari at Acme Teknik) and at least three open portal requests per organization with visit windows and AI drafts; 30 days of AI usage history; recent notifications for the demo users (the newest unread); about 7 days of audit history (job changes, customer and site edits, a role change, a settings change, sign-ins from documentation IP ranges). The seed runs with the audit log and live events turned off.
+
+*As built (0.3.1):* each service type lists its job titles with request texts written for each title, so a job's description always matches its title and service type; customers get access and billing notes from their own list. Open portal requests have no service type, estimate or checklist, like requests from the real portal, and their AI drafts suggest the service type and estimate, with checks and questions for that kind of job; drafts raise the priority only for faults. The random draws keep their order, so the rest of the demo data is unchanged.
 
 ---
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.1 — Sidebar and demo requests (2026-11-10)
+
+- **Collapsible sidebar:** on desktop, the sidebar collapses to an icon rail and expands again with its button or
+  Ctrl/⌘ B. Collapsed links keep their names for screen readers and show tooltips; the pending-approvals count
+  becomes a dot that is still announced. The choice is kept in a cookie, so the page renders that way from the
+  server.
+- **Demo data:** every job's description now matches its title and service type (they used to come from one shared
+  list). Portal requests waiting for review have no service type, estimate or checklist yet, like real ones; their
+  AI drafts suggest the service type and estimate, with checks and questions for that kind of job, and raise the
+  priority only for faults. The demo customer's request has an AI title and summary.
+- **AI review:** the current checklist shows its size, or a dash when there is none, instead of a fixed label.
+- E2E: the sidebar is tested collapsed and expanded, with axe, a reload and the keyboard shortcut.
+
 ## 0.3.0 — Automate (2026-11-10)
 
 - **SLA policies** (`/settings/sla`): response and resolution targets per priority, in calendar time or business
