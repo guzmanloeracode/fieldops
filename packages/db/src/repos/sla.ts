@@ -80,7 +80,8 @@ export function slaRepo(tx: Tx, orgId: string): SlaRepo {
                  case when j.first_scheduled_at is null and j.response_due_at is not null
                       then ${liveState("j.response_due_at", "j.response_at_risk_at", now)}
                       else j.sla_response_state end as response,
-                 case when j.resolution_due_at is not null
+                 -- A paused resolution clock (SLA-04) doesn't move.
+                 case when j.resolution_due_at is not null and j.sla_paused_at is null
                       then ${liveState("j.resolution_due_at", "j.resolution_at_risk_at", now)}
                       else j.sla_resolution_state end as resolution
             from job j
@@ -115,7 +116,7 @@ export function slaRepo(tx: Tx, orgId: string): SlaRepo {
           select j.id, 'resolution', j.sla_resolution_state
             from job j
            where j.organization_id = ${orgId} and j.deleted_at is null
-             and j.status not in ('completed', 'canceled')
+             and j.status not in ('completed', 'canceled') and j.sla_paused_at is null
              and j.sla_resolution_state in ('at_risk', 'breached')
         ), raised as (
           insert into sla_alert (organization_id, job_id, target, kind, raised_at)
