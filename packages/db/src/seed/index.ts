@@ -436,7 +436,7 @@ async function seedOrg(
 
       // First visit of a job that needed a second one: same time of day, two or three days before the final visit.
       const callback =
-        status === "completed" && offset < 0 && pastCompleted++ % 10 === 3
+        status === "completed" && offset < 0 && pastCompleted++ % 16 === 3
           ? new Date(placed.start.getTime() - (2 + (pastCompleted % 2)) * DAY)
           : null;
       const firstVisit =
