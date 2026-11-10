@@ -336,7 +336,7 @@ export async function requestAttachmentUpload(ctx: ServiceContext, jobId: string
     uploadedBy: ctx.actor.userId,
   });
   const put = await ctx.files.presignPut(storageKey, input.mime_type, input.size_bytes);
-  const thumb = thumbKey ? await ctx.files.presignPut(thumbKey, "image/webp", 512 * 1024) : null;
+  const thumb = thumbKey ? await ctx.files.presignPut(thumbKey, "image/webp") : null;
   return {
     attachment: record,
     uploadUrl: put.url,

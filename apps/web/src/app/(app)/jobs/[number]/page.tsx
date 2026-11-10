@@ -1,0 +1,252 @@
+import { can, DomainError, formatJobNumber, jobs, organization, STATUS_LABELS } from "@fieldops/core";
+import { ArrowLeft, Inbox, MapPin, Phone } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { PriorityBadge, StatusBadge } from "@/components/app/badges";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateTime, formatWindow } from "@/lib/format";
+import { fileStorageConfigured } from "@/env";
+import { requireActor, runService } from "@/server/context";
+import { AssignCard } from "./assign-card";
+import { Attachments } from "./attachments";
+import { JobMenu } from "./job-menu";
+import { Notes } from "./notes";
+import { SiteMap } from "./site-map";
+import { Timeline } from "./timeline";
+import { TransitionButtons } from "./transition-buttons";
+
+export async function generateMetadata({ params }: { params: Promise<{ number: string }> }): Promise<Metadata> {
+  const { number } = await params;
+  return { title: number.toUpperCase() };
+}
+
+export default async function JobPage({ params }: { params: Promise<{ number: string }> }) {
+  const { number } = await params;
+  const actor = await requireActor();
+  const t = await getTranslations("jobs");
+  const tz = actor.organization.timezone;
+  const office = can(actor, "jobs.update");
+
+  const data = await runService(async (ctx) => {
+    let job;
+    try {
+      job = await jobs.getJob(ctx, number);
+    } catch (err) {
+      if (err instanceof DomainError && err.code === "not_found") return null;
+      throw err;
+    }
+    const [actions, notes, events, attachments, members, serviceTypes, contacts, equipment] = await Promise.all([
+      jobs.getJobActions(ctx, job),
+      jobs.listNotes(ctx, job.id),
+      jobs.listJobEvents(ctx, job.id),
+      jobs.listAttachments(ctx, job.id),
+      office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
+      office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
+      ctx.store.customers.contacts(job.customerId),
+      job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
+    ]);
+    return { job, actions, notes, events, attachments, members, serviceTypes, contacts, equipment };
+  });
+  if (!data) notFound();
+  const { job } = data;
+  const jobNumber = formatJobNumber(job.number);
+  const primary = data.contacts[0];
+  const assigned = job.assignees.some((a) => a.memberId === actor.memberId);
+  const canWork = can(actor, "jobs.work", { assigned });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Link href="/jobs" className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm">
+          <ArrowLeft className="size-4" /> {t("title")}
+        </Link>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground font-mono">{jobNumber}</span>
+              <StatusBadge status={job.status} />
+              <PriorityBadge priority={job.priority} />
+              {job.needsReview ? (
+                <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                  <Inbox className="size-3" aria-hidden /> {t("needsReview")}
+                </span>
+              ) : null}
+              {job.holdReason ? <span className="text-muted-foreground text-xs">{t(`holdReason.${job.holdReason}`)}</span> : null}
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-balance">{job.title}</h1>
+            <p className="text-muted-foreground text-sm">
+              <Link href={`/customers/${job.customer.id}`} className="hover:text-foreground font-medium underline-offset-2 hover:underline">
+                {job.customer.name}
+              </Link>{" "}
+              · {job.site.label}, {job.site.address.city}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <TransitionButtons
+              jobId={job.id}
+              version={job.version}
+              actions={data.actions.map((a) => ({ to: a.to, name: a.name, requiresReason: Boolean(a.requiresReason) }))}
+            />
+            {office ? (
+              <JobMenu
+                job={{
+                  id: job.id,
+                  version: job.version,
+                  title: job.title,
+                  description: job.description,
+                  priority: job.priority,
+                  serviceTypeId: job.serviceTypeId,
+                  estimatedDurationMin: job.estimatedDurationMin,
+                  preferredStart: job.preferredStart?.toISOString() ?? null,
+                  preferredEnd: job.preferredEnd?.toISOString() ?? null,
+                }}
+                serviceTypes={data.serviceTypes.map((s) => ({ id: s.id, name: s.name }))}
+                canDelete={can(actor, "jobs.delete")}
+                timeZone={tz}
+              />
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("detail.details")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {job.description ? <p className="text-sm whitespace-pre-line">{job.description}</p> : <p className="text-muted-foreground text-sm">{t("detail.noDescription")}</p>}
+              <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                <Item label={t("col.serviceType")}>{job.serviceType?.name ?? "—"}</Item>
+                <Item label={t("detail.equipment")}>{data.equipment ? [data.equipment.type, data.equipment.brand, data.equipment.model].filter(Boolean).join(" · ") : "—"}</Item>
+                <Item label={t("detail.preferredWindow")}>{job.preferredStart ? formatWindow(job.preferredStart, job.preferredEnd, tz) : "—"}</Item>
+                <Item label={t("detail.estimate")}>{job.estimatedDurationMin ? t("detail.minutes", { n: job.estimatedDurationMin }) : "—"}</Item>
+                <Item label={t("detail.source")}>{t(`source.${job.source}`)}</Item>
+                <Item label={t("detail.created")}>{formatDateTime(job.createdAt, tz)}</Item>
+                {job.completedAt ? <Item label={STATUS_LABELS.completed}>{formatDateTime(job.completedAt, tz)}</Item> : null}
+                {job.canceledAt ? <Item label={STATUS_LABELS.canceled}>{formatDateTime(job.canceledAt, tz)}</Item> : null}
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Notes
+            jobId={job.id}
+            canAdd={canWork}
+            timeZone={tz}
+            notes={data.notes.map((n) => ({ id: n.id, body: n.body, visibility: n.visibility, author: n.author?.name ?? null, createdAt: n.createdAt.toISOString() }))}
+          />
+
+          <Attachments
+            jobId={job.id}
+            canUpload={canWork && fileStorageConfigured}
+            storageReady={fileStorageConfigured}
+            actorUserId={actor.userId}
+            canRemoveAny={office}
+            items={data.attachments.map((a) => ({
+              id: a.id,
+              fileName: a.fileName,
+              mimeType: a.mimeType,
+              sizeBytes: a.sizeBytes,
+              tag: a.tag,
+              url: a.url,
+              thumbUrl: a.thumbUrl,
+              uploadedBy: a.uploadedBy,
+            }))}
+          />
+
+          <Timeline
+            timeZone={tz}
+            events={data.events.map((e) => ({
+              id: e.id,
+              type: e.type,
+              fromStatus: e.fromStatus,
+              toStatus: e.toStatus,
+              actor: e.actor?.name ?? null,
+              payload: e.payload,
+              createdAt: e.createdAt.toISOString(),
+            }))}
+            members={Object.fromEntries([...data.members.map((m) => [m.id, m.name]), ...job.assignees.map((a) => [a.memberId, a.name])])}
+          />
+        </div>
+
+        <div className="space-y-6">
+          <AssignCard
+            jobId={job.id}
+            status={job.status}
+            canAssign={office && job.status !== "completed" && job.status !== "canceled"}
+            timeZone={tz}
+            assignees={job.assignees}
+            scheduledStart={job.scheduledStart?.toISOString() ?? null}
+            scheduledEnd={job.scheduledEnd?.toISOString() ?? null}
+            estimatedDurationMin={job.estimatedDurationMin}
+            members={data.members.map((m) => ({ id: m.id, name: m.name, role: m.role }))}
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{t("detail.location")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {job.site.latitude !== null && job.site.longitude !== null ? (
+                <SiteMap latitude={job.site.latitude} longitude={job.site.longitude} label={job.site.label} />
+              ) : null}
+              <div className="flex gap-2">
+                <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
+                <div>
+                  <p className="font-medium">{job.site.label}</p>
+                  <p className="text-muted-foreground">
+                    {job.site.address.line1}
+                    {job.site.address.line2 ? `, ${job.site.address.line2}` : ""}
+                    <br />
+                    {[job.site.address.city, job.site.address.region, job.site.address.postal_code].filter(Boolean).join(", ")}
+                  </p>
+                  {job.site.latitude !== null && job.site.longitude !== null ? (
+                    <a
+                      className="text-primary text-xs hover:underline"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${job.site.latitude},${job.site.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t("detail.directions")}
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+              {job.site.accessNotes ? (
+                <p className="bg-muted rounded-md p-2 text-xs">
+                  <span className="font-medium">{t("detail.access")}:</span> {job.site.accessNotes}
+                </p>
+              ) : null}
+              {primary ? (
+                <div className="flex gap-2 border-t pt-3">
+                  <Phone className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
+                  <div>
+                    <p className="font-medium">{primary.name}</p>
+                    {primary.phone ? (
+                      <a href={`tel:${primary.phone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">
+                        {primary.phone}
+                      </a>
+                    ) : null}
+                    {primary.email ? <p className="text-muted-foreground text-xs">{primary.email}</p> : null}
+                  </div>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Item({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dd className="mt-0.5">{children}</dd>
+    </div>
+  );
+}

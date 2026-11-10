@@ -1,4 +1,4 @@
-import { organizationUpdateSchema, serviceTypeInputSchema, type Role } from "@fieldops/shared";
+import { organizationUpdateSchema, serviceTypeInputSchema, serviceTypeUpdateSchema, type Role } from "@fieldops/shared";
 import { ConflictError, DemoRestrictedError, NotFoundError } from "../domain/errors";
 import { assertCan, canChangeRole } from "../domain/permissions";
 import { ForbiddenError } from "../domain/errors";
@@ -85,7 +85,7 @@ export async function createServiceType(ctx: ServiceContext, raw: unknown) {
 
 export async function updateServiceType(ctx: ServiceContext, id: string, raw: unknown) {
   assertCan(ctx.actor, "serviceTypes.manage");
-  const input = parseInput(serviceTypeInputSchema.partial(), raw);
+  const input = parseInput(serviceTypeUpdateSchema, raw);
   const updated = await ctx.store.serviceTypes.update(id, {
     ...(input.name !== undefined && { name: input.name }),
     ...(input.description !== undefined && { description: input.description ?? null }),

@@ -171,15 +171,18 @@ importers:
 
   apps/worker:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1165.0
+        version: 3.1165.0
       '@fieldops/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@fieldops/email':
-        specifier: workspace:*
-        version: link:../../packages/email
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      drizzle-orm:
+        specifier: ^0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(kysely@0.29.8)(pg@8.23.1)
       nodemailer:
         specifier: ^10.4.0
         version: 10.4.0

@@ -22,7 +22,7 @@ export const files: FileStorage | undefined = fileStorageConfigured
         const expiresIn = 600;
         const url = await getSignedUrl(
           s3(),
-          new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key, ContentType: contentType, ContentLength: sizeBytes }),
+          new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key, ContentType: contentType, ...(sizeBytes ? { ContentLength: sizeBytes } : {}) }),
           { expiresIn, signableHeaders: new Set(["content-type"]) },
         );
         return { url, headers: { "Content-Type": contentType }, expiresIn };

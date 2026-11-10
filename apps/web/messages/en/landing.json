@@ -1,1 +1,35 @@
-{}
+{
+  "nav": { "api": "API reference", "signIn": "Sign in", "openApp": "Open app" },
+  "hero": {
+    "badge": "Release {version} · live demo",
+    "title": "Field service management for small service teams",
+    "subtitle": "Turn requests into scheduled jobs, give technicians everything they need on site, and see the whole operation in one place. Built for HVAC, cleaning, plumbing and maintenance businesses with 5–50 people.",
+    "start": "Create your organization",
+    "api": "Explore the API"
+  },
+  "demo": {
+    "title": "Try it in one click",
+    "description": "Acme Air & Clean is a fictional AC and cleaning company in Austin with 12 people and 6 months of history.",
+    "indonesian": "Or try Acme Teknik Nusantara (Jakarta, IDR)",
+    "reset": "Shared demo accounts. All data is fictional and resets every day at 00:00 UTC."
+  },
+  "highlights": {
+    "tenancy": { "title": "Tenant isolation, twice", "body": "Every query is scoped by organization in code, and PostgreSQL row-level security enforces it again in the database." },
+    "contracts": { "title": "One contract", "body": "Zod schemas validate forms, server actions and the REST API, and generate the OpenAPI 3.1 reference." },
+    "lifecycle": { "title": "A real job lifecycle", "body": "A tested status machine with reasons, preconditions and a full timeline of who changed what." },
+    "selfHosted": { "title": "Self-hosted", "body": "Docker Compose on a Linux server behind Cloudflare, with migrations, health checks and nightly demo resets." }
+  },
+  "roadmap": {
+    "title": "Roadmap",
+    "subtitle": "Built in public, one release at a time.",
+    "r01": { "name": "0.1 Core", "body": "Accounts, roles, customers, sites, jobs, attachments, REST API and this demo." },
+    "r02": { "name": "0.2 Dispatch", "body": "Drag-and-drop board, technician day view, checklists, approvals, dashboard." },
+    "r03": { "name": "0.3 Automate", "body": "SLA engine, notifications, audit log, customer portal and AI job intake." },
+    "r04": { "name": "0.4 Get paid", "body": "Quotes, invoices, Stripe payments, AI assistant and service reports." },
+    "relay": { "name": "Relay 1.0", "body": "Event delivery service in Go: webhooks, retries, push and observability." },
+    "r05": { "name": "0.5 Platform", "body": "API keys, signed webhooks, SaaS plans and an MCP server." },
+    "site": { "name": "Site 1.0", "body": "Marketing site with GSAP motion, SEO and accessibility." },
+    "mobile": { "name": "1.0 Mobile", "body": "Expo app for technicians with offline mode, camera and push." }
+  },
+  "footer": { "portfolio": "A portfolio project by Ahmad Izzat Maulana. All demo data is fictional." }
+}

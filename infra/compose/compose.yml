@@ -1,0 +1,71 @@
+# FieldOps production stack (PRD §15.3). Only the web container is published, on localhost, behind the host's
+# reverse proxy. Postgres stays on the internal Docker network.
+#   docker compose --env-file /etc/fieldops/fieldops.env -f infra/compose/compose.yml up -d
+name: fieldops
+
+x-common: &common
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: local
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  postgres:
+    <<: *common
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: fieldops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: fieldops
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fieldops -d fieldops"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 384m
+    cpus: 1.0
+    command: ["postgres", "-c", "shared_buffers=96MB", "-c", "max_connections=60", "-c", "log_min_duration_statement=500"]
+
+  migrate:
+    image: fieldops-worker:${TAG:-latest}
+    command: ["node", "dist/index.js", "migrate"]
+    environment:
+      MIGRATION_DATABASE_URL: postgres://fieldops:${POSTGRES_PASSWORD}@postgres:5432/fieldops
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD}
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+
+  web:
+    <<: *common
+    image: fieldops-web:${TAG:-latest}
+    env_file: [/etc/fieldops/fieldops.env]
+    environment:
+      DATABASE_URL: postgres://fieldops_app:${APP_DB_PASSWORD}@postgres:5432/fieldops
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8097}:3000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 512m
+    cpus: 1.0
+    cap_drop: [ALL]
+
+  worker:
+    <<: *common
+    image: fieldops-worker:${TAG:-latest}
+    env_file: [/etc/fieldops/fieldops.env]
+    environment:
+      MIGRATION_DATABASE_URL: postgres://fieldops:${POSTGRES_PASSWORD}@postgres:5432/fieldops
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 384m
+    cpus: 1.0
+    cap_drop: [ALL]
+
+volumes:
+  pgdata:

@@ -37,11 +37,14 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
       const where: (SQL | undefined)[] = [scope];
       if (f.q) {
         const q = `%${likeEscape(f.q)}%`;
+        // Phone numbers are matched on digits only, and only when the search contains at least 3 digits.
+        const digits = f.q.replace(/\D/g, "");
+        const phoneMatch = digits.length >= 3 ? sql` or c.phone_norm like ${`%${digits}%`}` : sql``;
         where.push(
           or(
             ilike(customer.name, q),
             sql`exists (select 1 from ${contact} c where c.organization_id = ${orgId} and c.customer_id = "customer"."id"
-              and (c.email_norm ilike ${q} or c.phone_norm like ${`%${f.q.replace(/\D/g, "") || "\u0000"}%`} or c.name ilike ${q}))`,
+              and (c.email_norm ilike ${q} or c.name ilike ${q}${phoneMatch}))`,
           ),
         );
       }

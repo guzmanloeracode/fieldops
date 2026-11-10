@@ -135,6 +135,12 @@ export async function getSite(ctx: ServiceContext, id: string): Promise<SiteReco
   return site;
 }
 
+/** Equipment at a site the actor may see (technicians: sites of their assigned jobs). */
+export async function listSiteEquipment(ctx: ServiceContext, siteId: string) {
+  const site = await getSite(ctx, siteId);
+  return ctx.store.equipment.listBySite(site.id);
+}
+
 export async function updateSite(ctx: ServiceContext, id: string, raw: unknown) {
   assertCan(ctx.actor, "customers.update");
   const input = parseInput(siteUpdateSchema, raw);

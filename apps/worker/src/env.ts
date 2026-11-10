@@ -1,0 +1,27 @@
+const bool = (v: string | undefined) => v === "true" || v === "1";
+
+function required(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`${name} is not set`);
+  return v;
+}
+
+export const env = {
+  databaseUrl: required("MIGRATION_DATABASE_URL"),
+  demoMode: bool(process.env.DEMO_MODE),
+  demoPassword: process.env.DEMO_PASSWORD ?? "",
+  emailFrom: process.env.EMAIL_FROM ?? "FieldOps <no-reply@fieldops.local>",
+  resendApiKey: process.env.RESEND_API_KEY,
+  smtpUrl: process.env.SMTP_URL,
+  s3: {
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION ?? "auto",
+    bucket: process.env.S3_BUCKET,
+    accessKeyId: process.env.S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+  },
+  migrationsFolder: process.env.MIGRATIONS_FOLDER ?? "/app/drizzle",
+  appDbPassword: process.env.APP_DB_PASSWORD,
+  logLevel: process.env.LOG_LEVEL ?? "info",
+  version: process.env.APP_VERSION ?? "dev",
+};

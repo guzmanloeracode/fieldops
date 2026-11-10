@@ -46,6 +46,17 @@ export const addressSchema = z
   })
   .meta({ id: "Address" });
 export type AddressInput = z.input<typeof addressSchema>;
+/** Address as returned by the API (no input transforms, so it renders as an output schema). */
+export const addressDtoSchema = z
+  .object({
+    line1: z.string(),
+    line2: z.string().nullable().optional(),
+    city: z.string(),
+    region: z.string().nullable().optional(),
+    postal_code: z.string().nullable().optional(),
+    country: z.string().meta({ description: "ISO 3166-1 alpha-2 code", example: "US" }),
+  })
+  .meta({ id: "AddressValue" });
 export type Address = z.output<typeof addressSchema>;
 
 // ---------------------------------------------------------------- customers
@@ -77,8 +88,16 @@ export const customerCreateSchema = z
 export type CustomerCreateInput = z.input<typeof customerCreateSchema>;
 export type CustomerCreate = z.output<typeof customerCreateSchema>;
 
-export const customerUpdateSchema = customerCreateSchema
-  .omit({ contacts: true })
+// Update schemas are written out without .default(): in Zod 4, .partial() keeps defaults, so a PATCH of
+// one field would silently reset the others (for example type and tags) to their defaults.
+export const customerUpdateSchema = z
+  .object({
+    type: customerTypeSchema,
+    name: trimmed(200).min(1),
+    billing_address: addressSchema.nullable(),
+    tags: z.array(trimmed(40).min(1)).max(20),
+    notes: optionalText(4000),
+  })
   .partial()
   .meta({ id: "CustomerUpdate" });
 export type CustomerUpdate = z.output<typeof customerUpdateSchema>;
@@ -257,6 +276,23 @@ export const serviceTypeInputSchema = z
   .meta({ id: "ServiceTypeInput" });
 export type ServiceTypeInput = z.output<typeof serviceTypeInputSchema>;
 
+/** Partial update without defaults (see customerUpdateSchema). */
+export const serviceTypeUpdateSchema = z
+  .object({
+    name: trimmed(120).min(1),
+    description: optionalText(1000),
+    default_duration_min: z.number().int().min(5).max(24 * 60),
+    default_price_minor: z.number().int().min(0),
+    color: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/)
+      .nullable(),
+    active: z.boolean(),
+  })
+  .partial()
+  .meta({ id: "ServiceTypeUpdate" });
+export type ServiceTypeUpdate = z.output<typeof serviceTypeUpdateSchema>;
+
 export const inviteSchema = z.object({
   email: z.email().max(254).toLowerCase(),
   role: z.enum(["admin", "dispatcher", "technician"]),
@@ -327,8 +363,10 @@ export const jobSchema = z
     scheduled_end: ts.nullable(),
     completed_at: ts.nullable(),
     estimated_duration_min: z.number().int().nullable(),
+    hold_reason: z.enum(HOLD_REASONS).nullable(),
     needs_review: z.boolean(),
     ai_drafted: z.boolean(),
+    version: z.number().int().meta({ description: "Increments on every change. Sent as the ETag." }),
     created_at: ts,
     updated_at: ts,
   })
@@ -351,7 +389,7 @@ export const siteSchema = z
     id: z.uuid(),
     customer_id: z.uuid(),
     label: z.string(),
-    address: addressSchema,
+    address: addressDtoSchema,
     latitude: z.number().nullable(),
     longitude: z.number().nullable(),
     access_notes: z.string().nullable(),
@@ -368,7 +406,7 @@ export const customerSchema = z
     id: z.uuid(),
     type: customerTypeSchema,
     name: z.string(),
-    billing_address: addressSchema.nullable(),
+    billing_address: addressDtoSchema.nullable(),
     tags: z.array(z.string()),
     notes: z.string().nullable(),
     contacts: z.array(contactSchema),
@@ -445,7 +483,7 @@ export const serviceTypeSchema = z
   .meta({ id: "ServiceType" });
 
 export const problemSchema = z
-  .object({
+  .looseObject({
     type: z.string(),
     title: z.string(),
     status: z.number().int(),
@@ -461,3 +499,75 @@ export const pageOf = <T extends z.ZodType>(item: T, id: string) =>
 
 export const attachmentKindSchema = z.enum(ATTACHMENT_KINDS);
 export const jobEventTypeSchema = z.enum(JOB_EVENT_TYPES);
+
+// ---------------------------------------------------------------- API outputs added for /api/v1
+
+export const jobDetailSchema = jobSchema
+  .extend({
+    allowed_transitions: z
+      .array(
+        z.object({
+          to: jobStatusSchema,
+          name: z.string().meta({ example: "start" }),
+          requires_reason: z.boolean(),
+        }),
+      )
+      .meta({ description: "Status changes the current user may make from the job's current status" }),
+  })
+  .meta({ id: "JobDetail" });
+export type JobDetailDto = z.infer<typeof jobDetailSchema>;
+
+export const customerSummarySchema = z
+  .object({
+    id: z.uuid(),
+    type: customerTypeSchema,
+    name: z.string(),
+    tags: z.array(z.string()),
+    primary_contact: z.object({ name: z.string(), email: z.string().nullable(), phone: z.string().nullable() }).nullable(),
+    site_count: z.number().int(),
+    open_job_count: z.number().int(),
+    last_job_at: ts.nullable(),
+    created_at: ts,
+    updated_at: ts,
+  })
+  .meta({ id: "CustomerSummary" });
+export type CustomerSummaryDto = z.infer<typeof customerSummarySchema>;
+
+export const customerCreatedSchema = customerSchema
+  .extend({
+    possible_duplicates: z
+      .array(z.object({ id: z.uuid(), name: z.string(), matched_on: z.enum(["email", "phone"]) }))
+      .meta({ description: "Existing customers with a matching contact email or phone. The customer is created anyway." }),
+  })
+  .meta({ id: "CustomerCreated" });
+
+export const equipmentSchema = z
+  .object({
+    id: z.uuid(),
+    site_id: z.uuid(),
+    type: z.string(),
+    brand: z.string().nullable(),
+    model: z.string().nullable(),
+    serial: z.string().nullable(),
+    install_date: z.iso.date().nullable(),
+    warranty_end: z.iso.date().nullable(),
+  })
+  .meta({ id: "Equipment" });
+export type EquipmentDto = z.infer<typeof equipmentSchema>;
+
+export const attachmentSchema = z
+  .object({
+    id: z.uuid(),
+    job_id: z.uuid(),
+    kind: z.enum(ATTACHMENT_KINDS),
+    file_name: z.string(),
+    mime_type: z.string(),
+    size_bytes: z.number().int(),
+    tag: z.enum(ATTACHMENT_TAGS).nullable(),
+    status: z.enum(["pending", "ready"]),
+    url: z.url().nullable().meta({ description: "Short-lived signed download URL (ready attachments only)" }),
+    thumbnail_url: z.url().nullable(),
+    created_at: ts,
+  })
+  .meta({ id: "Attachment" });
+export type AttachmentDto = z.infer<typeof attachmentSchema>;

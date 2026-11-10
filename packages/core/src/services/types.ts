@@ -296,7 +296,8 @@ export interface Store {
 }
 
 export interface FileStorage {
-  presignPut(key: string, contentType: string, sizeBytes: number): Promise<{ url: string; headers: Record<string, string>; expiresIn: number }>;
+  /** Presigned PUT. With `sizeBytes`, the upload must be exactly that size. */
+  presignPut(key: string, contentType: string, sizeBytes?: number): Promise<{ url: string; headers: Record<string, string>; expiresIn: number }>;
   presignGet(key: string, opts?: { downloadName?: string }): Promise<string>;
   exists(key: string): Promise<boolean>;
   remove(keys: string[]): Promise<void>;

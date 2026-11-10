@@ -1,1 +1,19 @@
-{}
+{
+  "dashboard": {
+    "greeting": "Good day, {name}",
+    "subtitle": "Here's {date} at a glance.",
+    "newJob": "New job",
+    "today": "Visits today",
+    "unscheduled": "Unscheduled",
+    "inProgress": "In progress",
+    "onHold": "On hold",
+    "completedToday": "Completed today",
+    "reviewBanner": "{count, plural, one {# portal request needs} other {# portal requests need}} review.",
+    "todaysVisits": "Today's visits",
+    "queue": "Unscheduled queue",
+    "viewAll": "View all",
+    "nothingToday": "No visits scheduled today.",
+    "queueEmpty": "Nothing waiting. Every job has a technician and a time.",
+    "requested": "requested {when}"
+  }
+}
