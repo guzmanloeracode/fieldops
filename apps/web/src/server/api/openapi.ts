@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  agendaSchema,
   attachmentSchema,
   attachmentUploadResponseSchema,
   attachmentUploadSchema,
@@ -32,6 +33,7 @@ import {
   noteSchema,
   pageOf,
   problemSchema,
+  scheduleSchema,
   serviceTypeSchema,
   siteCreateSchema,
   siteSchema,
@@ -169,6 +171,7 @@ export function openApiDocument() {
       { name: "Jobs", description: "Work orders and their lifecycle" },
       { name: "Customers", description: "Customers, contacts, sites and equipment" },
       { name: "Expenses", description: "Parts and expenses requested on jobs, and their approval" },
+      { name: "Schedule", description: "The dispatch board's data and each member's agenda" },
       { name: "Organization", description: "The current user, members and service types" },
     ],
     components: {
@@ -245,7 +248,7 @@ export function openApiDocument() {
         put: op("Jobs", "Assign technicians and schedule", {
           operationId: "assignJob",
           description:
-            "Replaces the assignees and visit window. A new job with both becomes scheduled. Overlapping visits return 409 with `conflicts` unless `override_reason` is set.",
+            "Replaces the assignees and visit window. A new job with both becomes scheduled. Scheduling conflicts (an overlapping visit, outside working hours, time off, missing required skills) return 409 with `conflicts` unless `override_reason` is set; the reason and the overridden conflicts are kept in the timeline.",
           requestParams: { path: jobId },
           requestBody: body(jobAssignmentSchema),
           responses: {
@@ -499,6 +502,29 @@ export function openApiDocument() {
           requestParams: { path: uuidParam("Equipment") },
           requestBody: body(equipmentUpdateSchema),
           responses: { "200": json(equipmentSchema, "The updated unit"), ...errors(404, 415, 422) },
+        }),
+      },
+      "/schedule": {
+        get: op("Schedule", "Visits and availability in a date range", {
+          operationId: "getSchedule",
+          description:
+            "Scheduled visits overlapping the range (dates in the organization's time zone, at most 31 days), " +
+            "with every technician's working hours and time off. Office roles only.",
+          requestParams: {
+            query: z.object({
+              from: z.iso.date().meta({ example: "2026-11-10" }),
+              to: z.iso.date().meta({ example: "2026-11-16" }),
+              member: z.uuid().optional().meta({ description: "Only this member's lane and visits" }),
+            }),
+          },
+          responses: { "200": json(scheduleSchema, "The schedule"), ...errors(404, 422) },
+        }),
+      },
+      "/me/agenda": {
+        get: op("Schedule", "My agenda", {
+          operationId: "getMyAgenda",
+          description: "The caller's assigned visits from today through the next seven days.",
+          responses: { "200": json(agendaSchema, "The agenda"), ...errors() },
         }),
       },
       "/me": {

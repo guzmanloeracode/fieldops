@@ -90,7 +90,7 @@ const assigneesSql = sql<AssigneeRef[]>`coalesce((
   where ja.job_id = "job"."id" and ja.organization_id = "job"."organization_id"
 ), '[]'::json)`;
 
-const viewColumns = {
+export const viewColumns = {
   j: job,
   customerName: customer.name,
   site: site,
@@ -98,7 +98,7 @@ const viewColumns = {
   assignees: assigneesSql,
 };
 
-type ViewRow = {
+export type ViewRow = {
   j: typeof job.$inferSelect;
   customerName: string;
   site: typeof site.$inferSelect;
@@ -138,7 +138,7 @@ export function toJobRecord(r: typeof job.$inferSelect): JobRecord {
   };
 }
 
-function toView(r: ViewRow): JobView {
+export function toView(r: ViewRow): JobView {
   return {
     ...toJobRecord(r.j),
     customer: { id: r.j.customerId, name: r.customerName },

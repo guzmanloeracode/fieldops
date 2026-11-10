@@ -57,6 +57,9 @@ test.describe("app pages as owner", () => {
     "/settings/operations",
     "/settings/demo-outbox",
     "/approvals",
+    "/schedule",
+    "/schedule?view=week",
+    "/schedule/team",
   ]) {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
