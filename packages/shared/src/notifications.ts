@@ -30,8 +30,22 @@ export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
  * alerts (small teams often have no dispatcher); technicians get their own work.
  */
 export const NOTIFICATION_EVENTS_BY_ROLE: Record<Role, readonly NotificationEvent[]> = {
-  owner: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided", "daily_digest"],
-  admin: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided", "daily_digest"],
+  owner: [
+    "portal_request",
+    "sla_at_risk",
+    "sla_breached",
+    "expense_requested",
+    "expense_decided",
+    "daily_digest",
+  ],
+  admin: [
+    "portal_request",
+    "sla_at_risk",
+    "sla_breached",
+    "expense_requested",
+    "expense_decided",
+    "daily_digest",
+  ],
   dispatcher: ["portal_request", "sla_at_risk", "sla_breached", "expense_requested", "expense_decided"],
   technician: ["job_assigned", "job_rescheduled", "expense_decided"],
 };

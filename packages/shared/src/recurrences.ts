@@ -75,7 +75,11 @@ const checkPlan = (partial: boolean) => (v: PlanShape, ctx: z.RefinementCtx) => 
     });
   }
   if (v.starts_on && v.ends_on && v.ends_on < v.starts_on) {
-    ctx.addIssue({ code: "custom", path: ["ends_on"], message: "The end date must be on or after the start" });
+    ctx.addIssue({
+      code: "custom",
+      path: ["ends_on"],
+      message: "The end date must be on or after the start",
+    });
   }
   const both = !partial || (v.window_start !== undefined && v.window_minutes !== undefined);
   if (both && given(v.window_start) !== given(v.window_minutes)) {
