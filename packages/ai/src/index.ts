@@ -5,7 +5,7 @@ import { FixtureIntakeModel } from "./fixture";
 // AI providers behind the core's `IntakeModel` port (AI-01, ADR 013). The web app and the worker call
 // `createIntakeModel` once with their environment.
 
-export { AnthropicIntakeModel, DEFAULT_INTAKE_MODEL, describeError } from "./anthropic";
+export { AnthropicIntakeModel, DEFAULT_INTAKE_MODEL, describeError, type MessagesClient } from "./anthropic";
 export { FixtureIntakeModel, fixtureDraft } from "./fixture";
 export { catalogText, customerMessageText, INTAKE_SYSTEM_PROMPT } from "./prompt";
 

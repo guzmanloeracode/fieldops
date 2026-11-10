@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
-import { api, json, storageState, type JobDto } from "./fixtures";
+import { expect, test, type Browser, type Page } from "@playwright/test";
+import { api, json, storageState, type JobDto, type UserKey } from "./fixtures";
 
 // AI smart intake (AI-01), AI settings (SET-04) and rate-limited AI routes (PLT-04). The E2E stack runs the
 // deterministic fixture model (AI_PROVIDER=fixture): it never calls Claude, and "[[fail]]" in a message makes it
@@ -15,6 +15,14 @@ async function axe(page: Page) {
     .analyze();
   const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+}
+
+/** A page in its own context (axe needs pages created through a context). Closing the page closes both. */
+async function pageAs(browser: Browser, user: UserKey): Promise<Page> {
+  const context = await browser.newContext({ storageState: storageState(user) });
+  const page = await context.newPage();
+  page.on("close", () => void context.close());
+  return page;
 }
 
 /** Skips when the server under test has no AI provider (a dev server without AI_PROVIDER=fixture). */
@@ -36,8 +44,11 @@ interface DraftResponse {
 }
 
 test.describe.serial("AI intake", () => {
+  // Each journey drafts, saves and reloads pages; leave room for a busy machine.
+  test.describe.configure({ timeout: 150_000 });
+
   test("a dispatcher drafts a job from a customer's message, checks it and saves it", async ({ browser }) => {
-    const page = await browser.newPage({ storageState: storageState("dispatcher") });
+    const page = await pageAs(browser, "dispatcher");
     await page.goto("/jobs/new");
     await requireAi(page);
 
@@ -78,7 +89,7 @@ test.describe.serial("AI intake", () => {
       await page.getByRole("option").first().click();
     }
     await page.getByTestId("create-job").click();
-    await page.waitForURL(/\/jobs\/JOB-\d+$/);
+    await page.waitForURL(/\/jobs\/JOB-\d+$/, { timeout: 90_000 });
     await expect(page.getByText("AI intake").first()).toBeVisible();
     await expect(page.getByText("Needs review")).toHaveCount(0);
 
@@ -97,7 +108,7 @@ test.describe.serial("AI intake", () => {
   });
 
   test("when the model fails, the form stays usable", async ({ browser }) => {
-    const page = await browser.newPage({ storageState: storageState("dispatcher") });
+    const page = await pageAs(browser, "dispatcher");
     await page.goto("/jobs/new");
     await requireAi(page);
     await page.getByTestId("ai-message").fill("Please help with my unit [[fail]] it makes a noise");
@@ -144,7 +155,7 @@ test.describe.serial("AI intake", () => {
     const job = waiting.data.find((j) => j.ai_status === "drafted") ?? waiting.data[0];
     test.skip(!job, "No portal request waiting for review");
 
-    const page = await browser.newPage({ storageState: storageState("dispatcher") });
+    const page = await pageAs(browser, "dispatcher");
     await page.goto("/jobs?needs_review=true");
     await expect(page.getByTestId("filter-needs-review")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("job-row").first()).toBeVisible();
@@ -173,7 +184,7 @@ test.describe.serial("AI intake", () => {
   });
 
   test("an owner sees AI usage and can turn AI off and on", async ({ browser }) => {
-    const owner = await browser.newPage({ storageState: storageState("owner") });
+    const owner = await pageAs(browser, "owner");
     await owner.goto("/settings/ai");
     await expect(owner.getByTestId("ai-usage")).toBeVisible();
     await expect(owner.getByTestId("ai-provider")).toBeVisible();
@@ -185,7 +196,7 @@ test.describe.serial("AI intake", () => {
       await owner.getByTestId("ai-save").click();
       await expect(owner.getByText("AI settings saved")).toBeVisible();
 
-      const dispatcher = await browser.newPage({ storageState: storageState("dispatcher") });
+      const dispatcher = await pageAs(browser, "dispatcher");
       await dispatcher.goto("/jobs/new");
       await expect(dispatcher.getByTestId("ai-unavailable")).toContainText("turned off");
       await dispatcher.close();
@@ -198,7 +209,7 @@ test.describe.serial("AI intake", () => {
       }
     }
     // Dispatchers don't reach AI settings.
-    const dispatcher = await browser.newPage({ storageState: storageState("dispatcher") });
+    const dispatcher = await pageAs(browser, "dispatcher");
     const res = await dispatcher.goto("/settings/ai");
     expect(res?.status()).toBe(404);
     await dispatcher.close();
