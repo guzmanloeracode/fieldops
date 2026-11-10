@@ -61,3 +61,11 @@ export async function sendReportAction(jobId: string, to: string) {
     return { sentTo: sent.report.sentTo };
   });
 }
+
+/** The report's AI status and version, so the page can wait for the worker's draft without reloading itself. */
+export async function reportStatusAction(jobId: string) {
+  return action(async () => {
+    const { report } = await runService((ctx) => reports.getReport(ctx, jobId));
+    return report ? { aiStatus: report.aiStatus, version: report.version } : null;
+  });
+}

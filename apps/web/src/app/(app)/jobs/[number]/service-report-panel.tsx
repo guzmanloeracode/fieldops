@@ -32,7 +32,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
-import { draftReportAction, saveReportAction, sendReportAction, startReportAction } from "./report-actions";
+import {
+  draftReportAction,
+  reportStatusAction,
+  saveReportAction,
+  sendReportAction,
+  startReportAction,
+} from "./report-actions";
 
 export interface ReportView {
   status: ReportStatus;
@@ -90,18 +96,32 @@ export function ServiceReportPanel({
   const dirty = Boolean(saved && fields && FIELDS.some((k) => saved[k] !== fields[k]));
   const drafting = report?.aiStatus === "pending" || report?.aiStatus === "drafting";
 
-  // The worker drafts within seconds; check back a few times so the draft appears without a reload. Stop as soon
-  // as someone starts typing, so a refresh never replaces what they wrote.
+  // The worker drafts within seconds; check its status a few times and reload the page's data only once it has
+  // changed. Stop as soon as someone starts typing, so a refresh never replaces what they wrote.
+  const version = report?.version;
   useEffect(() => {
     if (!drafting || dirty) return;
     let n = 0;
-    const id = setInterval(() => {
+    let active = true;
+    const id = setInterval(async () => {
       n += 1;
-      if (n > 12) clearInterval(id);
-      else router.refresh();
+      if (n > 24) return clearInterval(id);
+      const r = await reportStatusAction(jobId);
+      if (
+        active &&
+        r.ok &&
+        r.data &&
+        (r.data.version !== version || !["pending", "drafting"].includes(r.data.aiStatus ?? ""))
+      ) {
+        clearInterval(id);
+        router.refresh();
+      }
     }, 5000);
-    return () => clearInterval(id);
-  }, [drafting, dirty, router]);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [drafting, dirty, router, jobId, version]);
 
   const run = (fn: () => Promise<{ ok: true } | { ok: false; error: { message: string } }>, done?: string) =>
     startTransition(async () => {
