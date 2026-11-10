@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ForbiddenError, ValidationError } from "../domain/errors";
 import { iso, world } from "../test/fixtures";
-import type { ServiceContext } from "./types";
 import * as bulk from "./bulk";
 import * as jobs from "./jobs";
 
@@ -13,7 +12,7 @@ async function setup() {
   const b = await make("B");
   const c = await make("C");
   const ctx = w.ctx(w.dispatcher);
-  const runItem: bulk.ItemRunner = (fn: (ctx: ServiceContext) => Promise<never>) => fn(ctx);
+  const runItem: bulk.ItemRunner = (fn) => fn(ctx);
   return { w, a, b, c, runItem };
 }
 
