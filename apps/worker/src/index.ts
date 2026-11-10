@@ -45,6 +45,11 @@ async function run() {
     await pool.query(`delete from idempotency_key where created_at < now() - interval '24 hours'`);
     await pool.query(`delete from verification where expires_at < now() - interval '1 day'`);
     await pool.query(`delete from session where expires_at < now()`);
+    // Read notifications are kept 90 days, unread ones a year (NOT-01).
+    await pool.query(
+      `delete from notification where (read_at is not null and created_at < now() - interval '90 days')
+         or created_at < now() - interval '365 days'`,
+    );
     log.info("maintenance done");
   });
 

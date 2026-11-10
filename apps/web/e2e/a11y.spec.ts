@@ -23,6 +23,11 @@ async function audit(page: Page, path: string) {
   expect(summary, `${path}\n${summary.join("\n")}`).toEqual([]);
 }
 
+// The live event stream (NOT-05) keeps a request open, which would keep "networkidle" from ever settling.
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/stream", (route) => route.abort());
+});
+
 test.describe("public pages", () => {
   for (const path of ["/", "/sign-in", "/sign-up", "/forgot-password"]) {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
@@ -60,6 +65,9 @@ test.describe("app pages as owner", () => {
     "/schedule",
     "/schedule?view=week",
     "/schedule/team",
+    "/notifications",
+    "/notifications?filter=unread",
+    "/notifications/preferences",
   ]) {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
@@ -95,6 +103,19 @@ test.describe("technician home", () => {
 test.describe("technician view", () => {
   test.use({ storageState: storageState("technician") });
   test("axe: my day", async ({ page }) => audit(page, "/jobs?view=my-day"));
+  test("axe: notification settings", async ({ page }) => audit(page, "/notifications/preferences"));
+  test("axe: notification popover", async ({ page }) => {
+    await page.goto("/jobs?view=my-day");
+    await page.getByTestId("notification-bell").locator("visible=true").click();
+    await expect(page.getByTestId("notification-popover")).toBeVisible();
+    await expect(page.getByTestId("notification-popover").getByRole("status")).toHaveCount(0);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[data-testid=notification-popover]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+  });
 });
 
 test.describe("loading skeletons", () => {

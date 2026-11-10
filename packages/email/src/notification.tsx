@@ -61,8 +61,7 @@ export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payl
   const customer = x.customer_name ? ` for ${x.customer_name}` : "";
   const start = when(x.scheduled_start, timeZone);
   const due = when(x.due_at, timeZone);
-  const target =
-    x.target === "response" ? "response (scheduled with a technician)" : "resolution (completed)";
+  const goal = x.target === "response" ? "scheduled with a technician" : "completed";
   switch (p.event) {
     case "job_assigned":
       return {
@@ -89,14 +88,14 @@ export function notificationCopy(p: Pick<NotificationEmailProps, "event" | "payl
       return {
         subject: `SLA at risk ${job}: ${title}`,
         heading: "A job is at risk of missing its SLA",
-        body: `The ${target} target of ${title}${customer} is due ${due || "soon"}.`,
+        body: `${title}${customer} must be ${goal} by ${due || "its SLA deadline"}.`,
         cta: "Open the job",
       };
     case "sla_breached":
       return {
         subject: `SLA breached ${job}: ${title}`,
         heading: "A job missed its SLA",
-        body: `${title}${customer} missed its ${target} target${due ? ` (due ${due})` : ""}.`,
+        body: `${title}${customer} wasn't ${goal} by its SLA deadline${due ? ` (${due})` : ""}.`,
         cta: "Open the job",
       };
     case "expense_requested":
