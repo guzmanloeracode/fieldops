@@ -16,7 +16,13 @@ import {
 // demo outbox (NOT-02), preferences (NOT-03), the live dispatch board (SCH-06) and the notifications API.
 
 interface NotificationPage {
-  data: { id: string; type: string; href: string; read_at: string | null; payload: { job_number?: number } }[];
+  data: {
+    id: string;
+    type: string;
+    href: string;
+    read_at: string | null;
+    payload: { job_number?: number };
+  }[];
   next_cursor: string | null;
   unread_count: number;
 }
@@ -98,10 +104,12 @@ test.describe("notification center", () => {
     await expect(page.getByText("Notification settings saved")).toBeVisible();
 
     try {
-      const before = (await json<NotificationPage>(await tech.get("/api/v1/notifications?limit=1"))).data[0]?.id;
+      const before = (await json<NotificationPage>(await tech.get("/api/v1/notifications?limit=1"))).data[0]
+        ?.id;
       const job = await createJob(dispatcher, `E2E muted ${uniq()}`);
       await assign(dispatcher, job.id, tom.id, futureWindow());
-      const latest = (await json<NotificationPage>(await tech.get("/api/v1/notifications?limit=1"))).data[0]?.id;
+      const latest = (await json<NotificationPage>(await tech.get("/api/v1/notifications?limit=1"))).data[0]
+        ?.id;
       expect(latest).toBe(before);
     } finally {
       const res = await tech.put("/api/v1/notifications/preferences", {
