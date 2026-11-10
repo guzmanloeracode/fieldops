@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "../src/client";
 import { DEMO_LOGINS, seedDemo, wipeAll } from "../src/seed";
+import { withStore } from "../src/store";
 import { freshDatabase, type TestDb } from "./helpers";
 
 // DEM-02/03: a deterministic seed whose dates are relative to the reset time.
@@ -157,6 +158,50 @@ describe("demo seed", () => {
       expect(row.revisits / row.completed).toBeLessThan(0.08);
       expect(row.bad).toBe(0);
     }
+  });
+
+  it("stores SLA policies, deadlines and states consistent with each job's timeline (SLA-01, SLA-02)", async () => {
+    const r = await first.owner.execute<{
+      slug: string;
+      policies: number;
+      missing: number;
+      wrong: number;
+      completed: number;
+      breached: number;
+      attention: number;
+    }>(sql`
+      select o.slug,
+        (select count(*)::int from sla_policy p where p.organization_id = o.id) as policies,
+        count(*) filter (where j.response_due_at is null or j.resolution_due_at is null
+          or j.response_at_risk_at > j.response_due_at or j.resolution_at_risk_at > j.resolution_due_at
+          or j.sla_policy_id is null)::int as missing,
+        count(*) filter (where (j.status = 'completed' and j.sla_resolution_state is distinct from
+            case when j.completed_at <= j.resolution_due_at then 'met' else 'breached' end)
+          or (j.first_scheduled_at is not null and j.status <> 'canceled' and j.sla_response_state is distinct from
+            case when j.first_scheduled_at <= j.response_due_at then 'met' else 'breached' end)
+          or (j.status = 'canceled' and (j.sla_response_state is not null or j.sla_resolution_state is not null)))::int as wrong,
+        count(*) filter (where j.status = 'completed')::int as completed,
+        count(*) filter (where j.status = 'completed' and j.sla_resolution_state = 'breached')::int as breached,
+        count(*) filter (where j.status not in ('completed', 'canceled')
+          and (j.sla_response_state in ('at_risk', 'breached') or j.sla_resolution_state in ('at_risk', 'breached')))::int as attention
+      from job j join organization o on o.id = j.organization_id group by o.id, o.slug order by o.slug`);
+    for (const row of r.rows) {
+      expect(row, row.slug).toMatchObject({ policies: 4, missing: 0, wrong: 0 });
+      // About 8% of completed jobs breach their resolution target (PRD §19).
+      expect(row.breached / row.completed).toBeGreaterThan(0.04);
+      expect(row.breached / row.completed).toBeLessThan(0.12);
+      expect(row.attention).toBeGreaterThan(0);
+    }
+  });
+
+  it("records the past SLA alerts, so the monitor's first run raises nothing (SLA-03)", async () => {
+    const orgs = await first.owner.execute<{ id: string }>(sql`select id from organization`);
+    for (const { id } of orgs.rows) {
+      const raised = await withStore(first.owner, id, (store) => store.sla.raiseAlerts(NOW));
+      expect(raised).toEqual([]);
+    }
+    const alerts = await first.owner.execute<{ n: number }>(sql`select count(*)::int as n from sla_alert`);
+    expect(alerts.rows[0]!.n).toBeGreaterThan(50);
   });
 
   it("creates the one-click demo accounts with verified emails and credentials", async () => {

@@ -1,4 +1,4 @@
-import type { JobPriority, JobStatus } from "@fieldops/shared";
+import type { JobPriority, JobStatus, SlaTarget } from "@fieldops/shared";
 import type { Bucket } from "../domain/date-range";
 
 // Repository contracts for 0.2 insights: dashboards (DSH), saved views (JOB-04), search (JOB-11) and
@@ -18,8 +18,13 @@ export interface KpiTotals {
   created: number;
   /** Jobs completed in the period. */
   completed: number;
-  /** Completed jobs that met the provisional resolution target of their priority. */
+  /** Completed jobs that met their resolution target (SLA-02). */
   completedWithinTarget: number;
+  /** Completed jobs with a resolution outcome (met or breached): the base of SLA compliance. */
+  completedSlaMeasured: number;
+  /** Jobs created in the period whose response target is decided, and how many of them met it. */
+  responseMeasured: number;
+  responseMet: number;
   /** Completed jobs that needed only one visit (revisit = false). */
   completedFirstVisit: number;
   /** Average minutes from creation to first scheduled, for jobs created in the period. */
@@ -38,6 +43,8 @@ export interface SlaBucketRow {
   bucket: string;
   completed: number;
   withinTarget: number;
+  /** Completed jobs with a resolution outcome (met or breached). */
+  measured: number;
 }
 
 export interface ServiceTypeCountRow {
@@ -64,6 +71,10 @@ export interface RiskRow {
   createdAt: Date;
   scheduledEnd: Date | null;
   assignees: string[];
+  /** The job's current SLA (see currentSla): the target that is at risk or breached and its deadline. */
+  target: SlaTarget;
+  state: "at_risk" | "breached";
+  dueAt: Date | null;
 }
 
 export interface PendingApprovalRow {
@@ -91,8 +102,8 @@ export interface DashboardRepo {
   workload(f: ReportFilters): Promise<WorkloadRow[]>;
   /** Jobs scheduled on one local date, counted by status. */
   dayStatusCounts(date: string, timeZone: string): Promise<{ status: JobStatus; count: number }[]>;
-  /** Open jobs past their provisional response target or past their visit window, most overdue first. */
-  atRisk(now: Date, limit: number): Promise<{ total: number; rows: RiskRow[] }>;
+  /** Open jobs whose current SLA is at risk or breached (SLA-02), the most urgent deadline first. */
+  atRisk(limit: number): Promise<{ total: number; rows: RiskRow[] }>;
   pendingApprovals(limit: number): Promise<{ total: number; rows: PendingApprovalRow[] }>;
   /** A member's completed visits and recorded work minutes in a period. */
   ownStats(memberId: string, from: string, to: string, timeZone: string): Promise<OwnStats>;

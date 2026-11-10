@@ -18,6 +18,7 @@ import { assertValidWindow } from "../domain/schedule";
 import * as checklist from "./checklist";
 import { getJob, isAssigned } from "./job-access";
 import * as signatures from "./signature";
+import * as sla from "./sla";
 import * as time from "./time";
 import { conflictSummary, detectConflicts } from "./conflicts";
 import { parseInput } from "./validate";
@@ -80,6 +81,7 @@ export async function createJob(ctx: ServiceContext, raw: unknown): Promise<JobV
     aiDrafted: input.source === "ai_intake",
     needsReview: input.source === "portal" || input.source === "ai_intake",
     createdBy: ctx.actor.userId,
+    ...(await sla.slaForNewJob(ctx, input.priority)),
   });
   await ctx.store.jobs.addEvent({
     jobId: job.id,
@@ -132,6 +134,7 @@ export async function updateJob(ctx: ServiceContext, id: string, raw: unknown, e
     (k) => String(patch[k as keyof JobRecord] ?? "") !== String(current[k as keyof JobRecord] ?? ""),
   );
   if (changed.length === 0) return current;
+  Object.assign(patch, await sla.refreshSla(ctx, current, patch));
   const updated = await ctx.store.jobs.update(current.id, patch, current.version);
   if (!updated) throw new PreconditionFailedError();
   if (changed.includes("serviceTypeId")) {
@@ -183,6 +186,7 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
   if (rule.to === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
   // A job that needs another visit doesn't count as a first-visit completion (DSH-01).
   if (rule.name === "reschedule" || rule.name === "reopen") patch.revisit = true;
+  Object.assign(patch, await sla.refreshSla(ctx, job, patch));
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
@@ -248,6 +252,7 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
     patch.revisit = true;
   }
   if (toStatus === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
+  Object.assign(patch, await sla.refreshSla(ctx, job, patch));
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();

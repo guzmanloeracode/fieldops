@@ -9,7 +9,6 @@ import {
   type DateRange,
 } from "../domain/date-range";
 import { assertCan } from "../domain/permissions";
-import { riskOf, type RiskReason } from "../domain/risk";
 import type { PendingApprovalRow, ReportFilters, RiskRow } from "./insights-types";
 import type { JobView, MemberRecord, OrganizationRecord, ServiceContext } from "./types";
 
@@ -28,15 +27,23 @@ export interface DashboardOverview {
   kpis: {
     created: Comparison;
     completed: Comparison;
-    /** Share of completed jobs within the provisional resolution target (0–1). */
+    /** Share of completed jobs that met their resolution target (0–1, SLA-02). */
     slaCompliance: Comparison;
+    /** Share of jobs created in the period that were scheduled within their response target (0–1). */
+    responseCompliance: Comparison;
     avgResponseMin: Comparison;
     avgResolutionMin: Comparison;
     /** Share of completed jobs that needed one visit (0–1). */
     firstVisitRate: Comparison;
   };
   statusSeries: { bucket: string; counts: Record<JobStatus, number>; total: number }[];
-  slaTrend: { bucket: string; completed: number; withinTarget: number; rate: number | null }[];
+  slaTrend: {
+    bucket: string;
+    completed: number;
+    withinTarget: number;
+    measured: number;
+    rate: number | null;
+  }[];
   byServiceType: { serviceTypeId: string | null; name: string; created: number; completed: number }[];
   workload: TechnicianLoad[];
 }
@@ -136,8 +143,12 @@ export async function getOverview(ctx: ServiceContext, raw: unknown): Promise<Da
       created: { value: cur.created, previous: before.created },
       completed: { value: cur.completed, previous: before.completed },
       slaCompliance: {
-        value: rate(cur.completedWithinTarget, cur.completed),
-        previous: rate(before.completedWithinTarget, before.completed),
+        value: rate(cur.completedWithinTarget, cur.completedSlaMeasured),
+        previous: rate(before.completedWithinTarget, before.completedSlaMeasured),
+      },
+      responseCompliance: {
+        value: rate(cur.responseMet, cur.responseMeasured),
+        previous: rate(before.responseMet, before.responseMeasured),
       },
       avgResponseMin: { value: cur.avgResponseMin, previous: before.avgResponseMin },
       avgResolutionMin: { value: cur.avgResolutionMin, previous: before.avgResolutionMin },
@@ -154,7 +165,8 @@ export async function getOverview(ctx: ServiceContext, raw: unknown): Promise<Da
       const r = slaMap.get(bucket);
       const completed = r?.completed ?? 0;
       const withinTarget = r?.withinTarget ?? 0;
-      return { bucket, completed, withinTarget, rate: rate(withinTarget, completed) };
+      const measured = r?.measured ?? 0;
+      return { bucket, completed, withinTarget, measured, rate: rate(withinTarget, measured) };
     }),
     byServiceType: types
       .map((t) => ({ ...t, name: t.name ?? "No service type" }))
@@ -169,7 +181,7 @@ export interface TodayOverview {
   scheduledTotal: number;
   technicians: TechnicianLoad[];
   unassigned: { total: number; rows: JobView[] };
-  atRisk: { total: number; rows: (RiskRow & { reason: RiskReason })[] };
+  atRisk: { total: number; rows: RiskRow[] };
   approvals: { total: number; rows: PendingApprovalRow[] };
 }
 
@@ -182,7 +194,7 @@ export async function getToday(ctx: ServiceContext): Promise<TodayOverview> {
   const [counts, load, risk, approvals, unassigned, members] = await Promise.all([
     repo.dayStatusCounts(date, org.timezone),
     repo.workload({ from: date, to: date, timeZone: org.timezone }),
-    repo.atRisk(ctx.now, 8),
+    repo.atRisk(8),
     repo.pendingApprovals(5),
     ctx.store.jobs.list({
       status: ["new"],
@@ -203,15 +215,33 @@ export async function getToday(ctx: ServiceContext): Promise<TodayOverview> {
       .reduce((a, [, n]) => a + n, 0),
     technicians: technicianLoads(members, org, load, date, date),
     unassigned: { total: unassigned.total ?? unassigned.rows.length, rows: unassigned.rows },
-    atRisk: {
-      total: risk.total,
-      rows: risk.rows.flatMap((r) => {
-        const reason = riskOf(r, ctx.now);
-        return reason ? [{ ...r, reason }] : [];
-      }),
-    },
+    atRisk: risk,
     approvals,
   };
+}
+
+/** Every open job whose SLA is at risk or breached, for the CSV export (DSH-05). Capped at `limit`. */
+export async function getAtRisk(ctx: ServiceContext, limit = 1000) {
+  assertCan(ctx.actor, "dashboard.operational");
+  return ctx.store.dashboard.atRisk(limit);
+}
+
+/** New jobs without a technician, most urgent first, for the CSV export (DSH-05). Capped at `limit`. */
+export async function getUnassigned(ctx: ServiceContext, limit = 1000): Promise<JobView[]> {
+  assertCan(ctx.actor, "dashboard.operational");
+  const page = await ctx.store.jobs.list({
+    status: ["new"],
+    unassigned: true,
+    sort: "-priority,created_at",
+    limit,
+  });
+  return page.rows;
+}
+
+/** Pending parts and expense requests, for the CSV export (DSH-05). Capped at `limit`. */
+export async function getPendingApprovals(ctx: ServiceContext, limit = 1000) {
+  assertCan(ctx.actor, "dashboard.operational");
+  return ctx.store.dashboard.pendingApprovals(limit);
 }
 
 export interface OwnStatsOverview {

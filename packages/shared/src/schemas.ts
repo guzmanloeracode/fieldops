@@ -362,6 +362,11 @@ export const jobListQuerySchema = z.object({
   unassigned: queryBool.optional(),
   /** Only jobs that needed another visit (rescheduled from hold or reopened). */
   revisit: queryBool.optional(),
+  /**
+   * The job's current SLA state (SLA-02): the worse of its open targets (response until first scheduled,
+   * resolution until completed); for completed jobs the resolution outcome.
+   */
+  sla: csvEnum(SLA_STATES).optional(),
   sort: z
     .string()
     .regex(

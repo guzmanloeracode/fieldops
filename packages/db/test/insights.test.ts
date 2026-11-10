@@ -55,6 +55,8 @@ beforeAll(async () => {
     scheduledStart: at("2026-01-05T17:00:00Z"),
     scheduledEnd: at("2026-01-05T19:00:00Z"),
     completedAt: at("2026-01-05T20:00:00Z"),
+    slaResponseState: "met",
+    slaResolutionState: "met",
     assign: k.members.tech,
   });
   await job(k, {
@@ -66,10 +68,18 @@ beforeAll(async () => {
     scheduledStart: at("2026-01-07T15:00:00Z"),
     scheduledEnd: at("2026-01-07T16:00:00Z"),
     completedAt: at("2026-01-08T15:00:00Z"),
+    slaResponseState: "breached",
+    slaResolutionState: "breached",
     assign: k.members.tech2,
   });
   // 05:00Z on the 7th is still the 6th in Chicago.
-  await job(k, { priority: "normal", status: "new", createdAt: at("2026-01-07T05:00:00Z") });
+  await job(k, {
+    priority: "normal",
+    status: "new",
+    createdAt: at("2026-01-07T05:00:00Z"),
+    slaResponseState: "on_track",
+    slaResolutionState: "on_track",
+  });
   // 23:30 on the 11th in Chicago: inside. 00:30 on the 12th: outside.
   await job(k, { status: "canceled", createdAt: at("2026-01-12T05:30:00Z") });
   await job(k, { status: "new", createdAt: at("2026-01-12T06:30:00Z") });
@@ -87,6 +97,8 @@ beforeAll(async () => {
     createdAt: at("2025-12-30T15:00:00Z"),
     firstScheduledAt: at("2025-12-30T17:00:00Z"),
     completedAt: at("2025-12-31T15:00:00Z"),
+    slaResponseState: "met",
+    slaResolutionState: "met",
   });
 
   // Risk fixture: an overdue urgent request, a fresh normal one, a late visit and a late but finished one.
@@ -94,12 +106,18 @@ beforeAll(async () => {
     priority: "urgent",
     status: "new",
     createdAt: at("2026-01-07T05:00:00Z"),
+    responseDueAt: at("2026-01-07T07:00:00Z"),
+    resolutionDueAt: at("2026-01-08T05:00:00Z"),
+    slaResponseState: "breached",
+    slaResolutionState: "on_track",
     title: "Overdue urgent",
   });
   await job(r, {
     priority: "normal",
     status: "new",
     createdAt: at("2026-01-07T05:00:00Z"),
+    slaResponseState: "on_track",
+    slaResolutionState: "on_track",
     title: "Fresh normal",
   });
   await job(r, {
@@ -107,6 +125,10 @@ beforeAll(async () => {
     createdAt: at("2026-01-06T05:00:00Z"),
     scheduledStart: at("2026-01-07T08:00:00Z"),
     scheduledEnd: at("2026-01-07T10:00:00Z"),
+    firstScheduledAt: at("2026-01-06T06:00:00Z"),
+    resolutionDueAt: at("2026-01-07T18:00:00Z"),
+    slaResponseState: "met",
+    slaResolutionState: "at_risk",
     title: "Running late",
     assign: r.members.tech2,
   });
@@ -114,8 +136,11 @@ beforeAll(async () => {
     status: "completed",
     createdAt: at("2026-01-06T05:00:00Z"),
     scheduledEnd: at("2026-01-07T10:00:00Z"),
+    slaResolutionState: "met",
     title: "Done on time",
   });
+  // Canceled jobs never count, whatever their state was.
+  await job(r, { status: "canceled", slaResponseState: "breached", title: "Canceled" });
   await t.owner.insert(s.expenseRequest).values({
     organizationId: r.orgId,
     jobId: r.ids.job,
@@ -146,6 +171,9 @@ describe("dashboard aggregations (DSH-01, DSH-02)", () => {
       created: 4,
       completed: 2,
       completedWithinTarget: 1,
+      completedSlaMeasured: 2,
+      responseMeasured: 2,
+      responseMet: 1,
       completedFirstVisit: 1,
       avgResponseMin: 120,
       avgResolutionMin: 1590,
@@ -157,6 +185,9 @@ describe("dashboard aggregations (DSH-01, DSH-02)", () => {
       created: 0,
       completed: 0,
       completedWithinTarget: 0,
+      completedSlaMeasured: 0,
+      responseMeasured: 0,
+      responseMet: 0,
       completedFirstVisit: 0,
       avgResponseMin: null,
       avgResolutionMin: null,
@@ -188,8 +219,8 @@ describe("dashboard aggregations (DSH-01, DSH-02)", () => {
       { bucket: "2026-01-05", status: "new", count: 1 },
     ]);
     expect(await runIn(k, (st) => st.dashboard.slaTrend(f, "day"))).toEqual([
-      { bucket: "2026-01-05", completed: 1, withinTarget: 1 },
-      { bucket: "2026-01-08", completed: 1, withinTarget: 0 },
+      { bucket: "2026-01-05", completed: 1, withinTarget: 1, measured: 1 },
+      { bucket: "2026-01-08", completed: 1, withinTarget: 0, measured: 1 },
     ]);
   });
 
@@ -228,16 +259,26 @@ describe("dashboard aggregations (DSH-01, DSH-02)", () => {
 });
 
 describe("dispatcher home (DSH-04)", () => {
-  it("lists at-risk jobs, most overdue first", async () => {
-    const risk = await runIn(r, (st) => st.dashboard.atRisk(at("2026-01-07T12:00:00Z"), 10));
+  it("lists open jobs whose current SLA is at risk or breached, the earliest deadline first", async () => {
+    const risk = await runIn(r, (st) => st.dashboard.atRisk(10));
     expect(risk.total).toBe(2);
-    expect(risk.rows.map((x) => [x.title, x.status, x.assignees])).toEqual([
-      ["Overdue urgent", "new", []],
-      ["Running late", "in_progress", ["r tech2"]],
+    expect(risk.rows.map((x) => [x.title, x.status, x.assignees, x.target, x.state])).toEqual([
+      ["Overdue urgent", "new", [], "response", "breached"],
+      ["Running late", "in_progress", ["r tech2"], "resolution", "at_risk"],
     ]);
+    expect(risk.rows[0]!.dueAt?.toISOString()).toBe("2026-01-07T07:00:00.000Z");
     expect(risk.rows[0]!.createdAt.toISOString()).toBe("2026-01-07T05:00:00.000Z");
-    const none = await runIn(r, (st) => st.dashboard.atRisk(at("2026-01-01T00:00:00Z"), 10));
-    expect(none).toEqual({ total: 0, rows: [] });
+    const one = await runIn(r, (st) => st.dashboard.atRisk(1));
+    expect([one.total, one.rows.length]).toEqual([2, 1]);
+    expect(await runIn(k, (st) => st.dashboard.atRisk(10))).toEqual({ total: 0, rows: [] });
+  });
+
+  it("filters the jobs list by the current SLA state", async () => {
+    const titles = async (sla: ("on_track" | "at_risk" | "breached" | "met")[]) =>
+      (await runIn(r, (st) => st.jobs.list({ sla, sort: "number", limit: 50 }))).rows.map((j) => j.title);
+    expect(await titles(["at_risk", "breached"])).toEqual(["Overdue urgent", "Running late"]);
+    expect(await titles(["met"])).toEqual(["Done on time"]);
+    expect(await titles(["on_track"])).toEqual(["Fresh normal"]);
   });
 
   it("lists pending approvals with their job and requester", async () => {
