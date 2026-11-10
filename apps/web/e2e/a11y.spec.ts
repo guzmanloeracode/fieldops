@@ -94,10 +94,9 @@ test.describe("customer portal", () => {
     await page.getByTestId("portal-demo-sign-in").click();
     await expect(page).toHaveURL(/\/portal\/acme-air$/);
     await audit(page, "/portal/acme-air");
-    await audit(page, "/portal/acme-air/request");
     const href = await page.getByTestId("portal-job").first().getAttribute("href");
-    await page.goto("/portal/acme-air");
-    await audit(page, href ?? "/portal/acme-air");
+    await audit(page, "/portal/acme-air/request");
+    await audit(page, href!);
   });
 });
 
