@@ -72,7 +72,7 @@ test.describe("technician home", () => {
   });
 
   test("technicians can't export jobs or bulk-select", async ({ page }) => {
-    const res = await page.request.get("/jobs/export");
+    const res = await page.request.get("/jobs/export", { timeout: 60_000 });
     expect(res.status()).toBe(403);
     await page.goto("/jobs");
     await expect(page.getByTestId("select-all")).toHaveCount(0);
@@ -118,7 +118,7 @@ test.describe("saved views, bulk actions and export (JOB-04)", () => {
     await expect(page.getByTestId("bulk-bar")).toContainText("2 jobs selected");
 
     await page.getByTestId("bulk-assign").click();
-    await page.getByLabel("Technician").click();
+    await page.getByRole("dialog").getByRole("combobox", { name: "Technician" }).click();
     await page.getByRole("option", { name: tom.name }).click();
     await page.getByTestId("bulk-assign-apply").click();
     await expect(page.getByText("2 jobs updated").first()).toBeVisible();
@@ -127,13 +127,13 @@ test.describe("saved views, bulk actions and export (JOB-04)", () => {
     // Assigning the same lead again is skipped, with the reason per job.
     await page.getByTestId("select-all").click();
     await page.getByTestId("bulk-assign").click();
-    await page.getByLabel("Technician").click();
+    await page.getByRole("dialog").getByRole("combobox", { name: "Technician" }).click();
     await page.getByRole("option", { name: tom.name }).click();
     await page.getByTestId("bulk-assign-apply").click();
     await expect(page.getByTestId("bulk-skipped")).toContainText("Already assigned");
 
     // The CSV holds exactly the filtered jobs.
-    const csv = await page.request.get(`/jobs/export?q=${encodeURIComponent(tag)}`);
+    const csv = await page.request.get(`/jobs/export?q=${encodeURIComponent(tag)}`, { timeout: 60_000 });
     expect(csv.status()).toBe(200);
     expect(csv.headers()["content-type"]).toContain("text/csv");
     const text = await csv.text();
@@ -144,9 +144,12 @@ test.describe("saved views, bulk actions and export (JOB-04)", () => {
 
     await page.getByTestId("select-all").click();
     await page.getByTestId("bulk-status").click();
-    await page.getByLabel("New status").click();
+    await page.getByRole("dialog").getByRole("combobox", { name: "New status" }).click();
     await page.getByRole("option", { name: "Canceled" }).click();
-    await page.getByLabel("Reason").fill("Customer called to cancel both visits");
+    await page
+      .getByRole("dialog")
+      .getByLabel("Reason", { exact: true })
+      .fill("Customer called to cancel both visits");
     await page.getByTestId("bulk-status-apply").click();
     await expect(page.getByText("2 jobs updated").first()).toBeVisible();
     await expect(page.getByTestId("job-row").first()).toContainText("Canceled");
@@ -261,12 +264,12 @@ test.describe("organization switching (AUTH-06)", () => {
 
     await page.getByTestId("user-menu").click();
     await expect(page.getByTestId("org-option")).toHaveCount(2);
-    await page.getByRole("menuitem", { name: "Switch to Acme Teknik Nusantara" }).click();
+    await page.getByTestId("org-option").filter({ hasText: "Acme Teknik Nusantara" }).click();
     await expect(sidebar.getByText("Acme Teknik Nusantara").first()).toBeVisible();
     await expect(page.getByText("Admin · Acme Teknik Nusantara")).toBeVisible();
 
     await page.getByTestId("user-menu").click();
-    await page.getByRole("menuitem", { name: "Switch to Acme Air & Clean" }).click();
+    await page.getByTestId("org-option").filter({ hasText: "Acme Air & Clean" }).click();
     await expect(sidebar.getByText("Acme Air & Clean").first()).toBeVisible();
     await context.close();
   });

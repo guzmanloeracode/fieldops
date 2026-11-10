@@ -132,7 +132,6 @@
   },
   "orgs": {
     "label": "Organizations",
-    "switch": "Switch to {name}",
     "switching": "Switching organization…",
     "switched": "Now working in {name}",
     "create": "Create organization",

@@ -92,14 +92,9 @@ export function UserMenu({
                       key={org.id}
                       disabled={switching}
                       aria-current={active ? "true" : undefined}
-                      aria-label={
-                        active ? `${org.name} (${t(`role.${org.role}`)})` : t("switch", { name: org.name })
-                      }
                       data-testid="org-option"
-                      onSelect={(e) => {
-                        if (active) return;
-                        e.preventDefault();
-                        switchTo(org);
+                      onSelect={() => {
+                        if (!active) switchTo(org);
                       }}
                     >
                       <Building2 className="size-4" />

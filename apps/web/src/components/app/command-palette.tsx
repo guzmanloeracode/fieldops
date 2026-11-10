@@ -20,14 +20,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchAction } from "@/app/(app)/search-action";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -61,11 +54,14 @@ export function SearchButton({ compact = false, className }: { compact?: boolean
       onClick={openPalette}
       data-testid="palette-open"
       className={cn("text-muted-foreground w-full justify-start gap-2 font-normal", className)}
-      aria-label={t("openHint")}
+      title={t("openHint")}
+      aria-keyshortcuts="Control+K Meta+K"
     >
       <Search className="size-4" aria-hidden />
       <span className="flex-1 text-left">{t("open")}</span>
-      <kbd className="bg-muted rounded border px-1.5 font-mono text-[10px]">{mac ? "⌘K" : "Ctrl K"}</kbd>
+      <kbd aria-hidden className="bg-muted rounded border px-1.5 font-mono text-[10px]">
+        {mac ? "⌘K" : "Ctrl K"}
+      </kbd>
     </Button>
   );
 }
@@ -173,15 +169,18 @@ export function CommandPalette({ role }: { role: string }) {
             data-testid="palette-input"
             className="h-12"
           />
-          <CommandList className="max-h-[60dvh]">
+          <div role="status" className="text-muted-foreground px-4 text-sm empty:hidden">
             {loading ? (
-              <div className="text-muted-foreground flex items-center gap-2 px-4 py-3 text-sm" role="status">
+              <span className="flex items-center gap-2 py-2">
                 <Loader2 className="size-4 animate-spin" aria-hidden /> {t("searching")}
-              </div>
+              </span>
+            ) : term.length === 1 ? (
+              <span className="block py-2">{t("typeMore")}</span>
+            ) : !anyHits && term.length >= 2 && actions.length === 0 ? (
+              <span className="block py-2">{t("empty")}</span>
             ) : null}
-            {!loading && term.length >= 2 && !anyHits && actions.length === 0 ? (
-              <CommandEmpty>{t("empty")}</CommandEmpty>
-            ) : null}
+          </div>
+          <CommandList className="max-h-[60dvh]" aria-busy={loading || undefined}>
             {hits.jobs.length ? (
               <CommandGroup heading={t("jobs")}>
                 {hits.jobs.map((j) => (
@@ -247,9 +246,6 @@ export function CommandPalette({ role }: { role: string }) {
                   );
                 })}
               </CommandGroup>
-            ) : null}
-            {term.length === 1 ? (
-              <p className="text-muted-foreground px-4 py-3 text-sm">{t("typeMore")}</p>
             ) : null}
           </CommandList>
         </Command>
