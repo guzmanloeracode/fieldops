@@ -218,6 +218,26 @@ test.describe.serial("billing", () => {
     await context.close();
   });
 
+  test("the API reference describes the billing endpoints", async () => {
+    const client = await api("owner");
+    const doc = await json<{ paths: Record<string, Record<string, unknown>> }>(
+      await client.get("/api/v1/openapi.json"),
+    );
+    for (const path of [
+      "/quotes",
+      "/quotes/{id}/decision",
+      "/quotes/{id}/pdf",
+      "/invoices/{id}/payments",
+      "/invoices/{id}/void",
+      "/catalog-items",
+    ]) {
+      expect(doc.paths[path], path).toBeDefined();
+    }
+    const catalog = await json<{ data: { sku: string | null }[] }>(await client.get("/api/v1/catalog-items?q=CAP"));
+    expect(catalog.data.map((c) => c.sku)).toContain("CAP-455");
+    await client.dispose();
+  });
+
   test("technicians can't reach quotes, invoices or the billing API", async ({ browser }) => {
     const context = await browser.newContext({ storageState: storageState("technician") });
     const page = await context.newPage();

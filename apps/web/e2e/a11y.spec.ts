@@ -113,30 +113,27 @@ test.describe("billing pages as owner (FIN)", () => {
   ]) {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
-  test("axe: quote, invoice and new invoice for a job", async ({ page }) => {
+  const first = async <T>(path: string) => {
     const client = await api("owner");
-    const sent = await json<{ data: { number: string }[] }>(
-      await client.get("/api/v1/quotes?limit=1&status=sent"),
-    );
-    const draft = await json<{ data: { number: string }[] }>(
-      await client.get("/api/v1/quotes?limit=1&status=draft"),
-    );
-    const overdue = await json<{ data: { id: string }[] }>(
-      await client.get("/api/v1/invoices?limit=1&status=overdue"),
-    );
-    const draftInvoice = await json<{ data: { id: string }[] }>(
-      await client.get("/api/v1/invoices?limit=1&status=draft"),
-    );
-    const jobs = await json<{ data: { number: string }[] }>(
-      await client.get("/api/v1/jobs?limit=1&status=completed"),
-    );
+    const page = await json<{ data: T[] }>(await client.get(path));
     await client.dispose();
-    await audit(page, `/quotes/${sent.data[0]!.number}`);
-    await audit(page, `/quotes/${draft.data[0]!.number}`);
-    await audit(page, `/invoices/${overdue.data[0]!.id}`);
-    // Drafts are jobs completed in the last two days, so the seed may not have one.
-    if (draftInvoice.data[0]) await audit(page, `/invoices/${draftInvoice.data[0].id}`);
-    await audit(page, `/invoices/new?job=${jobs.data[0]!.number}`);
+    return page.data[0];
+  };
+  test("axe: sent quote", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=sent");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: draft quote with the line editor", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=draft");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: overdue invoice", async ({ page }) => {
+    const i = await first<{ id: string }>("/api/v1/invoices?limit=1&status=overdue");
+    await audit(page, `/invoices/${i!.id}`);
+  });
+  test("axe: new invoice for a completed job", async ({ page }) => {
+    const j = await first<{ number: string }>("/api/v1/jobs?limit=1&status=completed");
+    await audit(page, `/invoices/new?job=${j!.number}`);
   });
 });
 
