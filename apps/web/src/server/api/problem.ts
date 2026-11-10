@@ -32,6 +32,7 @@ const TITLES: Record<ProblemCode, string> = {
   invalid_transition: "Invalid status transition",
   precondition_failed: "Precondition failed",
   demo_restricted: "Disabled in the public demo",
+  rate_limited: "Too many requests",
   bad_request: "Bad request",
   unauthorized: "Unauthorized",
   unsupported_media_type: "Unsupported media type",

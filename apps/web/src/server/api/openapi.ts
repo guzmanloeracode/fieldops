@@ -1,6 +1,9 @@
 import "server-only";
 import {
   agendaSchema,
+  aiIntakeRequestSchema,
+  aiIntakeResponseSchema,
+  jobReviewSchema,
   attachmentSchema,
   attachmentUploadResponseSchema,
   attachmentUploadSchema,
@@ -87,7 +90,7 @@ const problem = (description: string) => ({
 });
 
 const errors = (
-  ...codes: (400 | 401 | 403 | 404 | 409 | 412 | 415 | 422 | 503)[]
+  ...codes: (400 | 401 | 403 | 404 | 409 | 412 | 415 | 422 | 429 | 503)[]
 ): ZodOpenApiResponsesObject => {
   const text: Record<number, string> = {
     400: "Malformed request (invalid JSON or header)",
@@ -98,7 +101,8 @@ const errors = (
     412: "If-Match doesn't match the current version",
     415: "The body isn't JSON",
     422: "Validation failed; see errors[]",
-    503: "File storage isn't configured on this server",
+    429: "A rate limit or quota is used up; see Retry-After and the RateLimit-* headers",
+    503: "The feature isn't available: file storage or AI isn't configured, or AI is turned off",
   };
   const all = new Set([401, 403, ...codes]);
   return Object.fromEntries([...all].sort().map((c) => [String(c), problem(text[c]!)]));
@@ -173,6 +177,7 @@ export function openApiDocument() {
       { name: "Expenses", description: "Parts and expenses requested on jobs, and their approval" },
       { name: "Schedule", description: "The dispatch board's data and each member's agenda" },
       { name: "Organization", description: "The current user, members and service types" },
+      { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
     ],
     components: {
       securitySchemes: {
@@ -241,6 +246,19 @@ export function openApiDocument() {
           responses: {
             "200": json(jobDetailSchema, "The job after the change", etagHeader),
             ...errors(404, 409, 412, 415, 422),
+          },
+        }),
+      },
+      "/jobs/{id}/review": {
+        post: op("Jobs", "Review a portal request", {
+          operationId: "reviewJob",
+          description:
+            "Office roles, jobs that need review only (409 otherwise). Copies the chosen fields of the job's AI draft (`apply`) through an ordinary job update, then clears `needs_review` unless `confirm` is false. The customer's original request stays in the description.",
+          requestParams: { path: jobId, header: idempotencyHeader },
+          requestBody: body(jobReviewSchema),
+          responses: {
+            "200": json(jobDetailSchema, "The job after the review", etagHeader),
+            ...errors(404, 409, 415, 422),
           },
         }),
       },
@@ -408,6 +426,28 @@ export function openApiDocument() {
           description: "Approved parts only. Repeating the call keeps the first time.",
           requestParams: { path: uuidParam("Expense"), header: idempotencyHeader },
           responses: { "200": json(expenseSchema, "The request with `used_at` set"), ...errors(404, 409) },
+        }),
+      },
+      "/ai/intake": {
+        post: op("AI", "Draft a job from a customer's message", {
+          operationId: "draftIntake",
+          description:
+            "Smart intake (AI-01): turns a message (English or Bahasa Indonesia) and up to 3 base64 photos into a draft job: title, service type, priority with a reason, summary, checklist suggestions, duration, equipment, contact details, questions to ask and a confidence per field. Nothing is saved: create the job with `POST /jobs` (`source: ai_intake`). Office roles. Counts against the organization's monthly AI quota and per-user rate limits; responses carry `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`. When the model refuses or fails, `status` says so, `draft` is null and the job can be entered by hand. `Idempotency-Key` is ignored: a draft changes nothing.",
+          requestBody: body(aiIntakeRequestSchema),
+          responses: {
+            "200": json(
+              aiIntakeResponseSchema,
+              "The draft, or why there is none",
+              z.object({
+                "RateLimit-Limit": z
+                  .string()
+                  .meta({ description: "Requests allowed in the tightest window" }),
+                "RateLimit-Remaining": z.string(),
+                "RateLimit-Reset": z.string().meta({ description: "Seconds until that window resets" }),
+              }),
+            ),
+            ...errors(400, 415, 422, 429, 503),
+          },
         }),
       },
       "/customers": {

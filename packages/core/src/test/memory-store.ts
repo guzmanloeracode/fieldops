@@ -258,6 +258,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         let rows = liveJobs();
         if (f.assignedMemberId) rows = memberLinkedJobs(f.assignedMemberId);
         if (f.status?.length) rows = rows.filter((j) => f.status!.includes(j.status));
+        if (f.needs_review) rows = rows.filter((j) => j.needsReview);
         return { rows: rows.map(view), nextCursor: null, total: f.page ? rows.length : null };
       },
       async get(id) {

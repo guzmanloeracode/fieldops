@@ -1,1 +1,112 @@
-{}
+{
+  "intake": {
+    "title": "Draft with AI",
+    "badge": "AI",
+    "description": "Paste a customer's message (email, chat or call notes) and add up to 3 photos. AI drafts the job below; you check every field before saving.",
+    "unavailable": {
+      "disabled": "AI drafting is turned off for this organization. An owner or admin can turn it on in Settings → AI.",
+      "not_configured": "AI drafting isn't configured on this server. Fill in the form below.",
+      "quota": "This month's AI quota is used up. Fill in the form below, or ask an owner to raise the quota."
+    },
+    "message": "Customer's message",
+    "messagePlaceholder": "e.g. \"Hi, the AC in our bedroom is dripping water since this morning. It's Maria at 12 Elm St, 512-555-0187.\"",
+    "photos": "Photos (up to {max})",
+    "addPhotos": "Add photos",
+    "removePhoto": "Remove {name}",
+    "photoLimit": "Up to {max} photos per draft.",
+    "photoUnreadable": "Couldn't read {name}. Try a JPEG or PNG.",
+    "quota": "{used} of {limit} AI drafts used this month",
+    "draft": "Draft job",
+    "drafting": "Drafting…",
+    "refused": "AI declined to draft this message. Fill in the form below.",
+    "failed": "AI couldn't draft this message right now. Fill in the form below.",
+    "applied": "The AI draft is in the form below. Check each field, especially the ones marked for checking, then create the job.",
+    "priorityReason": "Why this priority:",
+    "questions": "Ask the customer",
+    "checklist": "Add these checks to the job's checklist",
+    "clear": "Discard draft",
+    "filled": "Filled by AI",
+    "lowConfidence": "AI isn't sure: check this",
+    "suggestedCustomers": "Customers with this name:"
+  },
+  "review": {
+    "title": "Needs review",
+    "badge": "AI draft",
+    "description": "A customer sent this request through the portal. Compare the AI's suggestions with the request, apply the ones you agree with, then confirm.",
+    "drafting": "A customer sent this request through the portal. AI is drafting it.",
+    "draftingHint": "The draft appears here in a few seconds. You can confirm the request without it.",
+    "failed": "A customer sent this request through the portal. AI couldn't draft it; check the request and confirm it.",
+    "skipped": "A customer sent this request through the portal. AI drafting was off; check the request and confirm it.",
+    "nothingToApply": "The AI agrees with the request as it is. Confirm it to move it into the queue.",
+    "noDraft": "A customer sent this request through the portal. Check it and confirm it.",
+    "summary": "AI summary",
+    "priorityReason": "Priority: {reason}",
+    "legend": "AI suggestions to apply",
+    "apply": "Apply",
+    "applyField": "Apply the suggested {field}",
+    "field": "Field",
+    "current": "Request now",
+    "suggested": "AI suggests",
+    "lowConfidence": "AI isn't sure",
+    "questions": "Ask the customer",
+    "applySelected": "Apply {count, plural, =0 {selected} one {# suggestion} other {# suggestions}}",
+    "applied": "{count, plural, one {# suggestion} other {# suggestions}} applied",
+    "confirm": "Confirm request",
+    "confirmed": "Request confirmed",
+    "minutes": "{n} min",
+    "checklistNow": "Standard checklist",
+    "fields": {
+      "title": "Title",
+      "service_type_id": "Service type",
+      "priority": "Priority",
+      "estimated_duration_min": "Duration",
+      "checklist": "Checklist"
+    }
+  },
+  "timeline": {
+    "applied": "applied AI suggestions: {fields}",
+    "confirmedApplied": "confirmed the request with AI suggestions: {fields}",
+    "confirmed": "confirmed the request",
+    "fields": {
+      "title": "Title",
+      "service_type_id": "Service type",
+      "priority": "Priority",
+      "estimated_duration_min": "Duration",
+      "checklist": "Checklist"
+    }
+  },
+  "filters": {
+    "needsReview": "Needs review"
+  },
+  "settings": {
+    "title": "AI features",
+    "description": "AI drafts jobs from customers' messages and portal requests. People confirm every change; nothing is saved by the AI alone.",
+    "provider": {
+      "anthropic": "Claude · {model}",
+      "fixture": "Test double (fixture)",
+      "unavailable": "Not configured"
+    },
+    "notConfiguredHint": "This server has no Anthropic API key, so AI drafting is unavailable whatever you choose here. Set ANTHROPIC_API_KEY in the server's environment to turn it on.",
+    "enabled": "Use AI features",
+    "enabledHint": "Smart intake on the new job form and drafts for portal requests. Turn it off and every form works by hand.",
+    "quota": "Monthly AI quota",
+    "quotaHint": "AI calls per calendar month (UTC) for the whole organization. 0 stops AI until next month.",
+    "invalidQuota": "Enter a whole number from 0 to 100,000",
+    "save": "Save",
+    "saved": "AI settings saved",
+    "usage": {
+      "title": "This month",
+      "description": "Every AI call is logged with its tokens, latency and what the dispatcher did with the draft.",
+      "calls": "AI calls",
+      "callsOf": "{used} / {limit}",
+      "acceptance": "Drafts kept",
+      "tokens": "Tokens",
+      "tokensValue": "{input} in · {output} out",
+      "cache": "Cached input tokens",
+      "latency": "Average response",
+      "seconds": "{s} s",
+      "outcomes": "{accepted} saved as drafted, {edited} saved with edits, {discarded} discarded, {failed} without a draft, {open} not decided yet."
+    },
+    "limits": "Rate limits on this server: {user} drafts per person per hour{visitor, plural, =0 {} other {, # per visitor per day}}, and {global} for all organizations per day."
+  }
+}

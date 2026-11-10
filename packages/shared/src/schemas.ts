@@ -362,6 +362,8 @@ export const jobListQuerySchema = z.object({
   unassigned: queryBool.optional(),
   /** Only jobs that needed another visit (rescheduled from hold or reopened). */
   revisit: queryBool.optional(),
+  /** Only portal requests waiting for a dispatcher to confirm them (AI-01). */
+  needs_review: queryBool.optional(),
   sort: z
     .string()
     .regex(

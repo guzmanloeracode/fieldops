@@ -18,6 +18,7 @@ import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
+import { AiReview } from "./ai-review";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
 import { JobExpenses } from "./expenses";
@@ -198,6 +199,7 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {office && job.needsReview ? <AiReview jobId={job.id} /> : null}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">{t("detail.details")}</CardTitle>

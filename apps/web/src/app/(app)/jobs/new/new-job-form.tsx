@@ -1,7 +1,12 @@
 "use client";
 import { PRIORITY_LABELS } from "@fieldops/core";
-import { JOB_PRIORITIES, type JobPriority } from "@fieldops/shared";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import {
+  JOB_PRIORITIES,
+  LOW_CONFIDENCE,
+  type IntakeConfidenceField,
+  type JobPriority,
+} from "@fieldops/shared";
+import { AlertTriangle, Check, ChevronsUpDown, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
@@ -27,6 +32,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { fromLocalInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { createJobAction, customerSitesAction, searchCustomersAction } from "../actions";
+import { createJobFromDraftAction, discardDraftAction, type DraftView } from "./ai-actions";
+import { AiDraftPanel, type AiIntakeStatus } from "./ai-draft-panel";
 
 type CustomerOption = { id: string; name: string; type?: string; siteCount?: number };
 type SiteOption = {
@@ -48,34 +55,110 @@ interface FormValues {
   estimated_duration_min: string;
 }
 
+/** The AI's description for the technician: its summary plus the details it read from the message. */
+function draftDescription(d: NonNullable<DraftView["draft"]>): string {
+  const equipment = [d.equipment.type, d.equipment.brand, d.equipment.model].filter(Boolean).join(" · ");
+  const contact = [d.contact.name, d.contact.phone, d.contact.email].filter(Boolean).join(" · ");
+  return [
+    d.summary,
+    equipment ? `Equipment: ${equipment}` : null,
+    contact ? `Contact: ${contact}` : null,
+    d.contact.address ? `Address: ${d.contact.address}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Marks a field the AI filled in; low-confidence fields ask the dispatcher to check them (AI-01). */
+function AiTag({ id, state }: { id: string; state: "ok" | "low" | null }) {
+  const t = useTranslations("ai.intake");
+  if (!state) return null;
+  return state === "low" ? (
+    <span
+      id={id}
+      className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+    >
+      <AlertTriangle className="size-3" aria-hidden /> {t("lowConfidence")}
+    </span>
+  ) : (
+    <span id={id} className="inline-flex items-center gap-1 text-xs text-violet-700 dark:text-violet-300">
+      <Sparkles className="size-3" aria-hidden /> {t("filled")}
+    </span>
+  );
+}
+
+const lowRing = "border-amber-500 ring-2 ring-amber-500/30";
+
 export function NewJobForm({
   timeZone,
   serviceTypes,
   initialCustomer,
+  ai,
 }: {
   timeZone: string;
   serviceTypes: { id: string; name: string; duration: number }[];
   initialCustomer: CustomerOption | null;
+  /** AI drafting for office roles (AI-01); null hides the panel. */
+  ai?: AiIntakeStatus | null;
 }) {
   const t = useTranslations("jobs");
+  const tai = useTranslations("ai.intake");
   const router = useRouter();
   const [customer, setCustomer] = useState<CustomerOption | null>(initialCustomer);
   const [sites, setSites] = useState<SiteOption[]>([]);
   const [siteId, setSiteId] = useState<string>("");
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
-  const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
-    defaultValues: {
-      priority: "normal",
-      title: "",
-      description: "",
-      service_type_id: "",
-      equipment_id: "",
-      preferred_start: "",
-      preferred_end: "",
-      estimated_duration_min: "",
-    },
-  });
+  const [aiDraft, setAiDraft] = useState<DraftView | null>(null);
+  const [keptChecklist, setKeptChecklist] = useState<string[]>([]);
+  const defaults: FormValues = {
+    priority: "normal",
+    title: "",
+    description: "",
+    service_type_id: "",
+    equipment_id: "",
+    preferred_start: "",
+    preferred_end: "",
+    estimated_duration_min: "",
+  };
+  const { register, handleSubmit, setValue, watch, reset } = useForm<FormValues>({ defaultValues: defaults });
+  const draft = aiDraft?.draft ?? null;
+  const aiState = (field: IntakeConfidenceField): "ok" | "low" | null =>
+    draft ? (draft.confidence[field] < LOW_CONFIDENCE ? "low" : "ok") : null;
+  const aiIds = {
+    title: "ai-title",
+    service_type: "ai-service-type",
+    priority: "ai-priority",
+    summary: "ai-summary",
+    estimated_duration: "ai-duration",
+    contact: "ai-customer",
+  } as const;
+  const describedBy = (field: keyof typeof aiIds) => (aiState(field) ? aiIds[field] : undefined);
+
+  const applyDraft = (d: DraftView) => {
+    if (!d.draft) return;
+    setAiDraft(d);
+    setKeptChecklist(d.draft.checklist);
+    setValue("title", d.draft.title);
+    setValue("description", draftDescription(d.draft));
+    setValue("priority", d.draft.priority);
+    setValue("service_type_id", d.draft.service_type_id ?? "");
+    setValue(
+      "estimated_duration_min",
+      d.draft.estimated_duration_min ? String(d.draft.estimated_duration_min) : "",
+    );
+    // A customer matched on email or phone is preselected; a match on the name only is offered below the picker.
+    const strong = d.suggestions.find((s) => s.matched_on !== "name");
+    if (strong && !customer) setCustomer({ id: strong.id, name: strong.name });
+  };
+
+  const clearDraft = () => {
+    if (aiDraft) void discardDraftAction(aiDraft.interactionId);
+    setAiDraft(null);
+    setKeptChecklist([]);
+    reset(defaults);
+    setCustomer(initialCustomer);
+  };
 
   useEffect(() => {
     setSites([]);
@@ -99,7 +182,7 @@ export function NewJobForm({
     setServerErrors(errors);
     if (Object.keys(errors).length) return;
     startTransition(async () => {
-      const result = await createJobAction({
+      const job = {
         customer_id: customer!.id,
         site_id: siteId,
         equipment_id: v.equipment_id || null,
@@ -107,11 +190,19 @@ export function NewJobForm({
         title: v.title,
         description: v.description,
         priority: v.priority,
-        source: "manual",
+        source: "manual" as const,
         preferred_start: fromLocalInput(v.preferred_start, timeZone),
         preferred_end: fromLocalInput(v.preferred_end, timeZone),
         estimated_duration_min: v.estimated_duration_min ? Number(v.estimated_duration_min) : null,
-      });
+      };
+      // A job saved from an AI draft records what the dispatcher kept (accepted or edited, §9.1).
+      const result = aiDraft
+        ? await createJobFromDraftAction({
+            interaction_id: aiDraft.interactionId,
+            checklist: keptChecklist,
+            job,
+          })
+        : await createJobAction(job);
       if (!result.ok) {
         setServerErrors(Object.fromEntries((result.error.fields ?? []).map((f) => [f.path, f.message])));
         toast.error(result.error.message);
@@ -122,16 +213,53 @@ export function NewJobForm({
     });
   });
 
+  const nameMatches =
+    aiDraft?.suggestions.filter((s) => s.matched_on === "name" && s.id !== customer?.id) ?? [];
+
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
+      {ai ? (
+        <AiDraftPanel
+          status={ai}
+          draft={aiDraft}
+          keptChecklist={keptChecklist}
+          onKeptChecklist={setKeptChecklist}
+          onDraft={applyDraft}
+          onClear={clearDraft}
+        />
+      ) : null}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("new.where")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <Label id="customer-label">{t("new.customer")}</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label id="customer-label">{t("new.customer")}</Label>
+              {customer && aiDraft?.suggestions.some((s) => s.id === customer.id) ? (
+                <AiTag id={aiIds.contact} state={aiState("contact")} />
+              ) : null}
+            </div>
             <CustomerPicker value={customer} onChange={setCustomer} />
+            {nameMatches.length ? (
+              <div
+                className="flex flex-wrap items-center gap-2 text-sm"
+                data-testid="ai-customer-suggestions"
+              >
+                <span className="text-muted-foreground">{tai("suggestedCustomers")}</span>
+                {nameMatches.map((s) => (
+                  <Button
+                    key={s.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCustomer({ id: s.id, name: s.name })}
+                  >
+                    {s.name}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
             <FieldError message={serverErrors.customer_id} />
           </div>
           <div className="space-y-2">
@@ -179,7 +307,10 @@ export function NewJobForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="service_type">{t("col.serviceType")}</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor="service_type">{t("col.serviceType")}</Label>
+              <AiTag id={aiIds.service_type} state={aiState("service_type")} />
+            </div>
             <Select
               value={watch("service_type_id") || "none"}
               onValueChange={(v) => {
@@ -191,7 +322,11 @@ export function NewJobForm({
                 if (st && !watch("title")) setValue("title", st.name);
               }}
             >
-              <SelectTrigger id="service_type" className="w-full">
+              <SelectTrigger
+                id="service_type"
+                className={cn("w-full", aiState("service_type") === "low" && lowRing)}
+                aria-describedby={describedBy("service_type")}
+              >
                 <SelectValue placeholder={t("new.chooseServiceType")} />
               </SelectTrigger>
               <SelectContent>
@@ -205,9 +340,14 @@ export function NewJobForm({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="estimated_duration_min">{t("new.duration")}</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor="estimated_duration_min">{t("new.duration")}</Label>
+              <AiTag id={aiIds.estimated_duration} state={aiState("estimated_duration")} />
+            </div>
             <Input
               id="estimated_duration_min"
+              className={cn(aiState("estimated_duration") === "low" && lowRing)}
+              aria-describedby={describedBy("estimated_duration")}
               type="number"
               min={5}
               max={1440}
@@ -218,9 +358,14 @@ export function NewJobForm({
             <FieldError message={serverErrors.estimated_duration_min} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="title">{t("new.jobTitle")}</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor="title">{t("new.jobTitle")}</Label>
+              <AiTag id={aiIds.title} state={aiState("title")} />
+            </div>
             <Input
               id="title"
+              className={cn(aiState("title") === "low" && lowRing)}
+              aria-describedby={describedBy("title")}
               maxLength={200}
               aria-invalid={Boolean(serverErrors.title)}
               {...register("title")}
@@ -228,17 +373,25 @@ export function NewJobForm({
             <FieldError message={serverErrors.title} />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="description">{t("new.descriptionLabel")}</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor="description">{t("new.descriptionLabel")}</Label>
+              <AiTag id={aiIds.summary} state={aiState("summary")} />
+            </div>
             <Textarea
               id="description"
+              className={cn(aiState("summary") === "low" && lowRing)}
+              aria-describedby={describedBy("summary")}
               rows={4}
               maxLength={8000}
               placeholder={t("new.descriptionPlaceholder")}
               {...register("description")}
             />
           </div>
-          <fieldset className="space-y-2 sm:col-span-2">
-            <legend className="text-sm font-medium">{t("col.priority")}</legend>
+          <fieldset className="space-y-2 sm:col-span-2" aria-describedby={describedBy("priority")}>
+            <legend className="flex w-full flex-wrap items-center justify-between gap-2 text-sm font-medium">
+              {t("col.priority")}
+              <AiTag id={aiIds.priority} state={aiState("priority")} />
+            </legend>
             <RadioGroup
               value={watch("priority")}
               onValueChange={(v) => setValue("priority", v as JobPriority)}

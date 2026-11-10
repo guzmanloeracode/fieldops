@@ -39,6 +39,7 @@ export async function Timeline({
           .filter((w) => typeof w.start === "string" && typeof w.end === "string")
           .map((w) => formatWindow(String(w.start), String(w.end), timeZone))
       : [];
+  const ta = await getTranslations("ai.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -95,6 +96,12 @@ export async function Timeline({
         });
       case "signature_captured":
         return tf("signature", { name: String(e.payload.signer_name ?? "") });
+      case "reviewed": {
+        const applied = (e.payload.applied as string[] | undefined) ?? [];
+        const fields = applied.map((f) => ta(`fields.${f}`)).join(", ");
+        if (!e.payload.confirmed) return ta("applied", { fields });
+        return applied.length ? ta("confirmedApplied", { fields }) : ta("confirmed");
+      }
       default:
         return e.type;
     }

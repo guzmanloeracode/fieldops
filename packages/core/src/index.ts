@@ -38,3 +38,4 @@ export * from "./services/ai-types";
 export * from "./services/notify";
 export * as portal from "./services/portal";
 export * as audit from "./services/audit";
+export * as ai from "./services/ai";

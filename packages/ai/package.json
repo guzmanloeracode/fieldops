@@ -1,0 +1,26 @@
+{
+  "name": "@fieldops/ai",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run --coverage",
+    "eval:intake": "tsx src/eval-intake.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.7.0",
+    "@fieldops/core": "workspace:*",
+    "@fieldops/shared": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^5.1.0",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.0"
+  }
+}

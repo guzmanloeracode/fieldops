@@ -1,8 +1,9 @@
-import { assertCan, organization } from "@fieldops/core";
+import { ai, assertCan, organization } from "@fieldops/core";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/app/page-header";
+import { intakeModel } from "@/server/ai";
 import { requireActor, runService } from "@/server/context";
 import { NewJobForm } from "./new-job-form";
 
@@ -21,6 +22,7 @@ export default async function NewJobPage({ searchParams }: { searchParams: Promi
     serviceTypes: await organization.listServiceTypes(ctx),
     customer:
       customerId && /^[0-9a-f-]{36}$/i.test(customerId) ? await ctx.store.customers.get(customerId) : null,
+    ai: await ai.intakeStatus(ctx, intakeModel.provider),
   }));
   return (
     <div className="mx-auto max-w-3xl">
@@ -33,6 +35,7 @@ export default async function NewJobPage({ searchParams }: { searchParams: Promi
           duration: s.defaultDurationMin,
         }))}
         initialCustomer={data.customer ? { id: data.customer.id, name: data.customer.name } : null}
+        ai={data.ai}
       />
     </div>
   );

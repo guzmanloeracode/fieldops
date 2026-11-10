@@ -26,4 +26,10 @@ export const env = {
   appDbPassword: process.env.APP_DB_PASSWORD,
   logLevel: process.env.LOG_LEVEL ?? "info",
   version: process.env.APP_VERSION ?? "dev",
+  /** AI drafts for portal requests (AI-01); without a key requests are marked "skipped". */
+  ai: {
+    apiKey: process.env.ANTHROPIC_API_KEY || undefined,
+    provider: process.env.AI_PROVIDER || undefined,
+    intakeModel: process.env.AI_MODEL_INTAKE || undefined,
+  },
 };

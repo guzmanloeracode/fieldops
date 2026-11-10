@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1165.0",
+    "@fieldops/ai": "workspace:*",
     "@fieldops/core": "workspace:*",
     "@fieldops/db": "workspace:*",
     "@fieldops/email": "workspace:*",
