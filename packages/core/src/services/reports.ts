@@ -178,7 +178,7 @@ interface ReportFacts {
 }
 
 /** What a report says about a job, read from the store: the model's input and the prefill's. */
-async function reportFacts(store: Store, job: JobView, now: Date): Promise<ReportFacts> {
+async function reportFacts(store: Store, job: JobView, now: Date, language?: Locale): Promise<ReportFacts> {
   const [org, customer, items, notes, expenses, equipment, attachments] = await Promise.all([
     store.organization.get(),
     store.customers.get(job.customerId),
@@ -188,7 +188,7 @@ async function reportFacts(store: Store, job: JobView, now: Date): Promise<Repor
     job.equipmentId ? store.equipment.get(job.equipmentId) : Promise.resolve(null),
     store.attachments.list(job.id),
   ]);
-  const locale = customer?.locale ?? org.settings.locale;
+  const locale = language ?? customer?.locale ?? org.settings.locale;
   return {
     org,
     locale,
@@ -581,7 +581,8 @@ export async function loadReportDocument(store: Store, jobId: string): Promise<R
     store.sites.get(job.siteId),
     store.customers.contacts(job.customerId),
     store.attachments.list(job.id),
-    reportFacts(store, job, job.completedAt ?? new Date()),
+    // Readings are written the way the report's language writes numbers.
+    reportFacts(store, job, job.completedAt ?? new Date(), report.locale),
   ]);
   const signature =
     attachments

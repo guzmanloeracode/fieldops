@@ -720,6 +720,9 @@ describe("the PDF and customers", () => {
     expect(data.signature!.id).toBe(sigNew);
     expect(sigOld).not.toBe(sigNew);
     expect(data.checklist).toHaveLength(5);
+    await reports.updateReport(w.ctx(w.tom), j.id, { locale: "id" });
+    const id = await reports.reportDocument(w.ctx(w.tom), j.id);
+    expect(id.checklist.find((c) => c.label === "Supply air")!.value).toBe("13,5 °C");
     const open = await workedJob(w, "Open");
     await expect(reports.reportDocument(w.ctx(w.tom), open.id)).rejects.toBeInstanceOf(NotFoundError);
     expect(await reports.loadReportDocument(w.store, uuid())).toBeNull();
