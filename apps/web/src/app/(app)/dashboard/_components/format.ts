@@ -1,3 +1,5 @@
+import type { JobStatus } from "@fieldops/shared";
+
 // Number formatting for dashboards. Dates are plain "YYYY-MM-DD" local dates of the organization.
 
 const dayFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -27,3 +29,14 @@ export function formatPercent(ratio: number | null): string {
 export const formatCount = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-US"));
 
 export const hours = (min: number) => Math.round((min / 60) * 10) / 10;
+
+/** Status colors shared by the charts and their data tables (match the status badges). */
+export const STATUS_COLORS: Record<JobStatus, string> = {
+  new: "#94a3b8",
+  scheduled: "#0ea5e9",
+  en_route: "#6366f1",
+  in_progress: "#f59e0b",
+  on_hold: "#f97316",
+  completed: "#10b981",
+  canceled: "#a1a1aa",
+};

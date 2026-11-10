@@ -14,19 +14,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { STATUS_COLORS } from "./format";
 
 // Charts for the overview (DSH-02). They are a visual layer: each sits next to a data table with the same
 // numbers and the same drill-down links, which is what screen readers and keyboards use (aria-hidden here).
-
-export const STATUS_COLORS: Record<JobStatus, string> = {
-  new: "#94a3b8",
-  scheduled: "#0ea5e9",
-  en_route: "#6366f1",
-  in_progress: "#f59e0b",
-  on_hold: "#f97316",
-  completed: "#10b981",
-  canceled: "#a1a1aa",
-};
 
 const axis = { fill: "var(--muted-foreground)", fontSize: 12 };
 const tooltipStyle = {

@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { bucketEnd, jobsHref } from "@/lib/drilldown";
-import { PairChart, SlaChart, StatusChart, STATUS_COLORS, type StatusPoint } from "./charts";
-import { formatCount, formatPercent, hours, longDate, shortDate } from "./format";
+import { PairChart, SlaChart, StatusChart, type StatusPoint } from "./charts";
+import { formatCount, formatPercent, hours, longDate, shortDate, STATUS_COLORS } from "./format";
 import { KpiTiles, type KpiTile } from "./kpi-tiles";
 import { RangeFilters } from "./range-filters";
 
