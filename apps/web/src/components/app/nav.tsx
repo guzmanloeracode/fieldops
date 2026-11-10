@@ -89,12 +89,12 @@ export function Nav({
         )}
       >
         <Icon className="size-4 shrink-0" aria-hidden />
-        <span className={collapsed ? "sr-only" : undefined}>{i.label}</span>
+        <span className={collapsed ? "sr-only" : undefined}>
+          {i.label}
+          {collapsed && count ? `, ${count} pending` : null}
+        </span>
         {count && collapsed ? (
-          <>
-            <span className="bg-primary absolute top-1.5 right-1.5 size-2 rounded-full" aria-hidden />
-            <span className="sr-only">, {count} pending</span>
-          </>
+          <span className="bg-primary absolute top-1.5 right-1.5 size-2 rounded-full" aria-hidden />
         ) : count ? (
           <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-[11px] leading-none font-semibold tabular-nums">
             {count}
