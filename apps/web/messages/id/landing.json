@@ -1,0 +1,68 @@
+{
+  "nav": { "api": "Referensi API", "signIn": "Masuk", "openApp": "Buka aplikasi" },
+  "hero": {
+    "badge": "Rilis {version} · demo langsung",
+    "title": "Manajemen layanan lapangan untuk tim servis kecil",
+    "subtitle": "Ubah permintaan menjadi pekerjaan terjadwal, bekali teknisi dengan semua yang mereka butuhkan di lokasi, dan pantau seluruh operasional di satu tempat. Dibuat untuk usaha servis AC, jasa kebersihan, perpipaan, dan perawatan dengan 5–50 orang.",
+    "start": "Buat organisasi Anda",
+    "api": "Jelajahi API"
+  },
+  "demo": {
+    "title": "Coba dengan satu klik",
+    "description": "Acme Air & Clean adalah perusahaan fiktif jasa AC dan kebersihan di Austin dengan 12 orang dan riwayat 6 bulan.",
+    "indonesian": "Atau coba Acme Teknik Nusantara (Jakarta, IDR)",
+    "reset": "Akun demo bersama. Semua data fiktif dan diatur ulang setiap hari pukul 00.00 UTC."
+  },
+  "highlights": {
+    "tenancy": {
+      "title": "Isolasi tenant, dua lapis",
+      "body": "Setiap kueri dibatasi per organisasi di kode, lalu row-level security PostgreSQL menegakkannya lagi di database."
+    },
+    "contracts": {
+      "title": "Satu kontrak",
+      "body": "Skema Zod memvalidasi formulir, server action, dan REST API, sekaligus menghasilkan referensi OpenAPI 3.1."
+    },
+    "lifecycle": {
+      "title": "Siklus pekerjaan yang sesungguhnya",
+      "body": "Mesin status yang teruji, dengan alasan, prasyarat, dan riwayat lengkap tentang siapa mengubah apa."
+    },
+    "selfHosted": {
+      "title": "Di-host sendiri",
+      "body": "Docker Compose di server Linux di balik Cloudflare, dengan migrasi, health check, dan reset demo setiap malam."
+    }
+  },
+  "roadmap": {
+    "title": "Peta jalan",
+    "subtitle": "Dikembangkan secara terbuka, rilis demi rilis.",
+    "r01": {
+      "name": "0.1 Inti",
+      "body": "Akun, peran, pelanggan, lokasi, pekerjaan, lampiran, REST API, dan demo ini."
+    },
+    "r02": {
+      "name": "0.2 Penjadwalan",
+      "body": "Papan jadwal seret dan lepas, tampilan harian teknisi, daftar periksa, persetujuan, dasbor."
+    },
+    "r03": {
+      "name": "0.3 Otomatisasi",
+      "body": "Mesin SLA, notifikasi, log audit, portal pelanggan, dan intake AI untuk pekerjaan."
+    },
+    "r04": {
+      "name": "0.4 Pembayaran",
+      "body": "Penawaran, faktur, pembayaran Stripe, asisten AI, dan laporan servis."
+    },
+    "relay": {
+      "name": "Relay 1.0",
+      "body": "Layanan pengiriman event berbasis Go: webhook, pengiriman ulang, notifikasi push, dan observabilitas."
+    },
+    "r05": {
+      "name": "0.5 Platform",
+      "body": "Kunci API, webhook bertanda tangan, paket SaaS, dan server MCP."
+    },
+    "site": { "name": "Situs 1.0", "body": "Situs pemasaran dengan animasi GSAP, SEO, dan aksesibilitas." },
+    "mobile": {
+      "name": "1.0 Mobile",
+      "body": "Aplikasi Expo untuk teknisi dengan mode offline, kamera, dan notifikasi push."
+    }
+  },
+  "footer": { "credit": "Dibuat oleh Ahmad Izzat Maulana. Semua data demo bersifat fiktif." }
+}

@@ -1,0 +1,128 @@
+{
+  "title": "Papan jadwal",
+  "description": "Seret pekerjaan ke jalur teknisi untuk menjadwalkannya. Semua seret-lepas juga bisa dilakukan dengan keyboard.",
+  "views": {
+    "day": "Hari",
+    "week": "Minggu",
+    "label": "Tampilan"
+  },
+  "tabs": {
+    "board": "Papan",
+    "map": "Peta",
+    "label": "Mode tampilan"
+  },
+  "nav": {
+    "previousDay": "Hari sebelumnya",
+    "nextDay": "Hari berikutnya",
+    "previousWeek": "Minggu sebelumnya",
+    "nextWeek": "Minggu berikutnya",
+    "today": "Hari ini",
+    "date": "Tanggal"
+  },
+  "filter": {
+    "technician": "Teknisi",
+    "all": "Semua teknisi"
+  },
+  "team": {
+    "link": "Ketersediaan tim",
+    "title": "Ketersediaan tim",
+    "description": "Jam kerja, keahlian, dan cuti. Data ini dipakai oleh papan jadwal dan pemeriksaan bentrok jadwal.",
+    "back": "Papan jadwal",
+    "businessHours": "Jam operasional",
+    "custom": "Jam sendiri",
+    "hoursLegend": "Jam kerja {name}",
+    "followsBusiness": "Mengikuti jam operasional organisasi ({hours}).",
+    "noBusinessHours": "Jam operasional belum diatur, jadi semua waktu dihitung sebagai jam kerja.",
+    "open": "Mulai",
+    "close": "Selesai",
+    "skills": "Keahlian",
+    "skillsHint": "Jenis layanan bisa mensyaratkan keahlian tertentu; menugaskan orang yang tidak memilikinya akan memunculkan peringatan.",
+    "addSkill": "Tambah keahlian",
+    "newSkill": "Keahlian baru",
+    "removeSkill": "Hapus {skill}",
+    "noSkills": "Belum ada keahlian",
+    "save": "Simpan jam dan keahlian",
+    "saved": "Ketersediaan {name} disimpan",
+    "timeOff": "Cuti",
+    "noTimeOff": "Tidak ada cuti mendatang",
+    "from": "Dari",
+    "to": "Sampai dengan",
+    "reason": "Alasan (opsional)",
+    "addTimeOff": "Tambah cuti",
+    "added": "Cuti ditambahkan",
+    "removed": "Cuti dihapus",
+    "remove": "Hapus cuti {range}",
+    "past": "sudah lewat",
+    "roleTechnician": "Teknisi",
+    "roleDispatcher": "Dispatcher",
+    "roleAdmin": "Admin",
+    "roleOwner": "Pemilik"
+  },
+  "queue": {
+    "title": "Belum dijadwalkan",
+    "description": "Seret pekerjaan ke sebuah jalur untuk menjadwalkannya.",
+    "empty": "Semua pekerjaan sudah dijadwalkan.",
+    "count": "{count, plural, other {# pekerjaan menunggu}}",
+    "dropToUnschedule": "Lepas di sini untuk membatalkan jadwal"
+  },
+  "lane": {
+    "label": "Jadwal {name}",
+    "visits": "{count, plural, =0 {Tidak ada kunjungan} other {# kunjungan}}",
+    "dayOff": "Hari libur",
+    "off": "Libur",
+    "offReason": "Libur: {reason}",
+    "lead": "Teknisi utama",
+    "helper": "Asisten",
+    "noLanes": "Belum ada teknisi. Undang teknisi di Pengaturan → Anggota."
+  },
+  "block": {
+    "resize": "Ubah durasi {number}"
+  },
+  "dnd": {
+    "instructions": "Untuk mengambil pekerjaan, tekan Spasi. Saat menyeret, gunakan tombol panah: kiri dan kanan menggesernya 15 menit (satu hari di tampilan minggu), atas dan bawah memindahkannya ke teknisi lain. Tekan Spasi atau Enter untuk melepasnya, atau Escape untuk membatalkan.",
+    "start": "{job} diambil.",
+    "over": "{job} berada di atas {target}.",
+    "overNothing": "{job} tidak berada di atas jalur mana pun.",
+    "drop": "{job} dilepas di {target}.",
+    "cancel": "Pemindahan {job} dibatalkan.",
+    "queue": "antrean belum dijadwalkan"
+  },
+  "save": {
+    "scheduled": "{job} dijadwalkan untuk {name}, {time}",
+    "moved": "{job} dipindahkan ke {name}, {time}",
+    "resized": "{job} kini selesai pukul {time}",
+    "unscheduled": "{job} kembali ke antrean",
+    "failed": "Perubahan tidak dapat disimpan",
+    "cantUnschedule": "Hanya pekerjaan terjadwal yang bisa dikembalikan ke antrean",
+    "saved": "{job} disimpan"
+  },
+  "preview": {
+    "clear": "Tidak ada bentrok",
+    "count": "{count, plural, other {# bentrok}}"
+  },
+  "dialog": {
+    "title": "Jadwalkan ulang {job}",
+    "scheduleTitle": "Jadwalkan {job}",
+    "description": "Teknisi dan waktu kunjungan ({timeZone}).",
+    "openJob": "Buka pekerjaan"
+  },
+  "conflicts": {
+    "title": "Bentrok jadwal",
+    "hint": "Anda tetap bisa menyimpan dengan menuliskan alasan; alasan itu dicatat di riwayat pekerjaan.",
+    "overlap": "Bentrok dengan kunjungan lain",
+    "outside_hours": "Di luar jam kerja",
+    "time_off": "Sedang cuti",
+    "missing_skills": "Keahlian yang belum dimiliki: {skills}",
+    "reason": "Alasan tetap menyimpan",
+    "saveAnyway": "Tetap simpan",
+    "cancel": "Batal"
+  },
+  "map": {
+    "label": "Peta kunjungan pada {date}",
+    "list": "Kunjungan pada {date}",
+    "noLocation": "Tanpa lokasi peta",
+    "empty": "Tidak ada kunjungan pada hari tersebut.",
+    "legend": "Warna status",
+    "open": "Buka {number}"
+  }
+}

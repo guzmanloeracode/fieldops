@@ -1,0 +1,112 @@
+{
+  "intake": {
+    "title": "Buat draf dengan AI",
+    "badge": "AI",
+    "description": "Tempel pesan pelanggan (email, chat, atau catatan telepon) dan tambahkan hingga 3 foto. AI menyusun draf pekerjaan di bawah; Anda memeriksa setiap kolom sebelum menyimpan.",
+    "unavailable": {
+      "disabled": "Draf AI dinonaktifkan untuk organisasi ini. Pemilik atau admin dapat mengaktifkannya di Pengaturan → AI.",
+      "not_configured": "Draf AI belum dikonfigurasi di server ini. Isi formulir di bawah.",
+      "quota": "Kuota AI bulan ini sudah habis. Isi formulir di bawah, atau minta pemilik menaikkan kuota."
+    },
+    "message": "Pesan pelanggan",
+    "messagePlaceholder": "mis. \"Halo, AC di kamar tidur kami menetes air sejak tadi pagi. Saya Maria, Jl. Melati No. 12, 0812-5550-0187.\"",
+    "photos": "Foto (hingga {max})",
+    "addPhotos": "Tambah foto",
+    "removePhoto": "Hapus {name}",
+    "photoLimit": "Maksimal {max} foto per draf.",
+    "photoUnreadable": "{name} tidak dapat dibaca. Coba JPEG atau PNG.",
+    "quota": "{used} dari {limit} draf AI terpakai bulan ini",
+    "draft": "Buat draf",
+    "drafting": "Menyusun draf…",
+    "refused": "AI menolak membuat draf dari pesan ini. Isi formulir di bawah.",
+    "failed": "Saat ini AI tidak dapat membuat draf dari pesan ini. Isi formulir di bawah.",
+    "applied": "Draf AI sudah dimasukkan ke formulir di bawah. Periksa setiap kolom, terutama yang ditandai untuk diperiksa, lalu buat pekerjaan.",
+    "priorityReason": "Alasan prioritas ini:",
+    "questions": "Tanyakan ke pelanggan",
+    "checklist": "Tambahkan pemeriksaan ini ke daftar periksa pekerjaan",
+    "clear": "Buang draf",
+    "filled": "Diisi oleh AI",
+    "lowConfidence": "AI kurang yakin: periksa ini",
+    "suggestedCustomers": "Pelanggan dengan nama ini:"
+  },
+  "review": {
+    "title": "Perlu ditinjau",
+    "badge": "Draf AI",
+    "description": "Pelanggan mengirim permintaan ini lewat portal. Bandingkan saran AI dengan permintaan, terapkan yang Anda setujui, lalu konfirmasi.",
+    "drafting": "Pelanggan mengirim permintaan ini lewat portal. AI sedang menyusun drafnya.",
+    "draftingHint": "Draf akan muncul di sini dalam beberapa detik. Anda dapat mengonfirmasi permintaan tanpa menunggunya.",
+    "failed": "Pelanggan mengirim permintaan ini lewat portal. AI tidak dapat menyusun drafnya; periksa permintaan, lalu konfirmasi.",
+    "skipped": "Pelanggan mengirim permintaan ini lewat portal. Saat itu draf AI nonaktif; periksa permintaan, lalu konfirmasi.",
+    "nothingToApply": "AI setuju dengan permintaan apa adanya. Konfirmasi untuk memasukkannya ke antrean.",
+    "noDraft": "Pelanggan mengirim permintaan ini lewat portal. Periksa, lalu konfirmasi.",
+    "summary": "Ringkasan AI",
+    "priorityReason": "Prioritas: {reason}",
+    "legend": "Saran AI untuk diterapkan",
+    "apply": "Terapkan",
+    "applyField": "Terapkan saran untuk {field}",
+    "field": "Kolom",
+    "current": "Permintaan saat ini",
+    "suggested": "Saran AI",
+    "lowConfidence": "AI kurang yakin",
+    "questions": "Tanyakan ke pelanggan",
+    "applySelected": "Terapkan {count, plural, =0 {yang dipilih} other {# saran}}",
+    "applied": "{count, plural, other {# saran}} diterapkan",
+    "confirm": "Konfirmasi permintaan",
+    "confirmed": "Permintaan dikonfirmasi",
+    "minutes": "{n} mnt",
+    "checklistNow": "{count, plural, other {# item}}",
+    "fields": {
+      "title": "Judul",
+      "service_type_id": "Jenis layanan",
+      "priority": "Prioritas",
+      "estimated_duration_min": "Durasi",
+      "checklist": "Daftar periksa"
+    }
+  },
+  "timeline": {
+    "applied": "menerapkan saran AI: {fields}",
+    "confirmedApplied": "mengonfirmasi permintaan dengan saran AI: {fields}",
+    "confirmed": "mengonfirmasi permintaan",
+    "fields": {
+      "title": "Judul",
+      "service_type_id": "Jenis layanan",
+      "priority": "Prioritas",
+      "estimated_duration_min": "Durasi",
+      "checklist": "Daftar periksa"
+    }
+  },
+  "filters": {
+    "needsReview": "Perlu ditinjau"
+  },
+  "settings": {
+    "title": "Fitur AI",
+    "description": "AI menyusun draf pekerjaan dari pesan pelanggan dan permintaan portal. Setiap perubahan dikonfirmasi oleh orang; AI tidak pernah menyimpan apa pun sendiri.",
+    "provider": {
+      "anthropic": "Claude · {model}",
+      "fixture": "Tiruan uji (fixture)",
+      "unavailable": "Belum dikonfigurasi"
+    },
+    "notConfiguredHint": "Server ini tidak memiliki kunci API Anthropic, jadi draf AI tidak tersedia apa pun pilihan Anda di sini. Atur ANTHROPIC_API_KEY di variabel lingkungan server untuk mengaktifkannya.",
+    "enabled": "Gunakan fitur AI",
+    "enabledHint": "Intake AI di formulir pekerjaan baru dan draf untuk permintaan portal. Jika dinonaktifkan, semua formulir diisi secara manual.",
+    "quota": "Kuota AI bulanan",
+    "quotaHint": "Jumlah panggilan AI per bulan kalender (UTC) untuk seluruh organisasi. Isi 0 untuk menghentikan AI hingga bulan depan.",
+    "invalidQuota": "Masukkan bilangan bulat dari 0 sampai 100.000",
+    "save": "Simpan",
+    "saved": "Pengaturan AI disimpan",
+    "usage": {
+      "title": "Bulan ini",
+      "description": "Setiap panggilan AI dicatat beserta token, latensi, dan tindakan dispatcher terhadap drafnya.",
+      "calls": "Panggilan AI",
+      "callsOf": "{used} / {limit}",
+      "acceptance": "Draf yang dipakai",
+      "tokens": "Token",
+      "tokensValue": "{input} masuk · {output} keluar",
+      "cache": "Token input dari cache",
+      "latency": "Rata-rata waktu respons",
+      "seconds": "{s} dtk",
+      "outcomes": "{accepted} disimpan sesuai draf, {edited} disimpan dengan perubahan, {discarded} dibuang, {failed} tanpa draf, {open} belum diputuskan."
+    },
+    "limits": "Batas laju di server ini: {user} draf per orang per jam{visitor, plural, =0 {} other {, # per pengunjung per hari}}, dan {global} untuk semua organisasi per hari."
+  }
+}

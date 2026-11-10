@@ -1,0 +1,24 @@
+{
+  "loading": "Memuat…",
+  "dashboard": {
+    "greeting": "Halo, {name}",
+    "subtitle": "Ringkasan untuk {date}.",
+    "newJob": "Pekerjaan baru",
+    "today": "Kunjungan hari ini",
+    "unscheduled": "Belum dijadwalkan",
+    "inProgress": "Sedang dikerjakan",
+    "onHold": "Ditunda",
+    "completedToday": "Selesai hari ini",
+    "reviewBanner": "{count, plural, other {# permintaan portal perlu}} ditinjau.",
+    "todaysVisits": "Kunjungan hari ini",
+    "queue": "Antrean belum dijadwalkan",
+    "viewAll": "Lihat semua",
+    "nothingToday": "Tidak ada kunjungan terjadwal hari ini.",
+    "queueEmpty": "Tidak ada yang menunggu. Semua pekerjaan sudah memiliki teknisi dan jadwal.",
+    "requested": "diajukan {when}"
+  },
+  "sidebar": {
+    "collapse": "Ciutkan bilah samping",
+    "expand": "Perluas bilah samping"
+  }
+}
