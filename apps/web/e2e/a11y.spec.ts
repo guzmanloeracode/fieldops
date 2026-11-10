@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { api, json, storageState } from "./fixtures";
+import { completedJobForJamie, sendReportToJamie } from "./report-helpers";
 
 // WCAG 2.2 AA checks on the key pages (PRD §13, §18.1): no serious or critical violations.
 async function audit(page: Page, path: string) {
@@ -77,6 +78,11 @@ test.describe("app pages as owner", () => {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
   test("axe: job detail", async ({ page }) => audit(page, `/jobs/${jobNumber}`));
+  test("axe: job detail with its service report (AI-03)", async ({ page }) => {
+    const job = await completedJobForJamie(`E2E a11y report ${Date.now()}`);
+    await audit(page, `/jobs/${job.number}`);
+    await expect(page.getByTestId("service-report")).toBeVisible();
+  });
   test("axe: customer detail", async ({ page }) => audit(page, `/customers/${customerId}`));
   test("axe: equipment detail", async ({ page }) => {
     const client = await api("owner");
@@ -110,6 +116,19 @@ test.describe("customer portal", () => {
     await audit(page, "/portal/acme-air/request");
     await audit(page, href!);
   });
+});
+
+test.describe("service report for customers (POR-04)", () => {
+  test("axe: portal job with a service report", async ({ page }) => {
+    const job = await completedJobForJamie(`E2E a11y portal report ${Date.now()}`);
+    await sendReportToJamie(job.id);
+    await page.goto("/portal/acme-air/sign-in");
+    await page.getByTestId("portal-demo-sign-in").click();
+    await expect(page).toHaveURL(/\/portal\/acme-air$/);
+    await audit(page, `/portal/acme-air/jobs/${job.number}`);
+    await expect(page.getByTestId("portal-report")).toBeVisible();
+  });
+  test("axe: an invalid report link", async ({ page }) => audit(page, "/share/reports/not.valid"));
 });
 
 test.describe("technician home", () => {
