@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   description:
     "FieldOps is an open-source field service management SaaS for small service businesses: requests, dispatch, on-site work, reports and payments.",
   applicationName: "FieldOps",
+  icons: { icon: "/favicon.svg" },
 };
 
 export const viewport: Viewport = {

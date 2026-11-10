@@ -20,10 +20,6 @@ const config: NextConfig = {
   poweredByHeader: false,
   typedRoutes: false,
   agentRules: false,
-  env: {
-    NEXT_PUBLIC_APP_VERSION: process.env.APP_VERSION ?? "dev",
-    NEXT_PUBLIC_APP_COMMIT: process.env.APP_COMMIT ?? "local",
-  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

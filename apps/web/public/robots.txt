@@ -1,0 +1,11 @@
+# FieldOps demo: the landing page and API reference are public; the app itself needs a session.
+User-agent: *
+Allow: /$
+Allow: /docs/api
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /jobs
+Disallow: /customers
+Disallow: /settings
+Disallow: /demo-inbox
+Disallow: /invite/

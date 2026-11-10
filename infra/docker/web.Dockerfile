@@ -16,11 +16,11 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lo
 COPY --from=pruner /repo/out/full/ .
 # turbo prune leaves out root-level config that packages extend.
 COPY --from=pruner /repo/tsconfig.base.json ./tsconfig.base.json
-ARG APP_VERSION=dev
-ARG APP_COMMIT=local
+# Version and commit are runtime env (runner stage), so a new commit doesn't invalidate the build cache.
 ARG NEXT_PUBLIC_MAP_STYLE_URL
-ENV APP_VERSION=$APP_VERSION APP_COMMIT=$APP_COMMIT NEXT_PUBLIC_MAP_STYLE_URL=$NEXT_PUBLIC_MAP_STYLE_URL
-RUN pnpm --filter @fieldops/web build
+ENV NEXT_PUBLIC_MAP_STYLE_URL=$NEXT_PUBLIC_MAP_STYLE_URL
+# Cap the build's heap: the server also runs other production services.
+RUN NODE_OPTIONS=--max-old-space-size=1536 pnpm --filter @fieldops/web build
 
 FROM node:24-alpine AS runner
 WORKDIR /app
