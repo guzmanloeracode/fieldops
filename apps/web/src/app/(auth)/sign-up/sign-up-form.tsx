@@ -120,7 +120,7 @@ export function SignUpForm({
           </Button>
           <p className="text-muted-foreground text-center text-sm">
             {t("signUp.haveAccount")}{" "}
-            <Link href="/sign-in" className="text-primary hover:underline">
+            <Link href="/sign-in" className="text-primary underline underline-offset-2">
               {t("signIn.title")}
             </Link>
           </p>

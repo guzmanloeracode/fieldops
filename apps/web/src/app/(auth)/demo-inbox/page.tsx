@@ -6,8 +6,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/app/page-header";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
+import { emailLinks } from "@/lib/email-links";
 import { db } from "@/server/db";
 import { demoInboxAddresses } from "@/server/demo-inbox";
 
@@ -38,20 +40,30 @@ export default async function DemoInboxPage() {
           <EmptyState icon={<Inbox />} title={t("inbox.empty")} />
         ) : (
           emails.map((m) => (
-            <details key={m.id} className="rounded-lg border" open={m === emails[0]}>
-              <summary className="cursor-pointer p-3 text-sm">
-                <span className="font-medium">{m.subject}</span>
-                <span className="text-muted-foreground block text-xs">
-                  {t("inbox.to", { email: m.toEmail })}
-                </span>
-              </summary>
-              <iframe
-                title={m.subject}
-                srcDoc={`<base target="_top">${m.html}`}
-                sandbox="allow-popups allow-top-navigation-by-user-activation"
-                className="h-96 w-full border-t bg-white"
-              />
-            </details>
+            <div key={m.id} className="space-y-3 rounded-lg border p-3">
+              <div>
+                <p className="text-sm font-medium">{m.subject}</p>
+                <p className="text-muted-foreground text-xs">{t("inbox.to", { email: m.toEmail })}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {emailLinks(m.html).map((l) => (
+                  <Button key={l.href} asChild size="sm">
+                    <a href={l.href}>{l.label}</a>
+                  </Button>
+                ))}
+              </div>
+              <details open={m === emails[0]}>
+                <summary className="text-muted-foreground cursor-pointer text-xs">
+                  {t("inbox.preview")}
+                </summary>
+                <iframe
+                  title={m.subject}
+                  srcDoc={m.html}
+                  sandbox=""
+                  className="mt-2 h-96 w-full rounded border bg-white"
+                />
+              </details>
+            </div>
           ))
         )}
         <Link href="/sign-in" className="text-primary block text-center text-sm hover:underline">

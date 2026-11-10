@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {env.DEMO_MODE ? (
         <div className="bg-primary text-primary-foreground flex flex-wrap items-center justify-center gap-x-3 px-4 py-1.5 text-center text-xs">
           <span>Public demo with fictional data. Demo data resets daily at 00:00 UTC.</span>
-          <span className="opacity-80">
+          <span>
             v{env.APP_VERSION} · {env.APP_COMMIT.slice(0, 7)}
           </span>
         </div>

@@ -37,7 +37,7 @@ const PRIORITY_ICON = { low: ArrowDown, normal: Minus, high: ArrowUp, urgent: Ch
 const PRIORITY_STYLE: Record<JobPriority, string> = {
   low: "text-muted-foreground",
   normal: "text-foreground/80",
-  high: "text-orange-600 dark:text-orange-400",
+  high: "text-orange-700 dark:text-orange-400",
   urgent: "text-red-600 dark:text-red-400 font-semibold",
 };
 

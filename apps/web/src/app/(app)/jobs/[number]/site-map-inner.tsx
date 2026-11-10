@@ -31,7 +31,7 @@ export function SiteMapInner({
   return (
     <div
       ref={ref}
-      role="img"
+      role="region"
       aria-label={`Map showing ${label}`}
       className="h-44 w-full overflow-hidden rounded-lg border"
     />

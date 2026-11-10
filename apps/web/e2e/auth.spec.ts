@@ -49,8 +49,8 @@ test("sign-up, confirm through the demo inbox, create an organization (AUTH-01, 
   await page.getByRole("link", { name: "Open demo inbox" }).click();
   await expect(page).toHaveURL(/\/demo-inbox$/);
   await expect(page.getByText(`To ${email}`)).toBeVisible();
-  const mail = page.frameLocator("iframe").first();
-  await mail.getByRole("link", { name: "Confirm email" }).click();
+  // Links in the captured email are offered as buttons outside the sandboxed preview.
+  await page.getByRole("link", { name: "Confirm email" }).first().click();
 
   await expect(page).toHaveURL(/\/onboarding$/);
   await page.getByLabel("Business name").fill(`E2E Services ${id}`);

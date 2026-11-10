@@ -21,7 +21,7 @@ test("create a customer with a contact and first site, warn on a duplicate email
   const name = `E2E Dental Group ${uniq()}`;
   await page.goto("/customers/new");
   await page.getByLabel("Commercial").check();
-  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByRole("textbox", { name: "Name", exact: true }).fill(name);
   await page.getByLabel("Tags").fill("E2E, Net 30");
   await page.getByLabel("Contact name").fill("Jamie Rivera");
   await page.getByLabel("Email", { exact: true }).fill(seededEmail!);

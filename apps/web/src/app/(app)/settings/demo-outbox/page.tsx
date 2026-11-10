@@ -9,7 +9,9 @@ import { z } from "zod";
 import { EmptyState } from "@/components/app/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { env } from "@/env";
+import { emailLinks } from "@/lib/email-links";
 import { formatDateTime } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireActor } from "@/server/context";
 import { db } from "@/server/db";
@@ -99,6 +101,13 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
                   <div className="border-b px-3 py-2 text-sm">
                     <p className="font-medium">{selected.subject}</p>
                     <p className="text-muted-foreground text-xs">{selected.toEmail}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {emailLinks(selected.html).map((l) => (
+                        <Button key={l.href} asChild size="sm" variant="outline">
+                          <a href={l.href}>{l.label}</a>
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                   {/* Rendered in a fully sandboxed frame: no scripts, no same-origin access, links don't navigate the app. */}
                   <iframe
