@@ -36,7 +36,7 @@ export function BoardMap({ date, jobs }: { date: string; timeZone: string; jobs:
           latitude: j.latitude!,
           longitude: j.longitude!,
         })),
-    [jobs],
+    [jobs, tStatus],
   );
   const statuses = [...new Set(jobs.map((j) => j.status))] as JobStatus[];
   return (

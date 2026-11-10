@@ -43,7 +43,9 @@ test.describe("the user menu", () => {
       .getByRole("link", { name: /^JOB-\d+$/ })
       .first()
       .click();
-    await expect(page.getByText("Dibuat", { exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/jobs\/JOB-\d+$/);
+    // The first visit compiles the page on a development server.
+    await expect(page.getByText("Dibuat", { exact: true })).toBeVisible({ timeout: 60_000 });
     await expect(page.locator("main")).toContainText(/\d{1,2} [A-Z][a-z]{2} \d{4} · \d{2}\.\d{2}/);
 
     // The language stays after a reload and on other pages.
@@ -83,7 +85,7 @@ test("a new account starts in the browser's language and keeps the language it p
     await expect(page).toHaveURL(/\/onboarding$/);
     await page.getByLabel("Nama usaha").fill(`Servis Bahasa ${id}`);
     await page.getByRole("button", { name: "Buat organisasi" }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 60_000 });
     await expect(page.locator("html")).toHaveAttribute("lang", "id");
     await page.goto("/settings/service-types");
     await expect(page.getByText("Inspeksi", { exact: true })).toBeVisible();

@@ -238,7 +238,7 @@ export function JobsTable({
         ),
       },
     ],
-    [t, tb, timeZone, bulk],
+    [t, tb, timeZone, bulk, locale],
   );
 
   const table = useReactTable({

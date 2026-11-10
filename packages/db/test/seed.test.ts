@@ -315,8 +315,11 @@ describe("demo seed", () => {
       where u.email like '%@' || o.slug || '.example'
       group by o.slug, u.locale, o.settings->>'locale'
       order by o.slug, u.locale`);
-    expect(r.rows).toEqual([
-      { slug: "acme-air", locale: "en", users: 10, customer_locale: "en" },
+    // Acme Air speaks English only (its count includes accounts other tests add); Acme Teknik's Fajar is English.
+    expect(r.rows.filter((x) => x.slug === "acme-air").map(({ users: _users, ...x }) => x)).toEqual([
+      { slug: "acme-air", locale: "en", customer_locale: "en" },
+    ]);
+    expect(r.rows.filter((x) => x.slug === "acme-teknik")).toEqual([
       { slug: "acme-teknik", locale: "en", users: 1, customer_locale: "id" },
       { slug: "acme-teknik", locale: "id", users: 6, customer_locale: "id" },
     ]);

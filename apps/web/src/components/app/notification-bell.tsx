@@ -59,7 +59,7 @@ export function NotificationBell({
       }
       newest.current = first?.id ?? newest.current;
     },
-    [t, timeZone],
+    [t, timeZone, locale],
   );
 
   useLiveEvents(["notification"], (m) => {
