@@ -98,6 +98,22 @@ test.describe("app pages as owner", () => {
     const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     expect(blocking.map((v) => v.id)).toEqual([]);
   });
+  test("axe: Ask FieldOps panel", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+    await page.keyboard.press("ControlOrMeta+j");
+    const panel = page.getByTestId("assistant-panel");
+    await expect(panel).toBeVisible();
+    await expect(
+      panel.getByTestId("assistant-starter").first().or(panel.getByTestId("assistant-unavailable")),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[data-testid=assistant-panel]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+  });
 });
 
 test.describe("customer portal", () => {
