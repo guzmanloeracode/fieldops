@@ -100,6 +100,46 @@ test.describe("app pages as owner", () => {
   });
 });
 
+test.describe("billing pages as owner (FIN)", () => {
+  test.use({ storageState: storageState("owner") });
+  for (const path of [
+    "/quotes",
+    "/quotes/new",
+    "/invoices",
+    "/invoices?status=overdue",
+    "/invoices/new",
+    "/settings/catalog",
+    "/settings/billing",
+  ]) {
+    test(`axe: ${path}`, async ({ page }) => audit(page, path));
+  }
+  test("axe: quote, invoice and new invoice for a job", async ({ page }) => {
+    const client = await api("owner");
+    const sent = await json<{ data: { number: string }[] }>(
+      await client.get("/api/v1/quotes?limit=1&status=sent"),
+    );
+    const draft = await json<{ data: { number: string }[] }>(
+      await client.get("/api/v1/quotes?limit=1&status=draft"),
+    );
+    const overdue = await json<{ data: { id: string }[] }>(
+      await client.get("/api/v1/invoices?limit=1&status=overdue"),
+    );
+    const draftInvoice = await json<{ data: { id: string }[] }>(
+      await client.get("/api/v1/invoices?limit=1&status=draft"),
+    );
+    const jobs = await json<{ data: { number: string }[] }>(
+      await client.get("/api/v1/jobs?limit=1&status=completed"),
+    );
+    await client.dispose();
+    await audit(page, `/quotes/${sent.data[0]!.number}`);
+    await audit(page, `/quotes/${draft.data[0]!.number}`);
+    await audit(page, `/invoices/${overdue.data[0]!.id}`);
+    // Drafts are jobs completed in the last two days, so the seed may not have one.
+    if (draftInvoice.data[0]) await audit(page, `/invoices/${draftInvoice.data[0].id}`);
+    await audit(page, `/invoices/new?job=${jobs.data[0]!.number}`);
+  });
+});
+
 test.describe("customer portal", () => {
   test("axe: portal home, request form and job", async ({ page }) => {
     await page.goto("/portal/acme-air/sign-in");

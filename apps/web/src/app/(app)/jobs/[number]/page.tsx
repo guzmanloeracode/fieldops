@@ -22,6 +22,7 @@ import { AiReview } from "./ai-review";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
 import { JobExpenses } from "./expenses";
+import { JobBilling } from "./billing";
 import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
@@ -315,6 +316,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
           />
 
           <JobExpenses jobId={job.id} status={job.status} assigned={assigned} />
+
+          <JobBilling jobId={job.id} jobNumber={jobNumber} status={job.status} />
 
           <Timeline
             timeZone={tz}

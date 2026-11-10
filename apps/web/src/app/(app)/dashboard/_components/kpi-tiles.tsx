@@ -17,9 +17,12 @@ export interface KpiTile {
   /** Whether a higher value is good news. */
   higherIsBetter: boolean;
   href: string;
+  /** Formats the value instead of `kind`, e.g. money (0.4 revenue). */
+  display?: (v: number | null) => string;
 }
 
-function show(v: number | null, kind: Kind) {
+function show(v: number | null, kind: Kind, display?: (v: number | null) => string) {
+  if (display) return display(v);
   return kind === "rate" ? formatPercent(v) : kind === "minutes" ? formatMinutes(v) : formatCount(v);
 }
 
@@ -38,7 +41,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
             tile.kind === "rate"
               ? t("points", { value: Math.abs(Math.round(diff * 100)) })
               : previous === 0
-                ? show(Math.abs(diff), tile.kind)
+                ? show(Math.abs(diff), tile.kind, tile.display)
                 : `${Math.abs(Math.round((diff / previous) * 100))}%`;
           delta = {
             text: direction === "same" ? t("same") : t(direction, { value: amount }),
@@ -56,7 +59,9 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
               className="bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full flex-col gap-1 rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <span className="text-muted-foreground text-xs font-medium">{tile.label}</span>
-              <span className="text-2xl font-semibold tabular-nums">{show(value, tile.kind)}</span>
+              <span className="text-2xl font-semibold tabular-nums">
+                {show(value, tile.kind, tile.display)}
+              </span>
               {delta ? (
                 <span
                   className={cn(
@@ -78,7 +83,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
                 <span className="text-muted-foreground text-xs">{t("noPrevious")}</span>
               )}
               <span className="text-muted-foreground text-xs">
-                {t("previous", { value: show(previous, tile.kind) })}
+                {t("previous", { value: show(previous, tile.kind, tile.display) })}
                 {tile.note ? <> · {tile.note}</> : null}
               </span>
             </Link>

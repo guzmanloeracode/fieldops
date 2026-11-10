@@ -7,6 +7,7 @@ import { drainOutbox, releaseStuck } from "./email";
 import { env } from "./env";
 import { log } from "./log";
 import { runSlaMonitor } from "./sla";
+import { runBillingPasses } from "./billing";
 
 const command = process.argv[2] ?? "run";
 
@@ -63,6 +64,12 @@ async function run() {
   await boss.createQueue("sla-monitor");
   await boss.schedule("sla-monitor", "*/5 * * * *", {}, { tz: "UTC" });
   await boss.work("sla-monitor", async () => runSlaMonitor(db));
+
+  // Billing (FIN-02, FIN-06): expire quotes, mark overdue invoices and send reminders, hourly so each organization's
+  // local midnight is picked up soon after; every step is idempotent.
+  await boss.createQueue("billing");
+  await boss.schedule("billing", "15 * * * *", {}, { tz: "UTC" });
+  await boss.work("billing", async () => runBillingPasses(db));
 
   if (env.demoMode) {
     await boss.createQueue("demo-reset");

@@ -40,6 +40,7 @@ export async function Timeline({
           .map((w) => formatWindow(String(w.start), String(w.end), timeZone))
       : [];
   const ta = await getTranslations("ai.timeline");
+  const tb = await getTranslations("billing.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -102,6 +103,8 @@ export async function Timeline({
         if (!e.payload.confirmed) return ta("applied", { fields });
         return applied.length ? ta("confirmedApplied", { fields }) : ta("confirmed");
       }
+      case "invoiced":
+        return tb("invoiced", { number: String(e.payload.invoice_number ?? ""), amount: amount(e.payload) });
       default:
         return e.type;
     }
