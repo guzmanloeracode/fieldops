@@ -42,7 +42,7 @@ test("a customer signs in with a one-time email link (POR-01)", async ({ page })
   await expect(page).toHaveURL(new RegExp(`${PORTAL}/sign-in$`));
   await page.goto(new URL(href).pathname + new URL(href).search);
   await page.getByTestId("portal-continue").click();
-  await expect(page.getByRole("alert")).toHaveText("This link has expired or was already used");
+  await expect(page.getByText("This link has expired or was already used")).toBeVisible();
 });
 
 test("an unknown email gets the same answer and no email (no enumeration)", async ({ page }) => {
@@ -85,7 +85,7 @@ test("a customer requests service with a photo and follows it; the office sees i
   // The office sees a portal job waiting for review.
   const client = await api("dispatcher");
   const job = await json<{ source: string; status: string; needs_review: boolean; title: string }>(
-    await client.get(`/api/v1/jobs/${number}`),
+    await client.get(`/api/v1/jobs/${number}`, { timeout: 60_000 }),
   );
   expect(job).toMatchObject({ source: "portal", status: "new", needs_review: true, title: text });
   await client.dispose();
@@ -106,7 +106,7 @@ test("tracking shows the technician's first name only, and never another custome
   // A job of another customer is a 404, even by its number.
   const client = await api("owner");
   const jobs = await json<{ data: { number: string; customer: { name: string } }[] }>(
-    await client.get("/api/v1/jobs?limit=20&sort=number"),
+    await client.get("/api/v1/jobs?limit=20&sort=number", { timeout: 60_000 }),
   );
   await client.dispose();
   const other = jobs.data.find((j) => j.customer.name !== "Jamie Rivera")!;

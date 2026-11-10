@@ -96,7 +96,6 @@ export default async function PortalJobPage({
                     p.url ? (
                       <li key={p.id}>
                         <a href={p.url} target="_blank" rel="noreferrer" className="block">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- signed URLs, no optimizer */}
                           <img
                             src={p.thumbUrl ?? p.url}
                             alt={t("photo", { name: p.fileName })}
