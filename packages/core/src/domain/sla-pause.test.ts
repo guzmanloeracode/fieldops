@@ -26,8 +26,9 @@ describe("pausesResolution", () => {
 });
 
 describe("elapsedMinutes", () => {
-  it("counts calendar minutes without hours, and nothing for an empty or reversed span", () => {
-    expect(elapsedMinutes(d("2026-11-10T10:00:00Z"), d("2026-11-11T12:30:20Z"), [], CHICAGO)).toBe(1590);
+  it("counts started calendar minutes without hours, and nothing for an empty or reversed span", () => {
+    expect(elapsedMinutes(d("2026-11-10T10:00:00Z"), d("2026-11-11T12:30:20Z"), [], CHICAGO)).toBe(1591);
+    expect(elapsedMinutes(d("2026-11-10T10:00:00Z"), d("2026-11-10T10:00:03Z"), [], CHICAGO)).toBe(1);
     expect(elapsedMinutes(d("2026-11-10T10:00:00Z"), d("2026-11-10T10:00:00Z"), [], CHICAGO)).toBe(0);
     expect(elapsedMinutes(d("2026-11-10T10:00:00Z"), d("2026-11-10T09:00:00Z"), [], CHICAGO)).toBe(0);
   });

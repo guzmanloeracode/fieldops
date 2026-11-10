@@ -189,7 +189,8 @@ export function pausesResolution(status: JobStatus, holdReason: string | null | 
 
 /**
  * Minutes between two instants in a time basis: with working hours, only the minutes inside the windows (in the
- * organization's time zone) count; without any usable hours, every minute counts. Rounded to whole minutes.
+ * organization's time zone) count; without any usable hours, every minute counts. A started minute counts as a
+ * whole one, so even a short pause gives the minute back.
  */
 export function elapsedMinutes(
   from: Date,
@@ -198,7 +199,7 @@ export function elapsedMinutes(
   timeZone: string,
 ): number {
   if (to <= from) return 0;
-  if (!hasWindows(hours)) return Math.round((to.getTime() - from.getTime()) / MINUTE);
+  if (!hasWindows(hours)) return Math.ceil((to.getTime() - from.getTime()) / MINUTE);
   let ms = 0;
   const last = localDateOf(to, timeZone);
   let date = localDateOf(from, timeZone);
@@ -210,7 +211,7 @@ export function elapsedMinutes(
       if (end > start) ms += end - start;
     }
   }
-  return Math.round(ms / MINUTE);
+  return Math.ceil(ms / MINUTE);
 }
 
 export interface SlaPauseEnd {
