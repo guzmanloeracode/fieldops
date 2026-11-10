@@ -18,6 +18,8 @@ const APP_PREFIXES = [
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  // Next.js's own requests (such as the dev server's HMR websocket) pass untouched.
+  if (pathname.startsWith("/_next/")) return NextResponse.next();
   // The request config picks the language by the part of the site (the customer portal has its own rules).
   const next = () => {
     const headers = new Headers(request.headers);
