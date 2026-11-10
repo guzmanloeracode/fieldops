@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { BoardLane } from "./board-data";
 import { DraggableBlock } from "./block";
-import type { ViewProps } from "./day-view";
+import { OFF_HOURS, type ViewProps } from "./day-view";
 import { hhmm } from "./geometry";
 
 const label = (date: string, pattern: string) => format(new Date(`${date}T12:00:00Z`), pattern);
@@ -85,9 +85,10 @@ function WeekCell(props: ViewProps & { lane: BoardLane; date: string }) {
         ref={setNodeRef}
         className={cn(
           "min-h-24 space-y-1 p-1",
-          dayOff && "bg-muted/60",
+          dayOff && "bg-muted",
           isOver && "ring-primary ring-2 ring-inset",
         )}
+        style={dayOff ? { backgroundImage: OFF_HOURS } : undefined}
         aria-label={`${lane.name}, ${label(date, "EEEE MMM d")}`}
         role="group"
       >

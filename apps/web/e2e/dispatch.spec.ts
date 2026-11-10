@@ -28,6 +28,7 @@ test.describe("dispatch board as dispatcher", () => {
   test("schedules, moves and resizes a job with the keyboard, then overrides a conflict", async ({
     page,
   }) => {
+    test.slow();
     const client = await api("dispatcher");
     const tom = await memberByEmail(client, USERS.technician);
     const date = futureMonday();
@@ -44,6 +45,7 @@ test.describe("dispatch board as dispatcher", () => {
     await queued.focus();
     await page.keyboard.press("Space");
     await expect(await liveRegion(page)).toContainText(`Picked up ${first.number}`);
+    await page.waitForTimeout(250);
     await page.keyboard.press("ArrowRight");
     await expect(await liveRegion(page)).toContainText("Tom Reyes");
     await page.keyboard.press("Space");
@@ -59,8 +61,16 @@ test.describe("dispatch board as dispatcher", () => {
     await expect(block).toBeVisible();
     await block.focus();
     await page.keyboard.press("Space");
+    // Picking up a block on its lane announces "picked up", then at once "is over Tom Reyes".
+    await expect(await liveRegion(page)).toHaveText(
+      new RegExp(`^(Picked up ${first.number}|${first.number} is over Tom Reyes)`),
+    );
+    // The sensor starts listening for arrow keys a tick after the pick-up.
+    await page.waitForTimeout(250);
     await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(100);
     await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(100);
     await page.keyboard.press("Space");
     await expect(page.getByText(`Moved ${first.number} to Tom Reyes, 08:30–09:30`)).toBeVisible();
     await expect
@@ -95,6 +105,7 @@ test.describe("dispatch board as dispatcher", () => {
     await queued2.focus();
     await page.keyboard.press("Space");
     await expect(await liveRegion(page)).toContainText(`Picked up ${second.number}`);
+    await page.waitForTimeout(250);
     await page.keyboard.press("ArrowRight");
     await expect(await liveRegion(page)).toContainText("Tom Reyes");
     await page.keyboard.press("Space");
@@ -132,6 +143,7 @@ test.describe("dispatch board as dispatcher", () => {
   });
 
   test("manages time off, which the conflict check then reports", async ({ page }) => {
+    test.slow();
     const client = await api("dispatcher");
     const tom = await memberByEmail(client, USERS.technician);
     const date = futureMonday();
@@ -140,10 +152,15 @@ test.describe("dispatch board as dispatcher", () => {
     await page.goto("/schedule/team");
     const card = page.locator('[data-testid="team-member"][data-member="Tom Reyes"]');
     await expect(card).toBeVisible();
-    await card.getByLabel("From", { exact: true }).fill(date);
-    await card.getByLabel("To (inclusive)").fill(date);
-    await card.getByLabel("Reason (optional)").fill(reason);
-    await card.getByRole("button", { name: "Add time off" }).click();
+    // Fill again until the page has hydrated and the button reacts.
+    const add = card.getByRole("button", { name: "Add time off" });
+    await expect(async () => {
+      await card.getByLabel("From", { exact: true }).fill(date);
+      await card.getByLabel("To (inclusive)").fill(date);
+      await card.getByLabel("Reason (optional)").fill(reason);
+      await expect(add).toBeEnabled({ timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
+    await add.click();
     await expect(card.getByText(reason)).toBeVisible();
 
     const job = await createJob(client, `E2E time off ${uniq()}`);

@@ -260,6 +260,7 @@ describe("availability (SCH-04)", () => {
     const w = dispatchWorld();
     const old = new Date("2026-10-01T00:00:00Z");
     const soon = new Date("2026-11-20T00:00:00Z");
+    const later = new Date("2031-06-01T00:00:00Z");
     w.data.timeOff = [
       { id: uuid(), memberId: w.tom.id, startsAt: old, endsAt: old, reason: "Old", createdAt: old },
       {
@@ -270,6 +271,7 @@ describe("availability (SCH-04)", () => {
         reason: "Soon",
         createdAt: old,
       },
+      { id: uuid(), memberId: w.tom.id, startsAt: later, endsAt: later, reason: "Later", createdAt: old },
     ];
     const team = await schedule.getTeamAvailability(w.ctx(w.dispatcher));
     expect(team.members.map((m) => m.name)).toEqual([
@@ -281,7 +283,7 @@ describe("availability (SCH-04)", () => {
     ]);
     expect(team.members[1]).toMatchObject({
       skills: ["ac"],
-      timeOff: [expect.objectContaining({ reason: "Soon" })],
+      timeOff: [expect.objectContaining({ reason: "Soon" }), expect.objectContaining({ reason: "Later" })],
     });
     await expect(schedule.getTeamAvailability(w.ctx(w.tom))).rejects.toThrow(ForbiddenError);
   });

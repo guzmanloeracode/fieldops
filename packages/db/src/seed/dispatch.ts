@@ -252,16 +252,14 @@ export async function seedDispatch(ctx: SeedContext): Promise<void> {
       .delete(s.jobAssignment)
       .where(and(eq(s.jobAssignment.organizationId, ctx.orgId), eq(s.jobAssignment.jobId, j.id)));
     if (j.assignees.length === 0) continue;
-    await ctx.tx
-      .insert(s.jobAssignment)
-      .values(
-        j.assignees.map((a) => ({
-          organizationId: ctx.orgId,
-          jobId: j.id,
-          memberId: a.memberId,
-          isLead: a.isLead,
-        })),
-      );
+    await ctx.tx.insert(s.jobAssignment).values(
+      j.assignees.map((a) => ({
+        organizationId: ctx.orgId,
+        jobId: j.id,
+        memberId: a.memberId,
+        isLead: a.isLead,
+      })),
+    );
     const at = eventAt(j);
     const event = {
       organizationId: ctx.orgId,

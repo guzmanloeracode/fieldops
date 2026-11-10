@@ -64,12 +64,19 @@ describe("dispatch seed", () => {
     expect(r.rows[0]!.n).toBe(0);
   });
 
-  it("keeps the assignment events in step with reassigned visits", async () => {
+  it("records a new assignment event when a visit changes hands", async () => {
+    // The latest assignment event of every scheduled job names exactly its current technicians.
     const r = await t.owner.execute<{ n: number }>(sql`
-      select count(*)::int as n from job j
-      join job_event e on e.job_id = j.id and e.type = 'assigned'
-      where j.status = 'scheduled' and not exists (
-        select 1 from job_assignment a where a.job_id = j.id and (e.payload->'member_ids') ? a.member_id::text)`);
+      with latest as (
+        select distinct on (e.job_id) e.job_id, e.payload
+        from job_event e where e.type = 'assigned' order by e.job_id, e.created_at desc, e.id desc
+      )
+      select count(*)::int as n from job j join latest l on l.job_id = j.id
+      where j.status = 'scheduled' and (
+        select coalesce(array_agg(a.member_id::text order by a.member_id::text), '{}') from job_assignment a where a.job_id = j.id
+      ) <> (
+        select coalesce(array_agg(x order by x), '{}') from jsonb_array_elements_text(l.payload->'member_ids') x
+      )`);
     expect(r.rows[0]!.n).toBe(0);
   });
 });

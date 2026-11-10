@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,7 +87,8 @@ function MemberCard({
   const [skills, setSkills] = useState(member.skills);
   const [skill, setSkill] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const p = `m-${member.id.slice(0, 8)}`;
+  // UUIDv7 prefixes are timestamps and repeat across members, so ids come from React instead.
+  const p = useId();
   const roleKey = `role${member.role[0]!.toUpperCase()}${member.role.slice(1)}` as
     "roleTechnician" | "roleDispatcher" | "roleAdmin" | "roleOwner";
 
@@ -320,7 +321,7 @@ function TimeOff({ member, timeZone, idPrefix }: { member: TeamMember; timeZone:
       ) : (
         <p className="text-muted-foreground text-sm">{t("noTimeOff")}</p>
       )}
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end">
+      <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-off-from`} className="text-xs">
             {t("from")}
@@ -346,21 +347,23 @@ function TimeOff({ member, timeZone, idPrefix }: { member: TeamMember; timeZone:
             className="h-8"
           />
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1 sm:col-span-2">
           <Label htmlFor={`${idPrefix}-off-reason`} className="text-xs">
             {t("reason")}
           </Label>
-          <Input
-            id={`${idPrefix}-off-reason`}
-            value={reason}
-            maxLength={200}
-            onChange={(e) => setReason(e.target.value)}
-            className="h-8"
-          />
+          <div className="flex gap-2">
+            <Input
+              id={`${idPrefix}-off-reason`}
+              value={reason}
+              maxLength={200}
+              onChange={(e) => setReason(e.target.value)}
+              className="h-8"
+            />
+            <Button type="button" size="sm" variant="outline" onClick={add} disabled={pending || !from}>
+              <Plus aria-hidden /> {t("addTimeOff")}
+            </Button>
+          </div>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={add} disabled={pending || !from}>
-          <Plus aria-hidden /> {t("addTimeOff")}
-        </Button>
       </div>
       {error ? (
         <p role="alert" className="text-destructive text-sm">

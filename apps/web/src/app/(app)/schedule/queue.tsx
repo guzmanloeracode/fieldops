@@ -1,6 +1,5 @@
 "use client";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { PRIORITY_LABELS } from "@fieldops/core";
 import { Inbox, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
@@ -92,16 +91,6 @@ function QueueItem({
         {...listeners}
         onKeyDown={onKeyDown}
         onClick={() => onOpen(job)}
-        aria-label={[
-          job.number,
-          job.title,
-          job.customer,
-          job.serviceType,
-          `${job.durationMin} min`,
-          job.priority === "high" || job.priority === "urgent" ? PRIORITY_LABELS[job.priority] : null,
-        ]
-          .filter(Boolean)
-          .join(", ")}
         data-testid="queue-item"
         data-job={job.number}
         className={cn(

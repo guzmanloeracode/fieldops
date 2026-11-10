@@ -22,6 +22,9 @@ export interface ViewProps {
 }
 
 const LABEL_W = 176;
+/** Hatching for time outside working hours (also in the week view). */
+export const OFF_HOURS =
+  "repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in oklab, var(--foreground) 7%, transparent) 7px 8px)";
 
 /** Current wall-clock minutes in the organization's time zone, updated every minute (client only). */
 function useNowMinutes(timeZone: string, enabled: boolean) {
@@ -126,8 +129,8 @@ function DayLane(
         data-from={from}
         role="group"
         aria-label={t("lane.label", { name: lane.name })}
-        className={cn("bg-muted/60 relative", isOver && "ring-primary ring-2 ring-inset")}
-        style={{ width: props.width, height }}
+        className={cn("bg-muted relative", isOver && "ring-primary ring-2 ring-inset")}
+        style={{ width: props.width, height, backgroundImage: OFF_HOURS }}
       >
         {day?.hours.map(([a, b]) => (
           <div

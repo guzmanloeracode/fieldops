@@ -124,7 +124,8 @@ export async function getTeamAvailability(ctx: ServiceContext) {
   );
   const timeOff = await ctx.store.availability.listTimeOff({
     from: new Date(ctx.now.getTime() - 14 * 86_400_000),
-    to: new Date(ctx.now.getTime() + 366 * 86_400_000),
+    // No upper bound: time off booked years ahead still shows (and can be removed).
+    to: new Date(Date.UTC(9999, 11, 31)),
   });
   return {
     timeZone: org.timezone,

@@ -72,7 +72,12 @@ export function BlockCard({
   width?: number;
   className?: string;
 }) {
-  const time = job.date ? `${hhmm(job.startMin)}–${hhmm(job.endMin)}` : `${job.durationMin} min`;
+  // Day view: the full window. Compact (week view, queue): the start only, so the number still fits.
+  const time = job.date
+    ? compact
+      ? hhmm(job.startMin)
+      : `${hhmm(job.startMin)}–${hhmm(job.endMin)}`
+    : `${job.durationMin} min`;
   return (
     <div
       className={cn(
@@ -83,11 +88,11 @@ export function BlockCard({
       )}
       style={width ? { width } : undefined}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
         <PriorityMark job={job} />
         <RoleMark job={job} laneId={laneId} />
-        <span className="font-semibold tabular-nums">{compact ? job.number : time}</span>
-        <span className="text-muted-foreground truncate">{compact ? time : job.number}</span>
+        <span className="font-semibold tabular-nums">{time}</span>
+        <span className="text-muted-foreground truncate">{job.number}</span>
       </div>
       <p className="truncate font-medium">{job.title}</p>
       {compact ? <p className="text-muted-foreground truncate">{job.customer}</p> : null}
@@ -132,21 +137,16 @@ export function DraggableBlock({
     data: { type: "resize", jobId: job.id, laneId } satisfies DragData,
     disabled: !resizable,
   });
-  const time = job.date ? `${hhmm(job.startMin)}–${hhmm(job.endMin)}` : `${job.durationMin} min`;
   const role =
     job.assignees.length > 1
       ? job.assignees.find((a) => a.memberId === laneId)?.isLead
         ? t("lane.lead")
         : t("lane.helper")
       : null;
-  const label = [
-    t("block.description", {
-      number: job.number,
-      title: job.title,
-      customer: job.customer,
-      time,
-      status: STATUS_LABELS[job.status],
-    }),
+  // The accessible name is the visible text plus these details (WCAG 2.5.3: the label contains the text).
+  const details = [
+    compact ? null : job.customer,
+    STATUS_LABELS[job.status],
     job.priority === "high" || job.priority === "urgent" ? PRIORITY_LABELS[job.priority] : null,
     role,
   ]
@@ -183,13 +183,13 @@ export function DraggableBlock({
           e.preventDefault();
           onOpen(job);
         }}
-        aria-label={label}
         className={cn(
           "focus-visible:ring-ring h-full cursor-grab rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1 active:cursor-grabbing",
           (dimmed || isDragging) && "opacity-40",
         )}
       >
         <BlockCard job={job} laneId={laneId} compact={compact} className="h-full" />
+        <span className="sr-only">, {details}</span>
         {saving ? (
           <Loader2 className="text-muted-foreground absolute top-1 right-2 size-3 animate-spin" aria-hidden />
         ) : null}
