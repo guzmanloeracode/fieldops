@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.0 — Automate (2026-11-10)
+
+- **SLA policies** (`/settings/sla`): response and resolution targets per priority, in calendar time or business
+  hours. Every job stores its deadlines and the moment each one turns "at risk" (75% of the window used); states
+  are on track, at risk, breached and met. A monitor runs every 5 minutes and raises each alert once per job and
+  target. Badges on the job page, the jobs list and the board, and a jobs filter by SLA state.
+- **Dashboard:** SLA compliance and the at-risk lists now use the stored deadlines (the provisional targets are
+  gone), with response compliance added; every report and list downloads as CSV.
+- **Notifications:** a bell with an unread badge, a notification page, deep links and mark as read; emails from
+  one template through the outbox; per-user settings per event and channel. Events: job assigned or
+  rescheduled, new portal request, SLA at risk or breached, part or expense requested and decided.
+- **Live updates:** the dispatch board, the _Today_ view and the bell update within seconds of another user's
+  change, through server-sent events fed by PostgreSQL `LISTEN/NOTIFY` (ADR 011).
+- **Customer portal** (`/portal/{org}`): customers sign in with a one-time email link, request service with
+  photos and preferred times, and follow their jobs: status, visit window and the technician's first name.
+  The demo has a one-click demo customer per organization.
+- **AI smart intake:** "Draft with AI" on the new job form turns a message and up to 3 photos into a draft job
+  (service type, priority with a reason, checklist suggestions, duration, contact details and questions to ask),
+  with low-confidence fields highlighted. Portal requests get a draft in the background and wait for a
+  dispatcher to review them. Claude (`claude-opus-5-5`) with schema-constrained output; AI settings with an
+  on/off switch and a monthly quota; rate limits with `RateLimit-*` headers; usage logged per call. Without an
+  API key, AI shows as not configured and every manual flow still works.
+- **Audit log** (`/settings/audit`): every change to business records, roles, approvals and settings, plus staff
+  sign-ins, with the actor, before and after values, IP address and user agent, written by database triggers in
+  the same transaction and read-only for the app (ADR 016). Filters and CSV export.
+- **Sign in with Google**, shown when an OAuth client is configured.
+- **Demo tour:** a "Try these 5 things" card per demo role.
+- **API:** SLA policies, notifications and their settings, the event stream, AI intake and the portal-request
+  review, all in the OpenAPI document. Job representations gained `ai_status`, the SLA deadlines and states.
+- Fixes: the canceled status badge meets the contrast ratio; the landing page wording.
+
 ## 0.2.1 — Loading states (2026-11-10)
 
 - **Skeletons while pages load:** every page that loads data shows a skeleton shaped like the page (lists,
