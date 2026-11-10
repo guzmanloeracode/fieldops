@@ -20,7 +20,7 @@ interface CustomerDetail {
   id: string;
   name: string;
   contacts: { id: string; email: string | null }[];
-  sites: { id: string }[];
+  site_count: number;
 }
 
 /** A customer with a site and a contact with an email, to send documents to. */
@@ -30,7 +30,7 @@ async function billableCustomer(client: APIRequestContext): Promise<CustomerDeta
   );
   for (const c of list.data) {
     const detail = await json<CustomerDetail>(await client.get(`/api/v1/customers/${c.id}`));
-    if (detail.sites.length && detail.contacts.some((x) => x.email)) return detail;
+    if (detail.site_count > 0 && detail.contacts.some((x) => x.email)) return detail;
   }
   throw new Error("No customer with a site and an email contact");
 }
@@ -233,7 +233,9 @@ test.describe.serial("billing", () => {
     ]) {
       expect(doc.paths[path], path).toBeDefined();
     }
-    const catalog = await json<{ data: { sku: string | null }[] }>(await client.get("/api/v1/catalog-items?q=CAP"));
+    const catalog = await json<{ data: { sku: string | null }[] }>(
+      await client.get("/api/v1/catalog-items?q=CAP"),
+    );
     expect(catalog.data.map((c) => c.sku)).toContain("CAP-455");
     await client.dispose();
   });
