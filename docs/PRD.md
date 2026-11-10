@@ -22,7 +22,7 @@
 | 1.5 | 10 Nov 2026 | Summary, market (§2), delivery goals (§4.2) and documentation and launch (§21) rewritten around the product and its customers. |
 | 1.6 | 10 Nov 2026 | Release 0.3 built and live. Recorded the decisions made while building it in *As built (0.3)* notes: Google sign-in (§8.1), the live board (§8.4), SLA time basis, the monitor and notification rules (§8.7), the portal sign-in and requests (§8.9), real SLA figures and CSV export (§8.10), the audit log written by database triggers (§8.11, ADR 016), SLA and AI settings (§8.12), AI rate limits (§8.14), AI intake (§9.2), live updates through PostgreSQL instead of Redis (§14.3, §15.3, ADR 011), new tables and endpoints (§16.3, §17.2) and the 0.3 seed (§19). |
 | 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
-| 1.8 | 10 Nov 2026 | Release 0.4 built: billing, documents, the assistant and operations. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, PDFs, reminders and totals (§8.8), report downloads in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings (§8.12), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–019 and the missing 016 in the ADR list (§14.5), new tables and endpoints (§16.3, §17.2) and the 0.4 seed (§19). |
+| 1.8 | 10 Nov 2026 | Release 0.4 built: billing, documents, the assistant, operations and Bahasa Indonesia. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, PDFs, reminders and totals (§8.8), report downloads in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings and the two languages (§8.12, §13), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–020 and the missing 016 in the ADR list (§14.5), new tables and endpoints (§16.3, §17.2) and the 0.4 seed (§19). |
 
 ## Contents
 
@@ -567,6 +567,14 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 
 *As built (0.4), SET-03 and billing:* Owners and Admins manage the parts and fees **catalog** at `/settings/catalog` (FIN-01) and the **billing settings** at `/settings/billing`: payment terms (0–365 days, default 14), quote validity (1–365 days, default 30), the labor rate per hour (default $95 or Rp150,000), the invoice and quote prefixes (1–10 letters or digits, default `INV` and `QUO`, and different from each other), overdue reminders on or off (on by default) and payment instructions, which are printed on invoices and in invoice and reminder emails. The prefixes complete SET-03's number prefixes; changing one doesn't restart the year's sequence. Each service type can name one of the organization's tax rates.
 
+*As built (0.4), SET-05:* the app, the customer portal, emails and PDFs come in English and Bahasa Indonesia (ADR 020).
+- **Which language:** the app follows the signed-in user's `user.locale`, chosen in the user menu and kept for every device and for their emails. Demo accounts are shared, so a demo visitor's choice is kept in a cookie in their browser and never saved to the account. The customer portal follows the visitor's choice (cookie), else the signed-in contact's customer, else the organization's customer language. Signed-out pages follow the cookie, else the browser's `Accept-Language`, else English, and a new account starts in the language it was signed up in. `<html lang>` and page titles follow the language.
+- **Settings:** *Customer language* in the organization settings (`settings.locale`) sets the portal, emails and documents for customers without a language of their own; *Language* on the customer form sets one customer's (empty follows the organization).
+- **Translations:** one message file per namespace and language. Indonesian is laid over English key by key, so a key that isn't translated yet shows in English instead of its raw name, and a unit test keeps the keys and ICU arguments of both languages in step. Terms follow `apps/web/messages/GLOSSARY.md`: "job" is *pekerjaan*, "invoice" *faktur*, and people are addressed as *Anda*.
+- **Formats:** dates and times stay in the organization's time zone and read in the reader's language; Indonesian is day-first with a 24-hour clock written with a period (`5 Nov 2026 · 14.30`). Numbers and money use `Intl` with the reader's locale (`Rp85.000`).
+- **Emails and documents** go out in the recipient's language: staff (notifications, the digest, account emails) in their own; customers (portal sign-in, quotes, invoices, receipts, reminders, *Job completed*) in their customer's language, else the organization's; invitations in the inviter's, since the invitee has no account yet. Quote and invoice PDFs follow the customer's language; a service report keeps the language it was created in, which can be changed before sending. *Ask FieldOps* answers in the language of the question, else in the user's app language.
+- **What stays English:** the REST API and the domain errors behind its problem details. Server actions translate the messages they show to people (`src/i18n/server-messages.ts`); a message without an Indonesian entry stays in English. CSV exports keep English column names and values, so spreadsheets and scripts get stable keys. Zod's messages for form checks are set in the browser only, because Zod's configuration is global and server requests in both languages share one process. There is no API to change a user's language yet.
+
 ### 8.13 SaaS plans and billing (BIL)
 
 | ID | Requirement | Pri | Rel |
@@ -831,6 +839,8 @@ sequenceDiagram
 
 *As built (0.3.1):* on desktop the sidebar collapses to an icon rail and expands again with its button or Ctrl/⌘ B (not while typing in a field). Collapsed links keep their names for screen readers and show them as tooltips, and the pending-approvals count turns into a dot that is still announced. A cookie keeps the choice, so the server renders the sidebar in the same state and the page doesn't shift on load. The mobile menu is unchanged.
 
+*As built (0.4), internationalization:* English and Bahasa Indonesia ship as described in SET-05 ([§8.12](#812-settings-set), ADR 020). The release E2E suite checks the language choice for a demo visitor, a new account, signed-out pages and the portal, and runs axe on signed-out pages, the portal sign-in and the main app pages in Indonesian as well as English.
+
 ---
 
 ## 14. Architecture and tech stack
@@ -972,6 +982,7 @@ fieldops/
 | 017 | Billing totals in BigInt minor units with line-level rounding; gap-free quote and invoice numbers from `org_counter` |
 | 018 | PDF documents with `@react-pdf/renderer` in the web server; signed share links for service reports |
 | 019 | *Ask FieldOps*: read-only tools bound to the session, one short transaction per call, streamed over POST |
+| 020 | English and Bahasa Indonesia: next-intl with per-key fallback, the language from the user, the customer or the browser, and an English API |
 
 ---
 
@@ -1172,7 +1183,7 @@ Internal routes such as `/api/webhooks/stripe` are not part of the public API.
 - **Service reports:** `GET/PATCH /jobs/{id}/report`, `POST /jobs/{id}/report-draft`, `POST /jobs/{id}/report/send`, `GET /jobs/{id}/report/pdf`.
 - **Maintenance plans:** `GET/POST /recurrences`, `GET/PATCH/DELETE /recurrences/{id}` (PATCH also pauses and resumes).
 - **Assistant:** `POST /ai/assistant` (server-sent events over POST), `GET /ai/conversations`, `GET/DELETE /ai/conversations/{id}`.
-- **Changed:** jobs gained `sla_paused_at`, `recurrence_id` and `occurrence_date` and the sources `quote` and `recurring`; service types gained `tax_rate_bps`; notifications gained `quote_decided`, `payment_received` and `daily_digest`, whose preference has `in_app: null` because it is email only.
+- **Changed:** jobs gained `sla_paused_at`, `recurrence_id` and `occurrence_date` and the sources `quote` and `recurring`, which only an approved quote or a maintenance plan sets (`POST /jobs` refuses them with 422); customers gained `locale` (null follows the organization); service types gained `tax_rate_bps`; notifications gained `quote_decided`, `payment_received` and `daily_digest`, whose preference has `in_app: null` because it is email only.
 - **Web only for now:** catalog edits, billing settings, revising and duplicating quotes. The report share link (`/share/reports/<token>`) and the portal's report download are outside `/api/v1`.
 
 ### 17.3 Webhook events
@@ -1304,6 +1315,7 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 - **Service reports** for jobs completed in the last 60 days: most sent, about two in three drafted by AI (logged as AI calls), some of those edited before sending, and the last two days' still drafts. The text is built from each job's checklist and service type, never by a model, so the seed stays deterministic. Acme Teknik's reports are in Bahasa Indonesia.
 - **Operations:** one to three maintenance plans per commercial customer (about 8% paused, 6% ended), each active plan with the unassigned jobs it would have generated within its lead days; every job on hold waiting for the customer has its resolution clock paused; yesterday's digest is logged for each owner.
 - **Assistant:** a few past *Ask FieldOps* conversations per organization for the demo dispatcher and owner, answered from the seeded data with the tools that ran.
+- **Languages:** Acme Teknik's customer language is Bahasa Indonesia and its people use the app in Indonesian, except the technician Fajar Nugroho, who uses English; Acme Air is English throughout.
 
 ---
 

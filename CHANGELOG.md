@@ -43,17 +43,26 @@
 - **Daily digest:** at 07:00 local time, owners (and admins who opt in) get yesterday's jobs, SLA compliance,
   first-visit completion and revenue, the most overdue jobs and pending approvals by email.
 - **Notifications:** a customer's decision on a quote (office roles) and a payment received (owners).
+- **Bahasa Indonesia:** the app, the customer portal, emails and PDFs in English or Indonesian (ADR 020). Members
+  pick their language in the user menu; demo visitors' choice stays in their browser. The portal follows the
+  visitor's choice, else the customer's language, else the business's; signed-out pages follow the browser, and a
+  new account starts in the language it signed up in. Organizations set a customer language, and each customer can
+  have their own. Emails go out in the recipient's language, Indonesian dates are day-first with 24-hour times
+  (14.30), and _Ask FieldOps_ answers in the language of the question. The REST API and CSV exports stay in
+  English.
 - **API:** quotes, invoices, payments, the catalog, service reports with their PDFs, maintenance plans and the
   assistant (server-sent events over POST) with its conversations, all in the OpenAPI document. Jobs gained
-  `sla_paused_at`, `recurrence_id` and `occurrence_date`; service types gained `tax_rate_bps`.
+  `sla_paused_at`, `recurrence_id` and `occurrence_date`; service types gained `tax_rate_bps`; customers gained
+  `locale`.
 - **Demo seed:** a catalog per company, quotes in every state, invoices with full, partial and missing payments and
   their reminders, service reports (many AI-drafted, Indonesian at Acme Teknik), maintenance plans with their
   generated jobs, jobs paused for the customer, yesterday's digest and a few past assistant conversations. The
-  demo portal customers each have a sent quote and an unpaid invoice.
+  demo portal customers each have a sent quote and an unpaid invoice. Acme Teknik's people and customers use
+  Bahasa Indonesia, except one technician who uses English.
+- Fixes: `POST /jobs` no longer accepts the sources `quote` and `recurring`; only an approved quote or a
+  maintenance plan creates those jobs.
 
 <!-- PENDING (pay slice): online payments (FIN-05) and quotes and invoices in the customer portal (POR-04). -->
-
-<!-- PENDING (i18n slice): Bahasa Indonesia (SET-05). -->
 
 ## 0.3.1 — Sidebar and demo requests (2026-11-10)
 

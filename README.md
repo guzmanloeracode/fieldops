@@ -67,9 +67,11 @@ OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHA
   answered through read-only tools that only see what the asking user can see.
 - **Operations:** maintenance plans that create recurring jobs ahead of time, an SLA clock that pauses while a job
   waits for the customer, a daily digest for owners, and revenue on the dashboard.
+- **Bahasa Indonesia:** the app, the customer portal, emails and PDFs in English or Indonesian, per member, per
+  customer and per browser for signed-out visitors, with Indonesian dates and 24-hour times. Sign in as Acme
+  Teknik's owner to see it.
 
 <!-- PENDING (pay slice): online payments; quotes and invoices in the customer portal. -->
-<!-- PENDING (i18n slice): Bahasa Indonesia. -->
 
 After 0.4 the [roadmap](#roadmap) adds a Go event-delivery service, API keys and webhooks, a marketing site and a
 mobile app.
