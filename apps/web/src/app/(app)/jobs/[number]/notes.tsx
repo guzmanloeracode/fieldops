@@ -53,17 +53,18 @@ export function Notes({
             onSubmit={(e) => {
               e.preventDefault();
               if (!body.trim()) return;
+              // Clear the form right away (restored on failure), so a late reset can't wipe the next note.
+              const draft = { body, visibility: customerVisible ? "customer" : "internal" } as const;
+              setBody("");
+              setCustomerVisible(false);
               startTransition(async () => {
-                const r = await addNoteAction(jobId, {
-                  body,
-                  visibility: customerVisible ? "customer" : "internal",
-                });
+                const r = await addNoteAction(jobId, draft);
                 if (!r.ok) {
+                  setBody(draft.body);
+                  setCustomerVisible(draft.visibility === "customer");
                   toast.error(r.error.message);
                   return;
                 }
-                setBody("");
-                setCustomerVisible(false);
                 router.refresh();
               });
             }}
