@@ -45,6 +45,10 @@ async function run() {
     await pool.query(`delete from idempotency_key where created_at < now() - interval '24 hours'`);
     await pool.query(`delete from verification where expires_at < now() - interval '1 day'`);
     await pool.query(`delete from session where expires_at < now()`);
+    // Customer portal (POR-01): spent sign-in links and expired sessions; old rate-limit windows.
+    await pool.query(`delete from portal_token where expires_at < now() - interval '1 day'`);
+    await pool.query(`delete from portal_session where expires_at < now()`);
+    await pool.query(`delete from rate_limit where window_start < now() - interval '2 days'`);
     log.info("maintenance done");
   });
 

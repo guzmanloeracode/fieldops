@@ -1,1 +1,115 @@
-{}
+{
+  "title": "{org} customer portal",
+  "poweredBy": "Customer portal powered by FieldOps",
+  "demoBanner": "Public demo with fictional data. Demo data resets daily at 00:00 UTC.",
+  "signedInAs": "Signed in as {name}",
+  "signOut": "Sign out",
+  "signIn": {
+    "title": "Sign in",
+    "description": "Enter the email {org} has on file for you, and we'll send you a link to sign in. No password needed.",
+    "email": "Email",
+    "submit": "Email me a sign-in link",
+    "sentTitle": "Check your email",
+    "sent": "If {email} is on file with {org}, a sign-in link is on its way. It works once, for 15 minutes.",
+    "openInbox": "Open the demo inbox",
+    "again": "Use another email",
+    "demoTitle": "Try the demo",
+    "demoDescription": "One click, no email: sign in as {name}, a fictional customer of {org}.",
+    "demoButton": "Sign in as {name}"
+  },
+  "auth": {
+    "title": "Sign in to {org}",
+    "description": "Continue to request service and follow your jobs.",
+    "continue": "Continue",
+    "missing": "This sign-in link is incomplete. Ask for a new one.",
+    "newLink": "Ask for a new link"
+  },
+  "home": {
+    "greeting": "Hello, {name}",
+    "description": "Request service and follow your jobs with {org}.",
+    "request": "Request service",
+    "open": "Open jobs",
+    "past": "Past jobs",
+    "empty": "No open jobs",
+    "emptyHint": "Something not working? Request service and we'll get back to you.",
+    "noPast": "No past jobs yet.",
+    "technician": "Technician: {name}",
+    "requestedOn": "Requested {date}",
+    "completedOn": "Completed {date}",
+    "notScheduled": "We'll confirm a time soon",
+    "details": "Details for {number}"
+  },
+  "status": {
+    "new": "Received",
+    "scheduled": "Scheduled",
+    "en_route": "On the way",
+    "in_progress": "In progress",
+    "on_hold": "Paused",
+    "completed": "Completed",
+    "canceled": "Canceled"
+  },
+  "job": {
+    "back": "All jobs",
+    "created": "Request sent. Your reference is {number}. We'll confirm a time soon.",
+    "visit": "Visit",
+    "technician": "Technician",
+    "address": "Address",
+    "request": "Your request",
+    "windows": "Times that suit you",
+    "photos": "Your photos",
+    "photo": "Photo {name}",
+    "notes": "Notes from {org}",
+    "history": "History",
+    "noVisit": "Not scheduled yet",
+    "step": {
+      "new": "Request received",
+      "scheduled": "Visit scheduled for {window}",
+      "en_route": "Technician on the way",
+      "in_progress": "Work started",
+      "on_hold": "Work paused",
+      "completed": "Job completed",
+      "canceled": "Job canceled"
+    }
+  },
+  "request": {
+    "title": "Request service",
+    "description": "Tell us what's wrong and when suits you. {org} will confirm the exact time.",
+    "what": "What's wrong?",
+    "whatHint": "For example: which unit, what it does, since when.",
+    "where": "Where?",
+    "newAddress": "Somewhere else",
+    "line1": "Street address",
+    "line2": "Apartment or suite (optional)",
+    "city": "City",
+    "postal": "Postal code (optional)",
+    "access": "Access notes (optional)",
+    "when": "When suits you?",
+    "whenHint": "Pick up to three. We'll confirm the exact time.",
+    "day": "Day",
+    "slot": "Time of day",
+    "time": "Time {n}",
+    "addTime": "Add another time",
+    "removeTime": "Remove time {n}",
+    "slots": {
+      "morning": "Morning (8 AM – 12 PM)",
+      "afternoon": "Afternoon (12 – 5 PM)",
+      "anytime": "Any time (8 AM – 5 PM)"
+    },
+    "photos": "Photos (optional)",
+    "photosHint": "Up to 3 photos (JPEG, PNG or WebP, 5 MB each).",
+    "addPhotos": "Add photos",
+    "removePhoto": "Remove {name}",
+    "uploading": "Uploading photos…",
+    "uploadFailed": "A photo couldn't be uploaded. Try again.",
+    "tooLarge": "{name} is larger than 5 MB.",
+    "wrongType": "{name} isn't a JPEG, PNG or WebP photo.",
+    "tooMany": "Add up to 3 photos.",
+    "submit": "Send request",
+    "cancel": "Cancel"
+  },
+  "timeline": {
+    "customer": "{name} (customer)",
+    "requested": "requested service through the customer portal",
+    "windows": "Times that suit: {windows}"
+  }
+}

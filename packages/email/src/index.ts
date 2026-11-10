@@ -1,6 +1,7 @@
 import { render } from "@react-email/render";
 import { createElement } from "react";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
+import { PortalSignIn } from "./portal";
 
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
@@ -9,6 +10,11 @@ export type EmailMessage =
       kind: "invitation";
       to: string;
       props: { inviterName: string; organizationName: string; role: string; url: string };
+    }
+  | {
+      kind: "portal.magic_link";
+      to: string;
+      props: { name: string; organizationName: string; url: string; minutes: number };
     };
 
 export interface RenderedEmail {
@@ -32,6 +38,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "invitation":
       subject = `${message.props.inviterName} invited you to ${message.props.organizationName} on FieldOps`;
       element = createElement(Invitation, message.props);
+      break;
+    case "portal.magic_link":
+      subject = `Your sign-in link for ${message.props.organizationName}`;
+      element = createElement(PortalSignIn, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);

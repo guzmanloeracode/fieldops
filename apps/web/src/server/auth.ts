@@ -1,5 +1,6 @@
 import "server-only";
-import { schema } from "@fieldops/db";
+import { audit } from "@fieldops/core";
+import { schema, withStore } from "@fieldops/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -7,10 +8,11 @@ import { nextCookies } from "better-auth/next-js";
 import { bearer, organization } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/organization/access";
-import { eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { env } from "@/env";
 import { db } from "./db";
+import { logger } from "./logger";
 import { queueEmail } from "./mailer";
 
 // Better Auth handles credentials, sessions, organizations and invitations. Business permissions are
@@ -47,6 +49,41 @@ async function isDemoUser(userId: string | undefined): Promise<boolean> {
     .from(schema.user)
     .where(eq(schema.user.id, userId));
   return Boolean(u?.isDemo);
+}
+
+/** Never blocks signing in: a failure to log is logged, not thrown. */
+async function recordAuthEvent(
+  event: "sign_in" | "sign_out",
+  session: {
+    userId: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+    activeOrganizationId?: unknown;
+  },
+): Promise<void> {
+  try {
+    const active = typeof session.activeOrganizationId === "string" ? session.activeOrganizationId : null;
+    const [m] = await db
+      .select({ organizationId: schema.member.organizationId })
+      .from(schema.member)
+      .where(
+        and(
+          eq(schema.member.userId, session.userId),
+          active ? eq(schema.member.organizationId, active) : undefined,
+        ),
+      )
+      .orderBy(asc(schema.member.createdAt))
+      .limit(1);
+    // Accounts without an organization yet (new sign-ups) have no audit log to write to.
+    if (!m) return;
+    await withStore(db, m.organizationId, (store) => audit.recordAuthEvent(store, event, session.userId), {
+      userId: session.userId,
+      ip: session.ipAddress ?? null,
+      userAgent: session.userAgent?.slice(0, 512) ?? null,
+    });
+  } catch (err) {
+    logger.error({ err, event }, "couldn't record an auth event in the audit log");
+  }
 }
 
 export const auth = betterAuth({
@@ -110,6 +147,17 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 3600, max: 10 },
       "/request-password-reset": { window: 3600, max: 5 },
       "/send-verification-email": { window: 3600, max: 5 },
+    },
+  },
+  databaseHooks: {
+    // Sign-ins and sign-outs go to the audit log (AUD-01) of the organization the session works in.
+    session: {
+      create: { after: async (session) => recordAuthEvent("sign_in", session) },
+      delete: {
+        after: async (session, ctx) => {
+          if (ctx?.path === "/sign-out") await recordAuthEvent("sign_out", session);
+        },
+      },
     },
   },
   hooks: {

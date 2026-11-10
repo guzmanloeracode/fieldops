@@ -24,7 +24,7 @@ async function audit(page: Page, path: string) {
 }
 
 test.describe("public pages", () => {
-  for (const path of ["/", "/sign-in", "/sign-up", "/forgot-password"]) {
+  for (const path of ["/", "/sign-in", "/sign-up", "/forgot-password", "/portal/acme-air/sign-in"]) {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
 });
@@ -56,6 +56,7 @@ test.describe("app pages as owner", () => {
     "/settings/service-types",
     "/settings/operations",
     "/settings/demo-outbox",
+    "/settings/audit",
     "/approvals",
     "/schedule",
     "/schedule?view=week",
@@ -84,6 +85,18 @@ test.describe("app pages as owner", () => {
       .analyze();
     const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     expect(blocking.map((v) => v.id)).toEqual([]);
+  });
+});
+
+test.describe("customer portal", () => {
+  test("axe: portal home, request form and job", async ({ page }) => {
+    await page.goto("/portal/acme-air/sign-in");
+    await page.getByTestId("portal-demo-sign-in").click();
+    await expect(page).toHaveURL(/\/portal\/acme-air$/);
+    await audit(page, "/portal/acme-air");
+    const href = await page.getByTestId("portal-job").first().getAttribute("href");
+    await audit(page, "/portal/acme-air/request");
+    await audit(page, href!);
   });
 });
 

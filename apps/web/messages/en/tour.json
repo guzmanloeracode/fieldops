@@ -1,0 +1,28 @@
+{
+  "title": "Try these 5 things",
+  "description": "A quick tour of the demo as {role}. Everything resets at 00:00 UTC.",
+  "dismiss": "Hide the tour",
+  "done": "Done",
+  "progress": "{done} of {total} tried",
+  "owner": {
+    "kpis": "Click a chart on the overview to drill into the matching jobs",
+    "approvals": "Approve or reject a large part request",
+    "audit": "See who changed what in the audit log",
+    "portal": "Open the customer portal as a customer and request service",
+    "settings": "Change an approval threshold in operations settings"
+  },
+  "dispatcher": {
+    "board": "Drag a job from the queue onto a technician on the dispatch board",
+    "review": "Review a request that came in through the customer portal",
+    "today": "Check today's load and the jobs at risk on the Today tab",
+    "search": "Search jobs and customers with ⌘K or Ctrl K",
+    "export": "Filter the jobs list and export it as CSV"
+  },
+  "technician": {
+    "myDay": "See today's visits in My day on a phone-sized screen",
+    "start": "Tap En route, then Start on your next visit",
+    "checklist": "Tick the checklist and add a photo",
+    "part": "Request a part for a job",
+    "complete": "Capture the customer's signature and complete the job"
+  }
+}
