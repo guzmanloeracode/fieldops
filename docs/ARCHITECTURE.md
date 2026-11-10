@@ -46,8 +46,8 @@ skeleton must not wrap the detail pages next to them.
 - **`packages/db`**: Drizzle schema, migrations (`drizzle/`), RLS policies, the `Store` implementation, the demo
   seed and the migration runner.
 - **`packages/email`**: React Email templates rendered by the web app and the worker into the outbox.
-- **`packages/ai`**: the intake and service report models (Claude through the official SDK, and test doubles), their prompts and the
-  evaluation set (`pnpm eval:intake`).
+- **`packages/ai`**: the intake and service report models (Claude through the official SDK, and test doubles),
+  their prompts and the evaluation set (`pnpm eval:intake`).
 - **`packages/documents`**: branded PDFs for quotes, invoices and service reports from plain view models, with
   labels in English and Bahasa Indonesia.
 
