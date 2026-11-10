@@ -25,6 +25,7 @@ import { JobExpenses } from "./expenses";
 import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
+import { ServiceReport } from "./service-report";
 import { SignatureCard } from "./signature-card";
 import { SlaCard } from "./sla-card";
 import { SiteMap } from "./site-map";
@@ -237,6 +238,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
               </dl>
             </CardContent>
           </Card>
+
+          <ServiceReport jobId={job.id} completed={job.status === "completed"} />
 
           <Checklist
             jobId={job.id}

@@ -83,7 +83,10 @@ export function prefillReport(input: Omit<ReportModelInput, "photos" | "organiza
   const t = PREFILL[input.locale] ?? PREFILL.en;
   const done = input.checklist.filter((c) => c.done);
   const checks = done.filter((c) => c.value === null).map((c) => c.label);
-  const readings = done.filter((c) => c.value !== null).map((c) => `${c.label}: ${c.value}`);
+  // "Filter size: 16x25x1", without the answer's own full stop before the list's separator.
+  const readings = done
+    .filter((c) => c.value !== null)
+    .map((c) => `${c.label}: ${c.value!.replace(/[.\s]+$/, "")}`);
   const parts = input.parts.map((p) => `${p.description} × ${p.quantity}`);
   const work = [
     t.completed(input.job.title),

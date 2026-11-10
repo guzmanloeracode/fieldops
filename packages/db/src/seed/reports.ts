@@ -4,10 +4,10 @@ import * as s from "../schema";
 import { extensionFaker, type SeedContext } from "./context";
 import { DAY, insertBatches } from "./time";
 
-// Service reports (AI-03) on the jobs completed in the last two months: most were drafted by the AI and sent to
-// the customer, some after edits, a few written by hand; the latest ones are still drafts waiting to be sent. The
-// text is built from each job's checklist answers and service type, never by a model, so the seed stays
-// deterministic. Acme Teknik writes in Bahasa Indonesia. Offset 10.
+// Service reports (AI-03) on the jobs completed in the last two months: most were sent to the customer, about two
+// in three were drafted by the AI (some edited before sending) and the others written by hand; the latest ones are
+// still drafts waiting to be sent. The text is built from each job's checklist answers and service type, never by
+// a model, so the seed stays deterministic. Acme Teknik writes in Bahasa Indonesia. Offset 10.
 
 const MODEL = "claude-opus-5-5";
 const WINDOW_DAYS = 60;
@@ -168,7 +168,7 @@ export async function seedReports(ctx: SeedContext): Promise<void> {
       .map((i) =>
         typeof i.value === "number"
           ? `${i.label}: ${number.format(i.value)}${i.unit ? ` ${i.unit}` : ""}`
-          : `${i.label}: ${String(i.value)}`,
+          : `${i.label}: ${String(i.value).replace(/[.\s]+$/, "")}`,
       );
     const work = [
       f.helpers.arrayElement(t.intro[kind]),
@@ -186,7 +186,8 @@ export async function seedReports(ctx: SeedContext): Promise<void> {
       nextServiceDate: addMonths(completedOn, isFault ? 3 : 6),
     };
 
-    const ai = f.number.float({ min: 0, max: 1 }) < 0.85;
+    // About two in three: each AI draft counts against the monthly quota the demo visitors share.
+    const ai = f.number.float({ min: 0, max: 1 }) < 0.65;
     const edited = !ai || f.number.float({ min: 0, max: 1 }) < 0.3;
     const to = emailOf.get(job.customerId) ?? null;
     const sent =

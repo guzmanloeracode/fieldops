@@ -40,6 +40,7 @@ export async function Timeline({
           .map((w) => formatWindow(String(w.start), String(w.end), timeZone))
       : [];
   const ta = await getTranslations("ai.timeline");
+  const tr = await getTranslations("reports.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -102,6 +103,8 @@ export async function Timeline({
         if (!e.payload.confirmed) return ta("applied", { fields });
         return applied.length ? ta("confirmedApplied", { fields }) : ta("confirmed");
       }
+      case "report_sent":
+        return tr("sent", { to: String(e.payload.to ?? "") });
       default:
         return e.type;
     }
