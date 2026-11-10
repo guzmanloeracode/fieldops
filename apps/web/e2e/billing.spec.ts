@@ -55,8 +55,8 @@ test.describe.serial("billing", () => {
     await page.getByTestId("customer-picker").click();
     await page.getByPlaceholder("Search customers…").fill(customer.name);
     await page.getByRole("option", { name: customer.name }).first().click();
-    await expect(page.getByLabel("Site")).not.toHaveValue("");
-    await page.getByLabel("Title").fill(`E2E quote ${tag}`);
+    await expect(page.getByLabel("Site", { exact: true })).not.toHaveValue("");
+    await page.getByLabel("Title", { exact: true }).fill(`E2E quote ${tag}`);
 
     await page.getByTestId("add-catalog").click();
     await page.getByPlaceholder("Search parts and fees").fill("filter");
@@ -66,8 +66,8 @@ test.describe.serial("billing", () => {
       .click();
     await page.getByTestId("add-line").click();
     const free = page.getByTestId("line").nth(1);
-    await free.getByLabel("Description").fill("Labor estimate");
-    await free.getByLabel("Qty").fill("2");
+    await free.getByLabel("Description", { exact: true }).fill("Labor estimate");
+    await free.getByLabel("Qty", { exact: true }).fill("2");
     await free.getByLabel("Unit price (USD)").fill("95");
     // $14.50 + 2 × $95.00 = $204.50, plus 8.25% Texas sales tax per line ($1.20 + $15.68).
     await expect(page.getByTestId("line-editor").getByTestId("total")).toHaveText("$221.38");
@@ -140,10 +140,10 @@ test.describe.serial("billing", () => {
     const lines = page.getByTestId("line");
     await expect(lines).toHaveCount(2);
     const labor = lines.nth(0);
-    await expect(labor.getByLabel("Description")).toHaveValue("Labor: Tom Reyes");
-    await expect(labor.getByLabel("Qty")).toHaveValue("1.25");
+    await expect(labor.getByLabel("Description", { exact: true })).toHaveValue("Labor: Tom Reyes");
+    await expect(labor.getByLabel("Qty", { exact: true })).toHaveValue("1.25");
     const capacitor = lines.nth(1);
-    await expect(capacitor.getByLabel("Description")).toHaveValue(`Capacitor ${tag}`);
+    await expect(capacitor.getByLabel("Description", { exact: true })).toHaveValue(`Capacitor ${tag}`);
     await capacitor.getByLabel(/Markup %/).fill("20");
     await expect(capacitor.getByTestId("line-net")).toHaveText("$22.20");
     await page.getByTestId("save-invoice").click();
@@ -157,7 +157,7 @@ test.describe.serial("billing", () => {
     await expect(page.getByTestId("invoice-number")).toHaveText(/^INV-\d{4}-\d{4}$/);
 
     await page.getByTestId("record-payment").click();
-    await page.getByLabel("Method").selectOption("cash");
+    await page.getByLabel("Method", { exact: true }).selectOption("cash");
     await page.getByTestId("confirm-payment").click();
     await expect(page.getByTestId("invoice-status")).toHaveText("Paid");
     await expect(page.getByTestId("balance")).toHaveText("$0.00");
@@ -211,7 +211,7 @@ test.describe.serial("billing", () => {
     await page.goto(`/invoices/${created.id}`);
     await expect(page.getByTestId("invoice-status")).toHaveText("Sent");
     await page.getByTestId("void-invoice").click();
-    await page.getByLabel("Reason").fill("Billed twice by mistake");
+    await page.getByLabel("Reason", { exact: true }).fill("Billed twice by mistake");
     await page.getByTestId("confirm-void").click();
     await expect(page.getByTestId("invoice-status")).toHaveText("Void");
     await expect(page.getByText("Billed twice by mistake")).toBeVisible();
