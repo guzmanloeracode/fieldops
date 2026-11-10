@@ -1,8 +1,7 @@
 "use client";
-import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
-import { MAP_STYLE } from "@/lib/map-style";
+import { MAP_STYLE, maplibregl } from "@/lib/maplibre";
 
 export interface MapMarker {
   id: string;

@@ -13,3 +13,6 @@ blob-report/
 .DS_Store
 apps/web/AGENTS.md
 packages/*/coverage/
+
+# Copied from maplibre-gl by apps/web/scripts/copy-map-worker.mjs
+apps/web/public/maplibre-gl-worker.mjs

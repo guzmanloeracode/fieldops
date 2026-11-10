@@ -5,6 +5,7 @@ import {
   createJob,
   expectStatus,
   futureWindow,
+  json,
   memberByEmail,
   storageState,
   toChicagoInput,
@@ -258,5 +259,24 @@ test.describe("jobs list (JOB-03)", () => {
     await expect(page.getByTestId("job-row")).toContainText(job.number);
     await page.getByRole("link", { name: job.title }).click();
     await expect(page).toHaveURL(new RegExp(`/jobs/${job.number}$`));
+  });
+});
+
+test.describe("site map", () => {
+  test.use({ storageState: storageState("dispatcher") });
+
+  test("loads MapLibre's worker from the app, so the map can draw tiles", async ({ page }) => {
+    const client = await api("dispatcher");
+    const jobs = await json<{ data: { number: string }[] }>(
+      await client.get("/api/v1/jobs?limit=1&status=scheduled"),
+    );
+    await client.dispose();
+    // The bundle moves MapLibre's module, so the worker is served from public/ (src/lib/maplibre.ts).
+    const worker = page.waitForResponse((r) => r.url().includes("/maplibre-gl-worker.mjs"));
+    await page.goto(`/jobs/${jobs.data[0]!.number}`);
+    await expect(page.getByRole("region", { name: /^Map showing / })).toBeVisible();
+    const response = await worker;
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toMatch(/javascript/);
   });
 });

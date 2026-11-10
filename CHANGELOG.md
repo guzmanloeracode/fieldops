@@ -34,8 +34,8 @@
   (ADR 015).
 - Fixes: the note form no longer wipes text typed while a note is saving; editing a service type no longer clears
   its checklist template; `/api/v1/openapi.json` renders again after the new response schemas; the site and board
-  maps draw their tiles again in the Docker image (an empty build argument hid the default map style); the SLA
-  trend chart's 100% label is no longer cut off.
+  maps draw tiles again (MapLibre's worker is served from the app, and an empty build argument no longer hides
+  the default map style); the SLA trend chart's 100% label is no longer cut off.
 
 ## 0.1.0 — Core (2026-11-10)
 
