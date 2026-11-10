@@ -17,6 +17,7 @@ import { seedSla } from "./sla";
 import type { SeedContext } from "./context";
 import { DAY, insertBatches, localDate, zoned } from "./time";
 export { DEMO_LOGINS, ORGS, type DemoOrg, type DemoRole } from "./data";
+export { DEMO_PORTAL_LOGINS } from "./portal";
 
 /**
  * Deterministic demo seed (DEM-02, DEM-03). The same seed and reset time always produce the same data, and

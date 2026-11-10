@@ -18,7 +18,16 @@ const STATUS_STYLES: Record<JobStatus, string> = {
     "bg-zinc-100 text-zinc-500 ring-zinc-200 line-through dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-700",
 };
 
-export function StatusBadge({ status, className }: { status: JobStatus; className?: string }) {
+export function StatusBadge({
+  status,
+  className,
+  label,
+}: {
+  status: JobStatus;
+  className?: string;
+  /** Overrides the label, e.g. with the customer's wording in the portal. */
+  label?: string;
+}) {
   return (
     <span
       className={cn(
@@ -28,7 +37,7 @@ export function StatusBadge({ status, className }: { status: JobStatus; classNam
       )}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current opacity-70" />
-      {STATUS_LABELS[status]}
+      {label ?? STATUS_LABELS[status]}
     </span>
   );
 }

@@ -3,6 +3,7 @@ import type { NotificationRecord, NotificationPreferenceRecord } from "../servic
 import type { SlaPolicyRecord } from "../services/sla-types";
 import type { AiInteractionInput } from "../services/ai-types";
 import type { Store } from "../services/types";
+import { memoryAudit, memoryPortal } from "./memory-portal";
 
 /** In-memory 0.3 repositories. Each 0.3 slice extends its own part. */
 export interface MemoryAutomate {
@@ -40,12 +41,8 @@ export function memoryAutomate(
         return a.notificationPreferences.filter((p) => userIds.includes(p.userId) && p.event === event);
       },
     },
-    audit: {
-      async record(entry) {
-        a.auditEvents.push({ ...entry, after: entry.after ?? null });
-      },
-    },
-    portal: {},
+    audit: memoryAudit(data),
+    portal: memoryPortal(data, uuid),
     ai: {
       async logInteraction(row) {
         const id = uuid();

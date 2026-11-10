@@ -1,10 +1,12 @@
-import { can, dashboard, jobs, organization } from "@fieldops/core";
+import { can, dashboard, jobs, organization, ROLE_LABELS } from "@fieldops/core";
 import { format } from "date-fns";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { DemoTour } from "@/components/app/demo-tour";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 import { inZone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requireActor, runService } from "@/server/context";
@@ -28,17 +30,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const t = await getTranslations("dashboard");
   const tz = actor.organization.timezone;
   const header = (
-    <PageHeader
-      title={tc("dashboard.greeting", { name: actor.name.split(" ")[0] ?? actor.name })}
-      description={tc("dashboard.subtitle", { date: format(inZone(new Date(), tz), "EEEE, MMMM d") })}
-      actions={
-        can(actor, "jobs.create") ? (
-          <Button asChild>
-            <Link href="/jobs/new">{tc("dashboard.newJob")}</Link>
-          </Button>
-        ) : null
-      }
-    />
+    <>
+      <PageHeader
+        title={tc("dashboard.greeting", { name: actor.name.split(" ")[0] ?? actor.name })}
+        description={tc("dashboard.subtitle", { date: format(inZone(new Date(), tz), "EEEE, MMMM d") })}
+        actions={
+          can(actor, "jobs.create") ? (
+            <Button asChild>
+              <Link href="/jobs/new">{tc("dashboard.newJob")}</Link>
+            </Button>
+          ) : null
+        }
+      />
+      {/* "Try these 5 things" for demo visitors (DEM-06). */}
+      {env.DEMO_MODE && actor.isDemoUser ? (
+        <div className="pb-6">
+          <DemoTour role={actor.role} roleLabel={ROLE_LABELS[actor.role]} orgSlug={actor.organization.slug} />
+        </div>
+      ) : null}
+    </>
   );
 
   if (!can(actor, "dashboard.operational")) {

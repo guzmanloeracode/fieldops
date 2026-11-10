@@ -29,9 +29,20 @@ export async function Timeline({
   const amount = (p: Record<string, unknown>) =>
     formatMoney({ amountMinor: Number(p.total_minor ?? 0), currency: (p.currency as Currency) ?? "USD" });
   const tf = await getTranslations("fieldwork.timeline");
+  const tp = await getTranslations("portal.timeline");
+  // Portal requests (POR-02) name the customer's contact and the times that suit them.
+  const portalContact = (e: Event) =>
+    !e.actor && typeof e.payload.contact_name === "string" ? e.payload.contact_name : null;
+  const portalWindows = (e: Event) =>
+    Array.isArray(e.payload.preferred_windows)
+      ? (e.payload.preferred_windows as { start?: unknown; end?: unknown }[])
+          .filter((w) => typeof w.start === "string" && typeof w.end === "string")
+          .map((w) => formatWindow(String(w.start), String(w.end), timeZone))
+      : [];
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
+        if (portalContact(e)) return tp("requested");
         return t("timeline.created", { source: t(`source.${String(e.payload.source ?? "manual")}`) });
       case "status_changed":
         return t("timeline.status", {
@@ -102,8 +113,17 @@ export async function Timeline({
                 className="bg-background ring-border absolute top-1.5 -left-[25px] size-2.5 rounded-full ring-2"
               />
               <p className="text-sm">
-                <span className="font-medium">{e.actor ?? t("timeline.system")}</span> {describe(e)}
+                <span className="font-medium">
+                  {e.actor ??
+                    (portalContact(e) ? tp("customer", { name: portalContact(e)! }) : t("timeline.system"))}
+                </span>{" "}
+                {describe(e)}
               </p>
+              {e.type === "created" && portalWindows(e).length ? (
+                <p className="text-muted-foreground text-sm">
+                  {tp("windows", { windows: portalWindows(e).join("; ") })}
+                </p>
+              ) : null}
               {typeof e.payload.reason === "string" ? (
                 <p className="text-muted-foreground text-sm">“{e.payload.reason}”</p>
               ) : null}
