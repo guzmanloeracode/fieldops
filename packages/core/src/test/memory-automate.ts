@@ -39,6 +39,43 @@ export function memoryAutomate(
       async preferences(userIds, event) {
         return a.notificationPreferences.filter((p) => userIds.includes(p.userId) && p.event === event);
       },
+      async list(f) {
+        const all = a.notifications
+          .filter((n) => n.userId === f.userId && (!f.unreadOnly || n.readAt === null))
+          .slice()
+          .reverse();
+        const start = f.page ? (f.page - 1) * f.limit : f.cursor ? Number(f.cursor) : 0;
+        const rows = all.slice(start, start + f.limit);
+        const more = all.length > start + f.limit;
+        return {
+          rows,
+          nextCursor: more && !f.page ? String(start + f.limit) : null,
+          total: f.page ? all.length : null,
+        };
+      },
+      async unreadCount(userId) {
+        return a.notifications.filter((n) => n.userId === userId && n.readAt === null).length;
+      },
+      async markRead(userId, ids, at) {
+        let n = 0;
+        for (const x of a.notifications) {
+          if (x.userId === userId && x.readAt === null && (ids === "all" || ids.includes(x.id))) {
+            x.readAt = at;
+            n += 1;
+          }
+        }
+        return n;
+      },
+      async userPreferences(userId) {
+        return a.notificationPreferences.filter((p) => p.userId === userId);
+      },
+      async savePreferences(userId, prefs) {
+        for (const p of prefs) {
+          const existing = a.notificationPreferences.find((x) => x.userId === userId && x.event === p.event);
+          if (existing) Object.assign(existing, p);
+          else a.notificationPreferences.push({ userId, ...p });
+        }
+      },
     },
     audit: {
       async record(entry) {

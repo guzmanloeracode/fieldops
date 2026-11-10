@@ -11,6 +11,7 @@ import { money, multiplyMoney } from "../domain/money";
 import { assertCan, can, seesOnlyAssigned, type Actor } from "../domain/permissions";
 import type { ExpenseView } from "./expense-types";
 import { getJob } from "./jobs";
+import * as notifications from "./notifications";
 import { parseInput } from "./validate";
 import type { JobView, OrganizationSettings, ServiceContext } from "./types";
 
@@ -135,7 +136,9 @@ export async function requestExpense(ctx: ServiceContext, jobId: string, raw: un
       auto_approved: auto,
     },
   });
-  return (await ctx.store.expenses.get(created.id))!;
+  const view = (await ctx.store.expenses.get(created.id))!;
+  await notifications.afterExpenseRequested(ctx, view);
+  return view;
 }
 
 /** EXP-02: approves or rejects a pending request. Rejections need a comment. */
@@ -174,7 +177,9 @@ export async function decideExpense(ctx: ServiceContext, id: string, raw: unknow
       ...(input.comment ? { comment: input.comment } : {}),
     },
   });
-  return (await ctx.store.expenses.get(expense.id))!;
+  const view = (await ctx.store.expenses.get(expense.id))!;
+  await notifications.afterExpenseDecided(ctx, view);
+  return view;
 }
 
 export type BulkDecisionResult =
