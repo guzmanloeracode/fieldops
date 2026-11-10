@@ -52,6 +52,7 @@ export const JOB_EVENT_TYPES = [
   "expense_requested",
   "expense_decided",
   "part_used",
+  "reviewed",
 ] as const;
 export type JobEventType = (typeof JOB_EVENT_TYPES)[number];
 
@@ -150,8 +151,11 @@ export const NOTIFICATION_DEFAULTS: Record<NotificationEvent, { inApp: boolean; 
   expense_decided: { inApp: true, email: null },
 };
 
-/** Where a portal request is in AI drafting (AI-01). Null for jobs that didn't come from the portal. */
-export const AI_STATUSES = ["pending", "drafted", "failed", "skipped"] as const;
+/**
+ * Where a portal request is in AI drafting (AI-01). Null for jobs that didn't come from the portal. The worker
+ * claims a pending job by setting "drafting" (like the email outbox), so two workers never draft it twice.
+ */
+export const AI_STATUSES = ["pending", "drafting", "drafted", "failed", "skipped"] as const;
 export type AiStatus = (typeof AI_STATUSES)[number];
 
 export const AI_FEATURES = ["intake"] as const;

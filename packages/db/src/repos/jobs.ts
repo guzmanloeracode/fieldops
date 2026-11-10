@@ -211,6 +211,7 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
         );
       }
       if (f.revisit) where.push(eq(job.revisit, true));
+      if (f.needs_review) where.push(eq(job.needsReview, true));
       const tz = sql`(select o.timezone from organization o where o.id = ${orgId})`;
       const dateCol =
         f.date_field === "created"

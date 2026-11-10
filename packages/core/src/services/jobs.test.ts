@@ -55,10 +55,10 @@ describe("createJob", () => {
     expect(a.createdBy).toBe(w.dispatcher.userId);
   });
 
-  it("flags portal and AI requests for review", async () => {
+  it("flags portal requests for review and marks AI drafts", async () => {
     const w = world();
     expect(await newJob(w, { source: "portal" })).toMatchObject({ needsReview: true, aiDrafted: false });
-    expect(await newJob(w, { source: "ai_intake" })).toMatchObject({ needsReview: true, aiDrafted: true });
+    expect(await newJob(w, { source: "ai_intake" })).toMatchObject({ needsReview: false, aiDrafted: true });
   });
 
   it("checks that the site, equipment and service type belong together", async () => {

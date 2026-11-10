@@ -36,3 +36,4 @@ export * from "./services/audit-types";
 export * from "./services/portal-types";
 export * from "./services/ai-types";
 export * from "./services/notify";
+export * as ai from "./services/ai";

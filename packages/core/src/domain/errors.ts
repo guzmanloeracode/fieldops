@@ -7,7 +7,9 @@ export type DomainErrorCode =
   | "conflict"
   | "invalid_transition"
   | "precondition_failed"
-  | "demo_restricted";
+  | "demo_restricted"
+  | "rate_limited"
+  | "unavailable";
 
 export class DomainError extends Error {
   constructor(
@@ -59,6 +61,27 @@ export class DemoRestrictedError extends DomainError {
   }
 }
 
+/** Too many requests in a window, or a quota used up (PLT-04). `retryAfterSeconds` feeds the Retry-After header. */
+export class RateLimitedError extends DomainError {
+  constructor(
+    message: string,
+    readonly limit: { scope: string; limit: number; resetAt: Date },
+  ) {
+    super("rate_limited", message, {
+      scope: limit.scope,
+      limit: limit.limit,
+      resetAt: limit.resetAt.toISOString(),
+    });
+  }
+}
+
+/** A feature that is turned off or not configured, such as AI without an API key. */
+export class UnavailableError extends DomainError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super("unavailable", message, details);
+  }
+}
+
 export const HTTP_STATUS: Record<DomainErrorCode, number> = {
   not_found: 404,
   forbidden: 403,
@@ -67,4 +90,6 @@ export const HTTP_STATUS: Record<DomainErrorCode, number> = {
   invalid_transition: 409,
   precondition_failed: 412,
   demo_restricted: 403,
+  rate_limited: 429,
+  unavailable: 503,
 };

@@ -78,7 +78,8 @@ export async function createJob(ctx: ServiceContext, raw: unknown): Promise<JobV
     preferredEnd: input.preferred_end ? new Date(input.preferred_end) : null,
     estimatedDurationMin: estimated,
     aiDrafted: input.source === "ai_intake",
-    needsReview: input.source === "portal" || input.source === "ai_intake",
+    // Portal requests wait for a dispatcher (AI-01). A dispatcher saving an AI draft has just reviewed it.
+    needsReview: input.source === "portal",
     createdBy: ctx.actor.userId,
   });
   await ctx.store.jobs.addEvent({

@@ -1,7 +1,7 @@
 import { type MemoryData } from "./memory-store";
 import type { NotificationRecord, NotificationPreferenceRecord } from "../services/notification-types";
 import type { SlaPolicyRecord } from "../services/sla-types";
-import type { AiInteractionInput } from "../services/ai-types";
+import { memoryAi, type MemoryAiInteraction } from "./memory-ai";
 import type { Store } from "../services/types";
 
 /** In-memory 0.3 repositories. Each 0.3 slice extends its own part. */
@@ -10,7 +10,8 @@ export interface MemoryAutomate {
   notifications: NotificationRecord[];
   notificationPreferences: NotificationPreferenceRecord[];
   auditEvents: { action: string; entityType: string; entityId: string | null; after: unknown }[];
-  aiInteractions: (AiInteractionInput & { id: string })[];
+  aiInteractions: MemoryAiInteraction[];
+  aiRateLimits?: Map<string, number>;
 }
 
 export function memoryAutomate(
@@ -46,12 +47,6 @@ export function memoryAutomate(
       },
     },
     portal: {},
-    ai: {
-      async logInteraction(row) {
-        const id = uuid();
-        a.aiInteractions.push({ ...row, id });
-        return { id };
-      },
-    },
+    ai: memoryAi(a.aiInteractions, (a.aiRateLimits ??= new Map()), data, uuid),
   };
 }
