@@ -8,9 +8,6 @@ import { describe, expect, it } from "vitest";
 const MESSAGES = path.join(import.meta.dirname, "../../messages");
 const LOCALES = ["en", "id"] as const;
 
-// 0.4 namespaces: English first, translated after the release's slices are merged.
-const NOT_YET_TRANSLATED = new Set(["billing", "reports", "recurrences", "assistant"]);
-
 type Tree = { [key: string]: string | Tree };
 
 function load(locale: string, ns: string): Tree {
@@ -130,7 +127,7 @@ describe("message files", () => {
     }
   });
 
-  for (const ns of namespaces.filter((n) => !NOT_YET_TRANSLATED.has(n))) {
+  for (const ns of namespaces) {
     it(`${ns}: Indonesian has the same keys and ICU arguments as English`, () => {
       const en = flatten(load("en", ns));
       const id = flatten(load("id", ns));

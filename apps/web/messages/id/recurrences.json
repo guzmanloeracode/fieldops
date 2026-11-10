@@ -1,1 +1,95 @@
-{}
+{
+  "plans": {
+    "title": "Rencana perawatan",
+    "description": "Kunjungan berulang untuk kontrak perawatan. Setiap rencana membuat pekerjaannya sekian hari sebelum jadwal kunjungan.",
+    "add": "Tambah rencana",
+    "empty": "Belum ada rencana perawatan. Tambahkan untuk menjadwalkan kunjungan berulang, misalnya servis AC tiap 3 bulan.",
+    "rule": "{unit, select, day {{count, plural, other {Setiap # hari}}} week {{count, plural, other {Setiap # minggu}}} month {{count, plural, other {Setiap # bulan}}} other {{count, plural, other {Setiap # tahun}}}}",
+    "since": "mulai {date}",
+    "until": "sampai {date}",
+    "window": "{start}, selama {duration}",
+    "noWindow": "Kapan saja",
+    "next": "Kunjungan berikutnya",
+    "noNext": "Tidak ada kunjungan mendatang",
+    "status": {
+      "active": "Aktif",
+      "paused": "Dijeda",
+      "ended": "Berakhir"
+    },
+    "jobs": "{count, plural, =0 {Belum ada pekerjaan} other {# pekerjaan dibuat}}",
+    "lead": "Pekerjaan dibuat {days, plural, =0 {pada hari kunjungan} other {# hari sebelumnya}}",
+    "suggested": "Teknisi pilihan: {name}",
+    "actions": "Tindakan untuk {title}",
+    "edit": "Ubah",
+    "pause": "Jeda",
+    "resume": "Lanjutkan",
+    "delete": "Hapus",
+    "paused": "Rencana dijeda. Tidak ada pekerjaan baru sampai Anda melanjutkannya.",
+    "resumed": "Rencana dilanjutkan",
+    "deleted": "Rencana dihapus",
+    "deleteTitle": "Hapus “{title}”?",
+    "deleteDescription": "Rencana ini berhenti membuat pekerjaan. Pekerjaan yang sudah dibuat tetap ada di jadwal.",
+    "confirmDelete": "Hapus rencana",
+    "cancel": "Batal"
+  },
+  "form": {
+    "createTitle": "Rencana perawatan baru",
+    "editTitle": "Ubah rencana perawatan",
+    "description": "FieldOps membuat pekerjaan untuk setiap kunjungan lebih awal, belum ditugaskan, dengan waktu yang diinginkan. Perubahan berlaku untuk pekerjaan yang dibuat setelah ini.",
+    "title": "Judul",
+    "titlePlaceholder": "Servis AC tiap 3 bulan",
+    "notes": "Deskripsi pekerjaan",
+    "notesPlaceholder": "Bersihkan filter dan koil, periksa tekanan freon",
+    "site": "Lokasi",
+    "equipment": "Peralatan",
+    "serviceType": "Jenis layanan",
+    "none": "Tidak ada",
+    "priority": "Prioritas",
+    "count": "Ulangi setiap",
+    "unit": "Satuan",
+    "units": {
+      "day": "{count, plural, other {hari}}",
+      "week": "{count, plural, other {minggu}}",
+      "month": "{count, plural, other {bulan}}",
+      "year": "{count, plural, other {tahun}}"
+    },
+    "startsOn": "Kunjungan pertama",
+    "endsOn": "Kunjungan terakhir (opsional)",
+    "windowStart": "Jam mulai yang diinginkan (opsional)",
+    "windowMinutes": "Rentang waktu kunjungan",
+    "minutes": "{count, plural, other {# menit}}",
+    "hours": "{count, plural, other {# jam}}",
+    "leadDays": "Buat pekerjaan sekian hari sebelum kunjungan",
+    "leadMember": "Teknisi pilihan",
+    "leadMemberHint": "Ditampilkan di setiap pekerjaan sebagai saran; penugasan tetap dilakukan dispatcher.",
+    "preview": "Kunjungan berikutnya",
+    "previewNone": "Tidak ada kunjungan tersisa dalam rentang ini.",
+    "previewHint": "Jadwal akhir bulan tidak bergeser: rencana tanggal 31 jatuh pada hari terakhir di bulan yang lebih pendek.",
+    "save": "Simpan rencana",
+    "created": "{count, plural, =0 {Rencana dibuat} other {Rencana dibuat. # pekerjaan siap di jadwal.}}",
+    "updated": "Rencana disimpan"
+  },
+  "badge": {
+    "label": "Berulang",
+    "title": "Dibuat dari rencana perawatan untuk jadwal kunjungan {date}",
+    "suggested": "Disarankan: {name}"
+  },
+  "slaPause": {
+    "badge": "Dijeda",
+    "short": "SLA dijeda",
+    "tooltip": "Menunggu pelanggan sejak {when}. Hitungan waktu penyelesaian dijeda.",
+    "card": "Dijeda sejak {when} karena menunggu pelanggan. Batas waktu mundur sesuai lama jeda.",
+    "total": "Total dijeda {duration}",
+    "timelinePaused": "Hitungan waktu penyelesaian berhenti selama menunggu pelanggan.",
+    "timelineResumed": "Hitungan waktu penyelesaian dijeda selama {duration}. Batas waktu baru: {due}.",
+    "durationMinutes": "{m, plural, other {# menit}}",
+    "durationHours": "{h} jam{m, plural, =0 {} other { # mnt}}",
+    "durationDays": "{d, plural, other {# hari}}{h, plural, =0 {} other { # jam}}"
+  },
+  "timeline": {
+    "created": "membuat pekerjaan dari rencana perawatan “{title}” untuk {date}"
+  },
+  "digest": {
+    "emailOnly": "Hanya email"
+  }
+}

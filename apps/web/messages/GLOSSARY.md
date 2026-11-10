@@ -118,3 +118,33 @@ and ICU arguments of both languages in step.
 | billing (settings tab)                  | penagihan                               |                                                                                       |
 | loading                                 | memuat                                  |                                                                                       |
 | language                                | bahasa                                  | English → _English_, Bahasa Indonesia → _Bahasa Indonesia_ (each in its own language) |
+
+## Terms added in 0.4
+
+| English                                                          | Bahasa Indonesia                                                 | Notes                                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| quote, quote status draft / sent / approved / declined / expired | penawaran: draf / terkirim / disetujui / ditolak / kedaluwarsa   |                                                               |
+| invoice, invoice status draft / sent / paid / overdue / void     | faktur: draf / terkirim / lunas / jatuh tempo lewat / dibatalkan | "Overdue" as a badge → _Terlambat_                            |
+| payment, record a payment                                        | pembayaran, catat pembayaran                                     |                                                               |
+| payment method: card / bank transfer / cash                      | kartu / transfer bank / tunai                                    |                                                               |
+| due date, due                                                    | jatuh tempo                                                      | "Due {date}" → _Jatuh tempo {date}_ (for SLAs keep _tenggat_) |
+| balance, amount due                                              | sisa tagihan                                                     |                                                               |
+| paid, partially paid                                             | lunas, dibayar sebagian                                          |                                                               |
+| payment terms                                                    | termin pembayaran                                                | "Net 14" → _14 hari_                                          |
+| valid until                                                      | berlaku hingga                                                   |                                                               |
+| line item, line                                                  | baris                                                            | "Add line" → _Tambah baris_                                   |
+| catalog, catalog item                                            | katalog, item katalog                                            |                                                               |
+| labor                                                            | jasa                                                             | "Labor rate" → _Tarif jasa per jam_                           |
+| discount, subtotal, tax, total                                   | diskon, subtotal, pajak, total                                   |                                                               |
+| reminder                                                         | pengingat                                                        |                                                               |
+| receipt (for a payment)                                          | bukti pembayaran                                                 | a part's receipt stays _nota_                                 |
+| revenue, invoiced, collected                                     | pendapatan, ditagihkan, diterima                                 |                                                               |
+| maintenance plan                                                 | rencana perawatan                                                | recurring visits under a contract                             |
+| recurring, occurrence                                            | berulang, jadwal kunjungan                                       |                                                               |
+| paused (plan or SLA)                                             | dijeda                                                           | "SLA paused" → _SLA dijeda_                                   |
+| daily digest                                                     | ringkasan harian                                                 |                                                               |
+| service report                                                   | laporan servis                                                   |                                                               |
+| findings, recommendations, work performed                        | temuan, rekomendasi, pekerjaan yang dilakukan                    |                                                               |
+| next service date                                                | tanggal servis berikutnya                                        |                                                               |
+| Ask FieldOps (assistant)                                         | Tanya FieldOps                                                   | the product name of the assistant                             |
+| conversation                                                     | percakapan                                                       |                                                               |

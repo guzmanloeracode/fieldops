@@ -1,1 +1,76 @@
-{}
+{
+  "title": "Laporan servis",
+  "none": "Pekerjaan sudah selesai. Tulis laporan untuk pelanggan.",
+  "start": "Tulis laporan",
+  "started": "Laporan dibuat",
+  "status": {
+    "draft": "Draf",
+    "sent": "Terkirim"
+  },
+  "ai": {
+    "badge": "Draf AI",
+    "badgeEdited": "Draf AI, sudah diubah",
+    "drafting": "AI sedang menyusun draf laporan dari daftar periksa, catatan untuk pelanggan, dan foto.",
+    "draftingHint": "Untuk sementara diisi dari daftar periksa. Draf AI akan menggantikannya, kecuali Anda mengubahnya lebih dulu.",
+    "drafted": "Disusun oleh AI dari daftar periksa, catatan untuk pelanggan, dan foto. Periksa sebelum mengirim.",
+    "failed": "Draf AI gagal dibuat. Laporan sudah diisi dari daftar periksa dan catatan untuk pelanggan.",
+    "prefilled": "Diisi dari daftar periksa dan catatan untuk pelanggan."
+  },
+  "sentTo": "Dikirim ke {to} pada {date}.",
+  "changedSinceSent": "Diubah setelah dikirim pada {date}. Kirim ulang agar pelanggan menerima perubahannya.",
+  "fields": {
+    "workPerformed": "Pekerjaan yang dilakukan",
+    "findings": "Temuan",
+    "recommendations": "Rekomendasi",
+    "nextServiceDate": "Tanggal servis berikutnya",
+    "locale": "Bahasa"
+  },
+  "locales": {
+    "en": "English",
+    "id": "Bahasa Indonesia"
+  },
+  "save": "Simpan laporan",
+  "saved": "Laporan disimpan",
+  "saveFirst": "Simpan perubahan Anda sebelum mengirim atau melihat pratinjau PDF.",
+  "editingSent": "Laporan ini sudah dikirim. Jika disimpan, statusnya kembali menjadi draf sampai Anda mengirimnya lagi.",
+  "draftWithAi": "Buat draf dengan AI",
+  "regenerate": "Buat ulang",
+  "drafted": "Draf AI siap",
+  "refused": "AI menolak membuat draf laporan ini. Tulis laporan secara manual.",
+  "draftFailed": "Draf AI gagal dibuat. Coba lagi atau tulis secara manual.",
+  "redraftTitle": "Ganti isi laporan?",
+  "redraftDescription": "Draf AI baru akan menggantikan isi saat ini, termasuk perubahan Anda.",
+  "preview": "Pratinjau PDF",
+  "download": "Unduh PDF",
+  "send": "Kirim ke pelanggan",
+  "sendAgain": "Kirim ulang",
+  "sendTitle": "Kirim laporan",
+  "sendDescription": "Pelanggan menerima email berisi tautan untuk mengunduh PDF. Tautan berlaku selama 30 hari tanpa perlu masuk.",
+  "recipient": "Penerima",
+  "noContacts": "Tidak ada kontak pelanggan ini yang memiliki alamat email. Tambahkan dulu di halaman pelanggan.",
+  "sendConfirm": "Kirim",
+  "sentToast": "Laporan dikirim ke {to}",
+  "cancel": "Batal",
+  "timeline": {
+    "sent": "mengirim laporan servis ke {to}"
+  },
+  "portal": {
+    "title": "Laporan servis",
+    "sent": "Dikirim {date}",
+    "download": "Unduh PDF"
+  },
+  "share": {
+    "invalid": {
+      "title": "Tautan ini tidak dapat dibuka",
+      "body": "Tautan ke laporan servis ini tidak lengkap atau sudah tidak berlaku. Minta tautan baru kepada pengirimnya."
+    },
+    "expired": {
+      "title": "Tautan ini sudah kedaluwarsa",
+      "body": "Tautan laporan servis berlaku selama 30 hari. Minta tautan baru kepada pengirimnya, atau unduh laporan dari portal pelanggan."
+    },
+    "updating": {
+      "title": "Laporan ini sedang diperbarui",
+      "body": "Pengirim sedang mengubah laporan servis ini. Anda akan menerima tautan baru saat laporan dikirim ulang."
+    }
+  }
+}

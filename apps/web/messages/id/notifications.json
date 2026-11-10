@@ -32,7 +32,9 @@
     "sla_at_risk": "SLA berisiko: {job}",
     "sla_breached": "SLA terlewati: {job}",
     "expense_requested": "{actor} mengajukan {item} untuk {job}",
-    "expense_decided": "{item} untuk {job} {decision, select, approved {disetujui} other {ditolak}}"
+    "expense_decided": "{item} untuk {job} {decision, select, approved {disetujui} other {ditolak}}",
+    "quote_decided": "{quote} {decision, select, approved {disetujui} other {ditolak}} oleh {customer}",
+    "payment_received": "{customer} membayar {amount} untuk {invoice}"
   },
   "detail": {
     "starts": "Mulai {when}",
@@ -41,7 +43,11 @@
   "fallback": {
     "actor": "Seseorang",
     "job": "sebuah pekerjaan",
-    "item": "Suku cadang"
+    "item": "Suku cadang",
+    "quote": "sebuah penawaran",
+    "invoice": "sebuah faktur",
+    "customer": "Seorang pelanggan",
+    "amount": "sebuah pembayaran"
   },
   "eventNames": {
     "job_assigned": "Pekerjaan ditugaskan kepada Anda",
@@ -50,7 +56,10 @@
     "sla_at_risk": "Pekerjaan berisiko melewati SLA",
     "sla_breached": "Pekerjaan melewati SLA",
     "expense_requested": "Suku cadang atau biaya perlu persetujuan Anda",
-    "expense_decided": "Pengajuan suku cadang atau biaya Anda sudah diputuskan"
+    "expense_decided": "Pengajuan suku cadang atau biaya Anda sudah diputuskan",
+    "daily_digest": "Ringkasan harian pukul 07.00: angka kemarin, pekerjaan terlambat, dan persetujuan",
+    "quote_decided": "Pelanggan menyetujui atau menolak penawaran",
+    "payment_received": "Pembayaran tercatat pada faktur"
   },
   "preferences": {
     "title": "Pengaturan notifikasi",

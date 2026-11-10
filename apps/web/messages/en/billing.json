@@ -331,7 +331,7 @@
     "receivablesNote": "{overdue} overdue",
     "downloadKpis": "Download revenue as CSV",
     "chartTitle": "Revenue trend",
-    "chartDescription": "Invoiced and collected per {bucket}.",
+    "chartDescription": "Invoiced and collected per {bucket, select, week {week} other {day}}.",
     "empty": "No revenue in this period.",
     "showData": "Show data as a table",
     "period": "Period",

@@ -79,7 +79,9 @@
     "manual": "Diinput oleh staf",
     "portal": "Portal pelanggan",
     "ai_intake": "Intake AI",
-    "api": "API"
+    "api": "API",
+    "recurring": "Rencana perawatan",
+    "quote": "Penawaran disetujui"
   },
   "detail": {
     "details": "Detail",
