@@ -95,6 +95,15 @@ describe("helpers", () => {
       userName: "Dan Dispatcher",
       role: "dispatcher",
     });
+    // The user's app language, when given (SET-05).
+    expect(
+      assistant.assistantContext(
+        { name: "Acme", timezone: "UTC", currency: "USD" },
+        w.ctx(w.dispatcher).actor,
+        new Date("2026-11-10T04:30:00Z"),
+        "id",
+      ).locale,
+    ).toBe("id");
     expect(assistant.retentionCutoff(new Date("2026-11-10T00:00:00Z"))).toEqual(
       new Date("2026-10-11T00:00:00Z"),
     );

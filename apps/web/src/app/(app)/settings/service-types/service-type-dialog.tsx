@@ -4,7 +4,7 @@ import { parseMajor, toMajor } from "@fieldops/core";
 import { serviceTypeInputSchema, type ChecklistTemplateItem, type Currency } from "@fieldops/shared";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { useForm, type Path } from "react-hook-form";
 import { ChecklistTemplateEditor, SkillsEditor } from "./template-editor";
@@ -62,6 +62,7 @@ export function ServiceTypeDialog({
 }) {
   const t = useTranslations("settings.serviceTypes");
   const tb = useTranslations("billing.serviceType");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -192,7 +193,7 @@ export function ServiceTypeDialog({
               <option value="">{tb("defaultRate")}</option>
               {taxRates.map((r) => (
                 <option key={`${r.name}-${r.rate_bps}`} value={r.rate_bps}>
-                  {r.name} ({percent(r.rate_bps)})
+                  {r.name} ({percent(r.rate_bps, locale)})
                 </option>
               ))}
             </NativeSelect>

@@ -1,7 +1,7 @@
 import { balanceOf, can, invoices, quotes } from "@fieldops/core";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { dayText, money } from "@/components/billing/money";
 import { InvoiceStatusBadge, QuoteStatusBadge } from "@/components/billing/status-badges";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ export async function CustomerBilling({ customerId }: { customerId: string }) {
   const actor = await requireActor();
   if (!can(actor, "billing.manage")) return null;
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const data = await runService(
     async (ctx) => ({
       quotes: await quotes.listQuotes(ctx, { customer: customerId, limit: 5 }),
@@ -60,7 +61,7 @@ export async function CustomerBilling({ customerId }: { customerId: string }) {
                     {q.number}
                   </Link>
                   <QuoteStatusBadge status={q.status} label={t(`quoteStatus.${q.status}`)} />
-                  <span className="ml-auto tabular-nums">{money(q.totalMinor, q.currency)}</span>
+                  <span className="ml-auto tabular-nums">{money(q.totalMinor, q.currency, locale)}</span>
                   <span className="text-muted-foreground w-full truncate text-xs">{q.title}</span>
                 </li>
               ))}
@@ -87,6 +88,7 @@ export async function CustomerBilling({ customerId }: { customerId: string }) {
                 amount: money(
                   open.reduce((a, i) => a + balanceOf(i), 0),
                   open[0]!.currency,
+                  locale,
                 ),
               })}
             </p>
@@ -101,9 +103,11 @@ export async function CustomerBilling({ customerId }: { customerId: string }) {
                     {i.number ?? t("invoice.draftNumber")}
                   </Link>
                   <InvoiceStatusBadge status={i.status} label={t(`invoiceStatus.${i.status}`)} />
-                  <span className="ml-auto tabular-nums">{money(i.totalMinor, i.currency)}</span>
+                  <span className="ml-auto tabular-nums">{money(i.totalMinor, i.currency, locale)}</span>
                   <span className="text-muted-foreground w-full text-xs">
-                    {i.dueDate ? t("customer.due", { date: dayText(i.dueDate) }) : t("invoice.draftTitle")}
+                    {i.dueDate
+                      ? t("customer.due", { date: dayText(i.dueDate, locale) })
+                      : t("invoice.draftTitle")}
                   </span>
                 </li>
               ))}

@@ -99,6 +99,62 @@ describe("emails in the recipient's language", () => {
     }
   });
 
+  it("sends the owner's daily digest in their language", async () => {
+    const props = {
+      recipientName: "Siti",
+      organizationName: "Acme Teknik",
+      date: "2026-05-07",
+      figures: {
+        jobsCreated: 12,
+        jobsCompleted: 9,
+        slaMet: 8,
+        slaMeasured: 9,
+        firstVisit: 8,
+        invoiced: "Rp1.250.000",
+        collected: "Rp850.000",
+      },
+      overdue: [],
+      overdueCount: 0,
+      pendingApprovals: 1,
+      urls: {
+        dashboard: "https://x.test/d",
+        overdue: "https://x.test/o",
+        approvals: "https://x.test/a",
+        preferences: "https://x.test/p",
+      },
+    };
+    const id = await renderEmail({ kind: "daily_digest", to: "siti@x.test", locale: "id", props });
+    expect(id.subject).toBe("Acme Teknik: ringkasan Anda untuk Kamis, 7 Mei");
+    expect(id.text).toContain("Pekerjaan selesai");
+    expect(id.text).toContain("(8 dari 9)");
+    expect(id.text).toContain("1 pengajuan menunggu keputusan");
+    const en = await renderEmail({ kind: "daily_digest", to: "siti@x.test", props });
+    expect(en.subject).toBe("Acme Teknik: your summary for Thursday, May 7");
+  });
+
+  it("writes the billing notifications in Indonesian", () => {
+    const approved = notificationCopy({
+      event: "quote_decided",
+      payload: { quote_number: "QUO-2026-0001", decision: "approved", job_number: 7, customer_name: "Budi" },
+      timeZone: "UTC",
+      locale: "id",
+    });
+    expect(approved.subject).toBe("Disetujui: QUO-2026-0001 untuk Budi");
+    expect(approved.body).toContain("Sekarang menjadi JOB-000007");
+    const paid = notificationCopy({
+      event: "payment_received",
+      payload: {
+        amount: "Rp500.000",
+        invoice_number: "INV-2026-0003",
+        customer_name: "Budi",
+        actor_name: "Siti",
+      },
+      timeZone: "UTC",
+      locale: "id",
+    });
+    expect(paid.body).toBe("Budi membayar Rp500.000 untuk faktur INV-2026-0003. Dicatat oleh Siti.");
+  });
+
   it("reads unknown locales as English", () => {
     expect(emailLocale("id")).toBe("id");
     expect(emailLocale("fr")).toBe("en");

@@ -110,7 +110,14 @@
     "signIn": "Sign in",
     "onboarding": "Set up your organization",
     "signUp": "Create an account",
-    "demoInbox": "Demo inbox"
+    "demoInbox": "Demo inbox",
+    "newQuote": "New quote",
+    "quotes": "Quotes",
+    "billingSettings": "Billing settings",
+    "invoice": "Invoice",
+    "newInvoice": "New invoice",
+    "invoices": "Invoices",
+    "catalog": "Catalog"
   },
   "validation": {
     "required": "Required",

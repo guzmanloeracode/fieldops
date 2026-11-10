@@ -81,20 +81,29 @@ export function notificationCopyId(p: Pick<NotificationEmailProps, "event" | "pa
       };
     }
     case "quote_decided": {
-      const declined = x.decision === "declined";
-      const quote = x.quote_number ? ` ${x.quote_number}` : "";
+      const quote = x.quote_number ? `penawaran ${x.quote_number}` : "sebuah penawaran";
+      const who = x.customer_name ?? "Pelanggan";
+      const recorded = x.actor_name ? ` Keputusan dicatat oleh ${x.actor_name}.` : "";
+      if (x.decision === "declined") {
+        return {
+          subject: `Ditolak: ${x.quote_number ?? "penawaran"}${customer}`,
+          heading: "Sebuah penawaran ditolak",
+          body: `${who} menolak ${quote}.${recorded}`,
+          cta: "Buka penawaran",
+        };
+      }
       return {
-        subject: `Penawaran${quote} ${declined ? "ditolak" : "disetujui"}`,
-        heading: declined ? "Sebuah penawaran ditolak" : "Sebuah penawaran disetujui",
-        body: `${x.customer_name ?? "Pelanggan"} ${declined ? "menolak" : "menyetujui"} penawaran${quote}.`,
+        subject: `Disetujui: ${x.quote_number ?? "penawaran"}${customer}`,
+        heading: "Sebuah penawaran disetujui",
+        body: `${who} menyetujui ${quote}.${x.job_number !== undefined ? ` Sekarang menjadi ${job} dan siap dijadwalkan.` : ""}${recorded}`,
         cta: "Buka penawaran",
       };
     }
     case "payment_received":
       return {
-        subject: `Pembayaran diterima: ${x.invoice_number ?? "faktur"}`,
+        subject: `Pembayaran diterima: ${x.amount ?? "pembayaran"} untuk ${x.invoice_number ?? "faktur"}`,
         heading: "Pembayaran masuk",
-        body: `${x.customer_name ?? "Seorang pelanggan"} membayar ${x.amount ?? "faktur"}${x.invoice_number ? ` untuk ${x.invoice_number}` : ""}.`,
+        body: `${x.customer_name ?? "Seorang pelanggan"} membayar ${x.amount ?? "sejumlah dana"}${x.invoice_number ? ` untuk faktur ${x.invoice_number}` : ""}.${x.actor_name ? ` Dicatat oleh ${x.actor_name}.` : ""}`,
         cta: "Buka faktur",
       };
     case "daily_digest":

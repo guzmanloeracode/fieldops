@@ -111,6 +111,71 @@ const ID: Record<string, string> = {
   "A photo couldn't be attached": "Ada foto yang tidak dapat dilampirkan",
   "Upload the photo again": "Unggah ulang fotonya",
   "Photo uploads aren't available right now": "Unggah foto sedang tidak tersedia",
+  // 0.4: quotes, invoices, payments and the catalog
+  "1–10 letters or digits": "1–10 huruf atau angka",
+  "A job can be invoiced once it's completed": "Pekerjaan baru bisa difakturkan setelah selesai",
+  "A part or expense appears twice": "Suku cadang atau biaya ini muncul dua kali",
+  "A part or expense can only be billed once": "Suku cadang atau biaya hanya bisa ditagihkan sekali",
+  "A part or expense on this invoice is already billed on another invoice":
+    "Ada suku cadang atau biaya di faktur ini yang sudah ditagihkan di faktur lain",
+  "A payment can't be in the future": "Tanggal pembayaran tidak boleh di masa depan",
+  "A percentage can't exceed 100%": "Persentase tidak boleh lebih dari 100%",
+  "Add at least one line before sending the quote": "Tambahkan minimal satu baris sebelum mengirim penawaran",
+  "Add at least one line with a price": "Tambahkan minimal satu baris dengan harga",
+  "Add at least one line": "Tambahkan minimal satu baris",
+  "Already used by another item": "Sudah dipakai item lain",
+  "Choose a contact of this customer": "Pilih kontak milik pelanggan ini",
+  "Choose a contact with an email address": "Pilih kontak yang memiliki alamat email",
+  "Choose a customer or a job": "Pilih pelanggan atau pekerjaan",
+  "Choose a customer": "Pilih pelanggan",
+  "Choose a date from today on": "Pilih tanggal mulai hari ini",
+  "Choose one of the organization's tax rates": "Pilih salah satu tarif pajak organisasi",
+  "Not an approved part or expense of this job":
+    "Bukan suku cadang atau biaya yang disetujui untuk pekerjaan ini",
+  "Only approved parts and expenses of this job can be billed":
+    "Hanya suku cadang dan biaya yang disetujui untuk pekerjaan ini yang bisa ditagihkan",
+  "Only draft invoices can be edited": "Hanya faktur draf yang bisa diubah",
+  "Only draft quotes can be edited. Revise the quote first.":
+    "Hanya penawaran draf yang bisa diubah. Revisi penawarannya terlebih dahulu.",
+  "Say why the customer declined": "Tuliskan alasan pelanggan menolak",
+  "Say why the invoice is void": "Tuliskan alasan faktur dibatalkan",
+  "The amounts are too large": "Nominalnya terlalu besar",
+  "The contact doesn't belong to this customer": "Kontak ini bukan milik pelanggan tersebut",
+  "The customer needs a site before the quote can become a job":
+    "Pelanggan memerlukan lokasi sebelum penawaran bisa menjadi pekerjaan",
+  "The invoice changed meanwhile. Reload it and try again.":
+    "Faktur ini sudah berubah. Muat ulang, lalu coba lagi.",
+  "The invoice needs at least one line and a total above zero":
+    "Faktur memerlukan minimal satu baris dan total di atas nol",
+  "The job belongs to another customer": "Pekerjaan ini milik pelanggan lain",
+  "The payment is more than the balance": "Pembayaran melebihi sisa tagihan",
+  "The quote's validity date has passed": "Masa berlaku penawaran sudah lewat",
+  "This quote has already been decided": "Penawaran ini sudah diputuskan",
+  "This quote has expired. Revise it and send it again.":
+    "Penawaran ini sudah kedaluwarsa. Revisi, lalu kirim lagi.",
+  "Unknown catalog item": "Item katalog tidak dikenal",
+  "Unknown customer": "Pelanggan tidak dikenal",
+  "Use a different prefix for quotes and invoices": "Gunakan awalan yang berbeda untuk penawaran dan faktur",
+  // 0.4: service reports
+  "Describe the work performed before sending": "Jelaskan pekerjaan yang dilakukan sebelum mengirim",
+  "Enter a valid email address": "Masukkan alamat email yang valid",
+  "Not a contact of this customer": "Bukan kontak pelanggan ini",
+  Required: "Wajib diisi",
+  "Send the report to one of the customer's contacts": "Kirim laporan ke salah satu kontak pelanggan",
+  "The job isn't completed yet": "Pekerjaan ini belum selesai",
+  // 0.4: maintenance plans
+  "Choose a site of this customer": "Pilih lokasi milik pelanggan ini",
+  "Give the window's start and its length, or neither":
+    "Isi jam mulai dan durasinya, atau kosongkan keduanya",
+  "No visit date is left before this end date":
+    "Tidak ada jadwal kunjungan tersisa sebelum tanggal berakhir ini",
+  "On or after the start date": "Pada atau setelah tanggal mulai",
+  "The end date must be on or after the start": "Tanggal berakhir harus pada atau setelah tanggal mulai",
+  "The interval is too long": "Intervalnya terlalu panjang",
+  "The plan ends before its next visit": "Rencana ini berakhir sebelum kunjungan berikutnya",
+  // 0.4: the assistant
+  "Revenue is only for owners and admins": "Data pendapatan hanya untuk pemilik dan admin",
+  "You don't approve parts and expenses": "Anda tidak menyetujui suku cadang dan biaya",
 };
 
 /** Names of records in "… not found". */
@@ -127,6 +192,12 @@ const ENTITY_ID: Record<string, string> = {
   "Time entry": "Catatan waktu",
   "Time off": "Cuti",
   View: "Tampilan",
+  "Catalog item": "Item katalog",
+  Conversation: "Percakapan",
+  Invoice: "Faktur",
+  "Maintenance plan": "Rencana perawatan",
+  Quote: "Penawaran",
+  "Service report": "Laporan servis",
 };
 
 const STATUS_ID: Record<string, string> = {
@@ -150,6 +221,10 @@ const PATTERNS_ID: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^Add up to (\d+) photos$/, (m) => `Tambahkan maksimal ${m[1]} foto`],
   [/^You can keep up to (\d+) views$/, (m) => `Anda dapat menyimpan maksimal ${m[1]} tampilan`],
   [/^Maximum (\d+) MB$/, (m) => `Maksimal ${m[1]} MB`],
+  [/^(.+) is already billed on another invoice$/, (m) => `${m[1]} sudah ditagihkan di faktur lain`],
+  [/^SKU (.+) is already used by (.+)$/, (m) => `SKU ${m[1]} sudah dipakai oleh ${m[2]}`],
+  [/^At most the balance of (.+)$/, (m) => `Maksimal sebesar sisa tagihan ${m[1]}`],
+  [/^At most (\d+) for this unit$/, (m) => `Maksimal ${m[1]} untuk satuan ini`],
 ];
 
 /** A server message in the reader's language; English (and anything unknown) is returned as is. */

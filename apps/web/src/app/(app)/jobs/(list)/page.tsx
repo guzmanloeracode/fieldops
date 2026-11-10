@@ -104,14 +104,16 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     recurring: j.recurrenceId
       ? {
           href: plans ? planHref(j.customer.id, j.recurrenceId) : null,
-          title: tr("badge.title", { date: j.occurrenceDate ? formatDay(j.occurrenceDate, "long") : "—" }),
+          title: tr("badge.title", {
+            date: j.occurrenceDate ? formatDay(j.occurrenceDate, "long", locale) : "—",
+          }),
         }
       : null,
     sla: (() => {
       if (j.slaPausedAt && j.status === "on_hold") {
         return {
           state: "paused" as const,
-          title: tr("slaPause.tooltip", { when: formatDateTime(j.slaPausedAt, tz) }),
+          title: tr("slaPause.tooltip", { when: formatDateTime(j.slaPausedAt, tz, locale) }),
         };
       }
       const a = attentionSla(j);

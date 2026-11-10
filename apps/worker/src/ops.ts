@@ -24,10 +24,18 @@ export function digestMailer(tx: Tx, organizationId: string): DigestMailer {
           .where(eq(schema.organization.id, organizationId))
       )[0];
       if (!org) return;
-      const money = (amountMinor: number) => formatMoney({ amountMinor, currency: summary.currency });
+      // In the owner's language (SET-05).
+      const [user] = await tx
+        .select({ locale: schema.user.locale })
+        .from(schema.user)
+        .where(eq(schema.user.id, recipient.userId));
+      const locale = user?.locale === "id" ? "id" : "en";
+      const money = (amountMinor: number) =>
+        formatMoney({ amountMinor, currency: summary.currency }, locale === "id" ? "id-ID" : "en-US");
       const rendered = await renderEmail({
         kind: "daily_digest",
         to: recipient.email,
+        locale,
         props: {
           recipientName: recipient.name,
           organizationName: org.name,

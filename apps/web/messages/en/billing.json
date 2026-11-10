@@ -290,7 +290,8 @@
     "invalidAmount": "Enter a valid amount",
     "activeLabel": "Active: {name}",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "defaultUnit": "each"
   },
   "settings": {
     "termsTitle": "Terms and labor",

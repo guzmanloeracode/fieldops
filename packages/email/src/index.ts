@@ -75,8 +75,8 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
       element = createElement(NotificationEmail, { ...message.props, locale });
       break;
     case "daily_digest":
-      subject = digestSubject(message.props);
-      element = createElement(DailyDigestEmail, message.props);
+      subject = digestSubject({ ...message.props, locale });
+      element = createElement(DailyDigestEmail, { ...message.props, locale });
       break;
     case "report.job_completed":
       subject = jobCompletedSubject(message.props);

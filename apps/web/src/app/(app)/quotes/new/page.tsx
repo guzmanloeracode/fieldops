@@ -5,7 +5,10 @@ import { requireActor, runService } from "@/server/context";
 import { billingFormData } from "@/components/billing/form-data";
 import { QuoteForm } from "../_components/quote-form";
 
-export const metadata: Metadata = { title: "New quote" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("newQuote") };
+}
 
 /** A new quote (FIN-02), optionally for a customer (`?customer=`). Office roles; the layout checks. */
 export default async function NewQuotePage({

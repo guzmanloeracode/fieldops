@@ -67,6 +67,9 @@ describe("prompt", () => {
     expect(text).toContain("revenue figures aren't available");
     expect(contextText({ ...context, role: "technician" })).toContain("assigned to them");
     expect(contextText({ ...context, role: "owner" })).toContain("organization's revenue");
+    expect(text).not.toContain("App language");
+    expect(contextText({ ...context, locale: "id" })).toContain("App language: Bahasa Indonesia");
+    expect(contextText({ ...context, locale: "en" })).toContain("App language: English");
   });
 });
 

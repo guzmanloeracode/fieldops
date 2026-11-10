@@ -290,7 +290,8 @@
     "invalidAmount": "Masukkan nominal yang valid",
     "activeLabel": "Aktif: {name}",
     "active": "Aktif",
-    "inactive": "Nonaktif"
+    "inactive": "Nonaktif",
+    "defaultUnit": "buah"
   },
   "settings": {
     "termsTitle": "Termin dan jasa",

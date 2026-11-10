@@ -1,6 +1,6 @@
 import type { revenue } from "@fieldops/core";
 import type { DashboardRange } from "@fieldops/shared";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { money } from "@/components/billing/money";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,8 +15,9 @@ import { RevenueChart } from "./revenue-chart";
  */
 export async function Revenue({ data, preset }: { data: revenue.RevenueOverview; preset: DashboardRange }) {
   const t = await getTranslations("billing.dashboard");
+  const locale = await getLocale();
   const { range, currency } = data;
-  const show = (v: number | null) => (v === null ? "—" : money(v, currency));
+  const show = (v: number | null) => (v === null ? "—" : money(v, currency, locale));
   const period = `from=${range.from}&to=${range.to}`;
   const tiles: KpiTile[] = [
     {
@@ -56,7 +57,7 @@ export async function Revenue({ data, preset }: { data: revenue.RevenueOverview;
     to: preset === "custom" ? range.to : null,
   };
   const points = data.series.map((s) => ({
-    label: shortDate(s.bucket < range.from ? range.from : s.bucket),
+    label: shortDate(s.bucket < range.from ? range.from : s.bucket, locale),
     invoicedMinor: s.invoicedMinor,
     collectedMinor: s.collectedMinor,
   }));
@@ -116,10 +117,10 @@ export async function Revenue({ data, preset }: { data: revenue.RevenueOverview;
                       <TableRow key={s.bucket}>
                         <TableCell>{points[i]!.label}</TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {money(s.invoicedMinor, currency)}
+                          {money(s.invoicedMinor, currency, locale)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {money(s.collectedMinor, currency)}
+                          {money(s.collectedMinor, currency, locale)}
                         </TableCell>
                       </TableRow>
                     ))}

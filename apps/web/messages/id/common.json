@@ -110,7 +110,14 @@
     "signIn": "Masuk",
     "onboarding": "Siapkan organisasi Anda",
     "signUp": "Buat akun",
-    "demoInbox": "Kotak masuk demo"
+    "demoInbox": "Kotak masuk demo",
+    "newQuote": "Penawaran baru",
+    "quotes": "Penawaran",
+    "billingSettings": "Pengaturan penagihan",
+    "invoice": "Faktur",
+    "newInvoice": "Faktur baru",
+    "invoices": "Faktur",
+    "catalog": "Katalog"
   },
   "validation": {
     "required": "Wajib diisi",
