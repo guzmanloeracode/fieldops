@@ -122,7 +122,8 @@ export const jobCreateSchema = z
     title: trimmed(200).min(1),
     description: optionalText(8000),
     priority: jobPrioritySchema.default("normal"),
-    source: jobSourceSchema.default("manual"),
+    // "quote" and "recurring" jobs come only from an approved quote or a maintenance plan.
+    source: jobSourceSchema.exclude(["quote", "recurring"]).default("manual"),
     preferred_start: isoDateTime.nullable().optional(),
     preferred_end: isoDateTime.nullable().optional(),
     estimated_duration_min: z
