@@ -1,0 +1,34 @@
+{
+  "id": "evt_1QfoTestCheckoutCompleted",
+  "object": "event",
+  "api_version": "2025-10-29.clover",
+  "created": 1794326400,
+  "data": {
+    "object": {
+      "id": "cs_test_a1FieldOpsInvoice0042",
+      "object": "checkout.session",
+      "amount_subtotal": 27063,
+      "amount_total": 27063,
+      "client_reference_id": "7b1e2c4a-3f5d-4e6a-9b8c-0d1e2f3a4b5c",
+      "currency": "usd",
+      "customer_email": "jamie.rivera@example.com",
+      "expires_at": 1794412800,
+      "livemode": false,
+      "metadata": {
+        "organization_id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+        "invoice_id": "7b1e2c4a-3f5d-4e6a-9b8c-0d1e2f3a4b5c"
+      },
+      "mode": "payment",
+      "payment_intent": "pi_3QfoTestFieldOps0042",
+      "payment_status": "paid",
+      "status": "complete",
+      "success_url": "https://fieldops.example/portal/acme-air/invoices/7b1e2c4a-3f5d-4e6a-9b8c-0d1e2f3a4b5c?payment=success",
+      "cancel_url": "https://fieldops.example/portal/acme-air/invoices/7b1e2c4a-3f5d-4e6a-9b8c-0d1e2f3a4b5c?payment=canceled",
+      "url": null
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 1,
+  "request": { "id": null, "idempotency_key": null },
+  "type": "checkout.session.completed"
+}
