@@ -55,6 +55,7 @@ test.describe("app pages as owner", () => {
     "/settings/members",
     "/settings/service-types",
     "/settings/operations",
+    "/settings/sla",
     "/settings/demo-outbox",
     "/approvals",
     "/schedule",

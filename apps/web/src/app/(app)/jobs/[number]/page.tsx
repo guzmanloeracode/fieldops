@@ -25,6 +25,7 @@ import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
 import { SignatureCard } from "./signature-card";
+import { SlaCard } from "./sla-card";
 import { SiteMap } from "./site-map";
 import { TimeEntries } from "./time-entries";
 import { Timeline } from "./timeline";
@@ -343,6 +344,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             estimatedDurationMin={job.estimatedDurationMin}
             members={data.members.map((m) => ({ id: m.id, name: m.name, role: m.role }))}
           />
+
+          <SlaCard job={job} timeZone={tz} />
 
           <Card>
             <CardHeader>

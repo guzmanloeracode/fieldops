@@ -8,7 +8,8 @@ import { getTranslations } from "next-intl/server";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
 import { Button } from "@/components/ui/button";
-import { inZone } from "@/lib/format";
+import { formatDateTime, inZone } from "@/lib/format";
+import { attentionSla } from "@/lib/sla";
 import { requireActor, runService } from "@/server/context";
 import { JobFilters } from "../job-filters";
 import { JobsTable, type JobRow } from "../jobs-table";
@@ -42,6 +43,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     date_field: one(sp.date_field) || undefined,
     unassigned: one(sp.unassigned) || undefined,
     revisit: one(sp.revisit) || undefined,
+    sla: one(sp.sla) || undefined,
     sort: myDay ? "scheduled_start" : one(sp.sort) || undefined,
     limit: one(sp.limit) || 25,
     page: one(sp.page) || 1,
@@ -49,6 +51,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const parsed = jobListQuerySchema.safeParse(raw);
   const query = parsed.success ? parsed.data : jobListQuerySchema.parse({ limit: 25, page: 1 });
   const office = can(actor, "jobs.update");
+  const tsla = await getTranslations("sla");
 
   const data = await runService(async (ctx) => {
     const [page, members, serviceTypes, customer, savedViews] = await Promise.all([
@@ -89,6 +92,19 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     scheduledEnd: j.scheduledEnd?.toISOString() ?? null,
     createdAt: j.createdAt.toISOString(),
     needsReview: j.needsReview,
+    sla: (() => {
+      const a = attentionSla(j);
+      return a
+        ? {
+            state: a.state,
+            title: tsla("badgeTitle", {
+              target: tsla(`target.${a.target}`),
+              state: tsla(`state.${a.state}`).toLowerCase(),
+              due: a.dueAt ? formatDateTime(a.dueAt, tz) : "—",
+            }),
+          }
+        : null;
+    })(),
   }));
 
   const params = new URLSearchParams();

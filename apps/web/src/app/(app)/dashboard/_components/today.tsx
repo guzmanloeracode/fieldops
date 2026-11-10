@@ -1,14 +1,16 @@
-import { formatJobNumber, formatMoney, responseDeadline, type dashboard } from "@fieldops/core";
+import { formatJobNumber, formatMoney, type dashboard } from "@fieldops/core";
 import type { Currency } from "@fieldops/shared";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
+import { SlaBadge } from "@/components/app/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelative } from "@/lib/format";
 import { jobsHref } from "@/lib/drilldown";
 import { formatMinutes, formatPercent } from "./format";
+import { CsvLink, exportHref } from "./overview";
 
 /** Dispatcher home (DSH-04): today's board, the queue, at-risk jobs and pending approvals. */
 export async function Today({
@@ -21,6 +23,18 @@ export async function Today({
   canApprove: boolean;
 }) {
   const t = await getTranslations("dashboard.today");
+  const tsla = await getTranslations("sla");
+  const csv = (report: string, title: string) => ({
+    href: exportHref(report),
+    label: t("downloadCsvLabel", { report: title }),
+    text: t("downloadCsv"),
+    testId: `today-${report.replace(/_/g, "-")}-csv`,
+  });
+  const riskHref = jobsHref({
+    sla: "at_risk,breached",
+    status: "new,scheduled,en_route,in_progress,on_hold",
+    sort: "scheduled_start",
+  });
   const day = { from: data.date, to: data.date };
   const c = data.statusCounts;
   const tiles = [
@@ -49,7 +63,7 @@ export async function Today({
       value: data.unassigned.total,
       href: jobsHref({ status: "new", unassigned: true, sort: "-priority" }),
     },
-    { key: "at-risk", label: t("atRisk"), value: data.atRisk.total, href: "#at-risk" },
+    { key: "at-risk", label: t("atRisk"), value: data.atRisk.total, href: riskHref },
     ...(canApprove
       ? [{ key: "approvals", label: t("approvals"), value: data.approvals.total, href: "/approvals" }]
       : []),
@@ -124,6 +138,9 @@ export async function Today({
                 );
               })}
             </ul>
+            <div className="pt-3">
+              <CsvLink {...csv("technicians_today", t("technicians"))} />
+            </div>
           </CardContent>
         </Card>
 
@@ -159,15 +176,23 @@ export async function Today({
                 ))}
               </ul>
             )}
+            <div className="pt-3">
+              <CsvLink {...csv("unassigned", t("queue"))} />
+            </div>
           </CardContent>
         </Card>
 
         <Card id="at-risk">
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("risk")} <span className="text-muted-foreground font-normal">({data.atRisk.total})</span>
-            </CardTitle>
-            <CardDescription>{t("riskNote")}</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+            <div className="space-y-1.5">
+              <CardTitle className="text-base">
+                {t("risk")} <span className="text-muted-foreground font-normal">({data.atRisk.total})</span>
+              </CardTitle>
+              <CardDescription>{t("riskNote")}</CardDescription>
+            </div>
+            <Button asChild variant="link" size="sm" className="px-0">
+              <Link href={riskHref}>{t("viewRisk")}</Link>
+            </Button>
           </CardHeader>
           <CardContent>
             {data.atRisk.rows.length === 0 ? (
@@ -184,22 +209,25 @@ export async function Today({
                         {r.title}
                       </Link>
                       <p className="text-muted-foreground truncate text-xs">
-                        <span className="font-medium text-red-700 dark:text-red-400">
-                          {t(`reason.${r.reason}`)}
-                        </span>{" "}
-                        ·{" "}
-                        {r.reason === "response_overdue"
-                          ? t("dueSince", { when: formatRelative(responseDeadline(r)) })
-                          : t("endedAt", { when: formatRelative(r.scheduledEnd!) })}{" "}
+                        {r.dueAt
+                          ? t(r.state === "breached" ? "wasDue" : "dueIn", {
+                              target: tsla(`target.${r.target}`),
+                              when: formatRelative(r.dueAt),
+                            })
+                          : tsla(`target.${r.target}`)}{" "}
                         · {r.customerName}
                         {r.assignees.length ? ` · ${r.assignees.join(", ")}` : ""}
                       </p>
                     </div>
-                    <StatusBadge status={r.status} />
+                    <SlaBadge state={r.state} prefixed />
+                    <StatusBadge status={r.status} className="hidden sm:inline-flex" />
                   </li>
                 ))}
               </ul>
             )}
+            <div className="pt-3">
+              <CsvLink {...csv("at_risk", t("risk"))} />
+            </div>
           </CardContent>
         </Card>
 
@@ -238,6 +266,9 @@ export async function Today({
                   ))}
                 </ul>
               )}
+              <div className="pt-3">
+                <CsvLink {...csv("approvals", t("approvalsTitle"))} />
+              </div>
             </CardContent>
           </Card>
         ) : null}

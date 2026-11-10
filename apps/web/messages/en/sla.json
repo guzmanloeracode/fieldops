@@ -1,1 +1,60 @@
-{}
+{
+  "state": {
+    "on_track": "On track",
+    "at_risk": "At risk",
+    "breached": "Breached",
+    "met": "Met"
+  },
+  "short": {
+    "on_track": "SLA on track",
+    "at_risk": "SLA at risk",
+    "breached": "SLA breached",
+    "met": "SLA met"
+  },
+  "target": {
+    "response": "Response",
+    "resolution": "Resolution"
+  },
+  "targetLong": {
+    "response": "Response: scheduled with a technician",
+    "resolution": "Resolution: completed"
+  },
+  "badgeTitle": "{target} {state}, due {due}",
+  "card": {
+    "title": "SLA",
+    "description": "{priority} priority · {basis}",
+    "calendar": "calendar time",
+    "businessHours": "business hours",
+    "defaults": "Default targets",
+    "dueIn": "Due {when}",
+    "wasDue": "Was due {when}",
+    "metAt": "Met {when}",
+    "missedAt": "Done {when}, after the deadline",
+    "deadline": "Deadline {date}",
+    "notTracked": "Not tracked for canceled jobs.",
+    "none": "No SLA deadlines for this job."
+  },
+  "filter": {
+    "label": "SLA",
+    "chip": "SLA: {states}"
+  },
+  "settings": {
+    "title": "SLA policies",
+    "description": "Each priority has a response target (scheduled with a technician) and a resolution target (completed). New jobs, and jobs whose priority changes, get deadlines from these targets.",
+    "priority": "Priority",
+    "response": "Response target",
+    "resolution": "Resolution target",
+    "businessHours": "Business hours only",
+    "businessHoursHint": "Business-hours targets count only the opening hours set in Organization settings, so 24 hours is about three working days.",
+    "default": "Default",
+    "unit": "Unit",
+    "minutes": "minutes",
+    "hours": "hours",
+    "days": "days",
+    "amount": "{priority} {target}",
+    "invalid": "Enter a whole number",
+    "save": "Save policies",
+    "saved": "SLA policies saved",
+    "existingJobs": "Existing jobs keep their deadlines."
+  }
+}

@@ -2,7 +2,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
 import type { JobStatus } from "@fieldops/shared";
-import { ArrowUp, ChevronsUp, Loader2, Star, Users } from "lucide-react";
+import { AlertTriangle, ArrowUp, ChevronsUp, Loader2, Star, Users, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
@@ -40,6 +40,25 @@ function PriorityMark({ job }: { job: BoardJob }) {
       className={cn(
         "size-3.5 shrink-0",
         job.priority === "urgent" ? "text-red-700 dark:text-red-400" : "text-orange-700 dark:text-orange-400",
+      )}
+      aria-hidden
+    />
+  );
+}
+
+/** At risk or breached SLA (SLA-02): an icon on the block; the text is in the block's accessible details. */
+function SlaMark({ job }: { job: BoardJob }) {
+  if (!job.sla) return null;
+  const Icon = job.sla.state === "breached" ? XCircle : AlertTriangle;
+  return (
+    <Icon
+      data-testid="block-sla"
+      data-sla={job.sla.state}
+      className={cn(
+        "size-3.5 shrink-0",
+        job.sla.state === "breached"
+          ? "text-red-700 dark:text-red-400"
+          : "text-amber-700 dark:text-amber-400",
       )}
       aria-hidden
     />
@@ -89,6 +108,7 @@ export function BlockCard({
       style={width ? { width } : undefined}
     >
       <div className="flex items-center gap-1 overflow-hidden whitespace-nowrap">
+        <SlaMark job={job} />
         <PriorityMark job={job} />
         <RoleMark job={job} laneId={laneId} />
         <span className="font-semibold tabular-nums">{time}</span>
@@ -127,6 +147,7 @@ export function DraggableBlock({
   onResize: (jobId: string, laneId: string, minutes: number) => void;
 }) {
   const t = useTranslations("dispatch");
+  const tsla = useTranslations("sla");
   const data: DragData = { type: "job", jobId: job.id, laneId };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `job:${job.id}:${laneId}`,
@@ -148,6 +169,7 @@ export function DraggableBlock({
     compact ? null : job.customer,
     STATUS_LABELS[job.status],
     job.priority === "high" || job.priority === "urgent" ? PRIORITY_LABELS[job.priority] : null,
+    job.sla ? tsla(`short.${job.sla.state}`) : null,
     role,
   ]
     .filter(Boolean)

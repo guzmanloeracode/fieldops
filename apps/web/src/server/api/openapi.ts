@@ -39,6 +39,8 @@ import {
   siteSchema,
   siteUpdateSchema,
   signatureCaptureSchema,
+  slaPoliciesUpdateSchema,
+  slaPolicyListSchema,
   timeEntryCreateSchema,
   timeEntryListSchema,
   timeEntrySchema,
@@ -541,6 +543,21 @@ export function openApiDocument() {
             "200": json(list(memberSchema, "MemberPage"), "Members of the organization"),
             ...errors(),
           },
+        }),
+      },
+      "/sla-policies": {
+        get: op("Organization", "List SLA policies", {
+          operationId: "listSlaPolicies",
+          description:
+            "Response (scheduled with a technician) and resolution (completed) targets per priority, in minutes. Priorities without a saved policy show the defaults (`is_default`).",
+          responses: { "200": json(slaPolicyListSchema, "One policy per priority"), ...errors() },
+        }),
+        put: op("Organization", "Replace the SLA policies", {
+          operationId: "updateSlaPolicies",
+          description:
+            "Owners and admins. Send all four priorities. New jobs and jobs whose priority changes get deadlines from these targets; existing deadlines stay. With `business_hours`, only the organization's business hours count.",
+          requestBody: body(slaPoliciesUpdateSchema),
+          responses: { "200": json(slaPolicyListSchema, "The saved policies"), ...errors(415, 422) },
         }),
       },
       "/service-types": {
