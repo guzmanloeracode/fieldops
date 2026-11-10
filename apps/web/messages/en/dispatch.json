@@ -102,6 +102,7 @@
   },
   "dialog": {
     "title": "Reschedule {job}",
+    "scheduleTitle": "Schedule {job}",
     "description": "Technicians and visit window ({timeZone}).",
     "openJob": "Open job"
   },

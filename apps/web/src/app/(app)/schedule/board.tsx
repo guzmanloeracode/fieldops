@@ -467,7 +467,13 @@ export function DispatchBoard(props: BoardProps & { members: AssignMember[] }) {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{conflict ? t("dialog.title", { job: conflict.job.number }) : null}</DialogTitle>
+            <DialogTitle>
+              {conflict
+                ? t(conflict.job.status === "new" ? "dialog.scheduleTitle" : "dialog.title", {
+                    job: conflict.job.number,
+                  })
+                : null}
+            </DialogTitle>
             <DialogDescription>{conflict?.message}</DialogDescription>
           </DialogHeader>
           {conflict ? (
