@@ -17,15 +17,18 @@ async function axe(page: Page) {
   expect(blocking.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 
-/** A page in its own context (axe needs pages created through a context). Closing the page closes both. */
+/** A page in its own context (axe needs pages created through a context). Close it with `done`. */
 async function pageAs(browser: Browser, user: UserKey): Promise<Page> {
   const context = await browser.newContext({ storageState: storageState(user) });
-  const page = await context.newPage();
-  // Not awaited by anyone: a rejection here (the context already closing) would surface in the next test.
-  page.on("close", () => {
-    context.close().catch(() => {});
-  });
-  return page;
+  return context.newPage();
+}
+
+/**
+ * Closes the page's context and waits for it. A context still closing when the test ends breaks the next test's
+ * setup ("Target page, context or browser has been closed" while the runner starts tracing).
+ */
+async function done(page: Page) {
+  await page.context().close();
 }
 
 /** Skips when the server under test has no AI provider (a dev server without AI_PROVIDER=fixture). */
@@ -107,7 +110,7 @@ test.describe.serial("AI intake", () => {
       title: "Bedroom AC leaking water",
     });
     await client.dispose();
-    await page.close();
+    await done(page);
   });
 
   test("when the model fails, the form stays usable", async ({ browser }) => {
@@ -119,7 +122,7 @@ test.describe.serial("AI intake", () => {
     await expect(page.getByTestId("ai-failure")).toContainText("couldn't draft this message");
     await expect(page.getByLabel("Title", { exact: true })).toHaveValue("");
     await expect(page.getByTestId("create-job")).toBeEnabled();
-    await page.close();
+    await done(page);
   });
 
   test("the API drafts with rate-limit headers and guards roles and input", async () => {
@@ -183,7 +186,7 @@ test.describe.serial("AI intake", () => {
     const again = await client.post(`/api/v1/jobs/${job!.id}/review`, { data: { confirm: true } });
     expect(again.status()).toBe(409);
     await client.dispose();
-    await page.close();
+    await done(page);
   });
 
   test("an owner sees AI usage and can turn AI off and on", async ({ browser }) => {
@@ -202,7 +205,7 @@ test.describe.serial("AI intake", () => {
       const dispatcher = await pageAs(browser, "dispatcher");
       await dispatcher.goto("/jobs/new");
       await expect(dispatcher.getByTestId("ai-unavailable")).toContainText("turned off");
-      await dispatcher.close();
+      await done(dispatcher);
     } finally {
       await owner.reload();
       if (!(await owner.getByTestId("ai-enabled").isChecked())) {
@@ -215,7 +218,7 @@ test.describe.serial("AI intake", () => {
     const dispatcher = await pageAs(browser, "dispatcher");
     const res = await dispatcher.goto("/settings/ai");
     expect(res?.status()).toBe(404);
-    await dispatcher.close();
-    await owner.close();
+    await done(dispatcher);
+    await done(owner);
   });
 });
