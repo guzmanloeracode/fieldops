@@ -1,6 +1,6 @@
 import "server-only";
 import { DomainError, HTTP_STATUS, type Actor, type ServiceContext } from "@fieldops/core";
-import { schema, withStore } from "@fieldops/db";
+import { schema, withStore, type Tx } from "@fieldops/db";
 import type { Role } from "@fieldops/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
@@ -11,6 +11,7 @@ import { auth } from "./auth";
 import { db } from "./db";
 import { files } from "./files";
 import { logger } from "./logger";
+import { notificationMailer } from "./notification-mailer";
 import { requestMeta } from "./request-meta";
 
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
@@ -77,15 +78,22 @@ export const requireActor = cache(async (): Promise<ResolvedActor> => {
   return actor;
 });
 
-function context(actor: Actor, store: ServiceContext["store"]): ServiceContext {
-  return { actor, store, now: new Date(), demo: env.DEMO_MODE, files };
+function context(actor: Actor, store: ServiceContext["store"], tx: Tx): ServiceContext {
+  return {
+    actor,
+    store,
+    now: new Date(),
+    demo: env.DEMO_MODE,
+    files,
+    mailer: notificationMailer(tx, actor.organizationId),
+  };
 }
 
 /** Runs a core service for the signed-in member in one tenant-scoped transaction. */
 export async function runService<T>(fn: (ctx: ServiceContext) => Promise<T>, actor?: Actor): Promise<T> {
   const a = actor ?? (await requireActor());
   const meta = await requestMeta();
-  return withStore(db, a.organizationId, (store) => fn(context(a, store)), {
+  return withStore(db, a.organizationId, (store, tx) => fn(context(a, store, tx)), {
     userId: a.userId,
     ip: meta.ip,
     userAgent: meta.userAgent,

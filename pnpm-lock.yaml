@@ -186,9 +186,15 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1165.0
         version: 3.1165.0
+      '@fieldops/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@fieldops/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@fieldops/email':
+        specifier: workspace:*
+        version: link:../../packages/email
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared

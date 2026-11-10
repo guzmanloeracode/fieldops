@@ -7,6 +7,7 @@ import { resolveActor, type ResolvedActor } from "@/server/context";
 import { db } from "@/server/db";
 import { files } from "@/server/files";
 import { logger } from "@/server/logger";
+import { notificationMailer } from "@/server/notification-mailer";
 import { metaFromHeaders } from "@/server/request-meta";
 import { claimIdempotencyKey, hashBody, readIdempotencyKey, storeIdempotentResponse } from "./idempotency";
 import { ApiProblem, internalProblem, problemFromError, type ProblemBody } from "./problem";
@@ -138,7 +139,14 @@ export function apiRoute<P extends Record<string, string> = Record<string, never
                 headers: { "Idempotent-Replayed": "true" },
               };
           }
-          const ctx: ServiceContext = { actor, store, now: new Date(), demo: env.DEMO_MODE, files };
+          const ctx: ServiceContext = {
+            actor,
+            store,
+            now: new Date(),
+            demo: env.DEMO_MODE,
+            files,
+            mailer: notificationMailer(tx, actor.organizationId),
+          };
           const out = await handler({ req, url, params, body: json, ctx, actor, tx, requestId });
           const status = out.status ?? 200;
           if (scope) await storeIdempotentResponse(tx, scope, status, out.body);

@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1165.0",
+    "@fieldops/core": "workspace:*",
     "@fieldops/db": "workspace:*",
+    "@fieldops/email": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "nodemailer": "^10.4.0",
