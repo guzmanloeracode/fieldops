@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DemoSignIn } from "@/components/app/demo-sign-in";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { env } from "@/env";
+import { GoogleSignIn } from "@/components/app/google-sign-in";
+import { env, googleConfigured } from "@/env";
 import { SignInForm } from "./sign-in-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -26,6 +27,7 @@ export default async function SignInPage({
               Email confirmed. You can sign in now.
             </p>
           ) : null}
+          {googleConfigured ? <GoogleSignIn next={next?.startsWith("/") ? next : "/dashboard"} /> : null}
           <SignInForm next={next?.startsWith("/") ? next : "/dashboard"} />
           <div className="flex justify-between text-sm">
             <Link href="/forgot-password" className="text-primary hover:underline">

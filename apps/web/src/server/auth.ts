@@ -9,7 +9,7 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/organization/access";
 import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
-import { env } from "@/env";
+import { env, googleConfigured } from "@/env";
 import { db } from "./db";
 import { queueEmail } from "./mailer";
 
@@ -81,6 +81,22 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,
     cookieCache: { enabled: true, maxAge: 60 },
+  },
+  // Sign in with Google (AUTH-02), only when the OAuth client is configured. Google accounts link to an
+  // existing FieldOps user with the same (verified) email.
+  ...(googleConfigured
+    ? {
+        socialProviders: {
+          google: {
+            clientId: env.GOOGLE_CLIENT_ID!,
+            clientSecret: env.GOOGLE_CLIENT_SECRET!,
+            prompt: "select_account" as const,
+          },
+        },
+      }
+    : {}),
+  account: {
+    accountLinking: { enabled: true, trustedProviders: ["google"] },
   },
   emailAndPassword: {
     enabled: true,

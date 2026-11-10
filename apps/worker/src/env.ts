@@ -9,6 +9,8 @@ function required(name: string): string {
 export const env = {
   databaseUrl: required("MIGRATION_DATABASE_URL"),
   demoMode: bool(process.env.DEMO_MODE),
+  /** Public URL of the web app, for links in notification emails. */
+  appUrl: process.env.APP_URL ?? "http://localhost:3000",
   demoPassword: process.env.DEMO_PASSWORD ?? "",
   emailFrom: process.env.EMAIL_FROM ?? "FieldOps <no-reply@fieldops.local>",
   resendApiKey: process.env.RESEND_API_KEY,

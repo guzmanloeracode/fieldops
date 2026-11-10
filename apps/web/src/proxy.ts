@@ -11,6 +11,7 @@ const APP_PREFIXES = [
   "/customers",
   "/equipment",
   "/settings",
+  "/notifications",
   "/onboarding",
 ];
 

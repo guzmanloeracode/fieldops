@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { FieldError } from "@/components/app/field-error";
+import { GoogleSignIn } from "@/components/app/google-sign-in";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,10 +15,13 @@ export function SignUpForm({
   demo,
   defaultEmail,
   next,
+  google = false,
 }: {
   demo: boolean;
   defaultEmail: string;
   next?: string;
+  /** Show "Continue with Google" (AUTH-02). */
+  google?: boolean;
 }) {
   const t = useTranslations("auth");
   const [pending, startTransition] = useTransition();
@@ -52,6 +56,7 @@ export function SignUpForm({
         <CardDescription>{t("signUp.description")}</CardDescription>
       </CardHeader>
       <CardContent>
+        {google ? <GoogleSignIn next={next ?? "/dashboard"} className="mb-4" /> : null}
         <form
           className="space-y-4"
           onSubmit={(e) => {

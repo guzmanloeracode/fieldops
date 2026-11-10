@@ -11,6 +11,7 @@ import { requireActor, runService } from "@/server/context";
 import { OwnStats } from "./_components/own-stats";
 import { Overview } from "./_components/overview";
 import { Today } from "./_components/today";
+import { LiveRefresh } from "@/components/app/live-refresh";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -101,6 +102,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div>
         {header}
         {nav}
+        <LiveRefresh kinds={["job", "time_off", "expense"]} />
         <Today
           data={today}
           reviewCount={review}

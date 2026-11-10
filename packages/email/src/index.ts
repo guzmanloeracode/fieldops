@@ -1,6 +1,9 @@
 import { render } from "@react-email/render";
 import { createElement } from "react";
+import { NotificationEmail, notificationCopy, type NotificationEmailProps } from "./notification";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
+
+export { notificationCopy, type NotificationEmailEvent, type NotificationEmailProps } from "./notification";
 
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
@@ -9,7 +12,8 @@ export type EmailMessage =
       kind: "invitation";
       to: string;
       props: { inviterName: string; organizationName: string; role: string; url: string };
-    };
+    }
+  | { kind: "notification"; to: string; props: NotificationEmailProps };
 
 export interface RenderedEmail {
   subject: string;
@@ -32,6 +36,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "invitation":
       subject = `${message.props.inviterName} invited you to ${message.props.organizationName} on FieldOps`;
       element = createElement(Invitation, message.props);
+      break;
+    case "notification":
+      subject = notificationCopy(message.props).subject;
+      element = createElement(NotificationEmail, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);

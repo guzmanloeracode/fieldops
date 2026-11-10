@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useLiveRefresh } from "@/components/app/live-refresh";
 import { toast } from "sonner";
 import { AssignForm, type AssignMember } from "@/components/app/assign-form";
 import { ConflictPanel, conflictsOf } from "@/components/app/conflict-list";
@@ -80,6 +81,8 @@ export function DispatchBoard(props: BoardProps & { members: AssignMember[] }) {
   const [conflict, setConflict] = useState<(Change & { conflicts: ConflictDto[] }) | null>(null);
   const [reason, setReason] = useState("");
   const previewKey = useRef("");
+  // Other dispatchers' changes appear within seconds (SCH-06), but never in the middle of a drag or a save.
+  useLiveRefresh(["job", "time_off"], { paused: active !== null || saving.size > 0 || conflict !== null });
 
   // Server data wins after every refresh.
   useEffect(() => {

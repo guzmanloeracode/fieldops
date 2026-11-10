@@ -53,7 +53,7 @@ export function problemResponse(
   return respond(body.status, body, { ...headers, "X-Request-Id": requestId }, true);
 }
 
-async function authenticate(req: Request): Promise<ResolvedActor> {
+export async function authenticate(req: Request): Promise<ResolvedActor> {
   const authorization = req.headers.get("authorization");
   if (authorization?.toLowerCase().startsWith("bearer fo_")) {
     throw new ApiProblem(
