@@ -1,10 +1,4 @@
-import {
-  assistant,
-  assistantTools,
-  type Actor,
-  type ServiceContext,
-  type TxRunner,
-} from "@fieldops/core";
+import { assistant, assistantTools, type Actor, type ServiceContext, type TxRunner } from "@fieldops/core";
 import type { AssistantToolName, AssistantToolRun } from "@fieldops/shared";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

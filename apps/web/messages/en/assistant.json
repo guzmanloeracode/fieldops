@@ -61,6 +61,7 @@
     "notConfigured": "AI isn't configured on this server.",
     "notFound": "That conversation is no longer available. Start a new one.",
     "invalid": "Questions can be up to 2,000 characters.",
-    "noAnswer": "No answer was saved for this question."
+    "noAnswer": "No answer was saved for this question.",
+    "stopped": "Stopped before the answer finished."
   }
 }

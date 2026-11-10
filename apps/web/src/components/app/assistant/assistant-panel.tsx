@@ -67,7 +67,8 @@ type ErrorCode =
   | "notConfigured"
   | "notFound"
   | "invalid"
-  | "noAnswer";
+  | "noAnswer"
+  | "stopped";
 
 interface ChatMessage {
   id: string;
@@ -266,7 +267,7 @@ export function AssistantPanel() {
       }
       if (!finished) fail("network");
     } catch {
-      fail(controller.signal.aborted ? "failed" : "network");
+      fail(controller.signal.aborted ? "stopped" : "network");
     } finally {
       abort.current = null;
       setBusy(false);
