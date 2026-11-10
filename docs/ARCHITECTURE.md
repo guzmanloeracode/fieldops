@@ -33,8 +33,10 @@ idempotency keys, ETags and problem details.
 ## Packages
 
 - **`packages/shared`**: constants and Zod schemas. Inputs and API representations use snake_case.
-- **`packages/core`**: `domain/` (permissions, job status machine, money, numbering, cursors, schedule) and
-  `services/` (use cases against the `Store` interface). No framework dependencies.
+- **`packages/core`**: `domain/` (permissions, job status machine, money, numbering, cursors, schedule, working
+  hours and availability, at-risk rules) and `services/` (use cases against the `Store` interface: jobs and
+  assignment conflicts, schedule, checklists, time entries, signatures, expenses, dashboard, saved views, bulk
+  actions, search). No framework dependencies.
 - **`packages/db`**: Drizzle schema, migrations (`drizzle/`), RLS policies, the `Store` implementation, the demo
   seed and the migration runner.
 - **`packages/email`**: React Email templates rendered by the web app into the outbox.
@@ -54,16 +56,26 @@ stateDiagram-v2
     InProgress --> OnHold: waiting for + reason
     OnHold --> InProgress
     OnHold --> Scheduled: reschedule
-    InProgress --> Completed: required checklist items done
+    InProgress --> Completed: required checklist items done, signature if required
     Completed --> InProgress: reopen (office, reason)
 ```
 
-Assigning technicians and a window to a New job schedules it; clearing either sends it back to New. Overlapping
-visits for the same technician are rejected unless the dispatcher gives an override reason, which is kept in the
-timeline.
+Assigning technicians and a window to a New job schedules it; clearing either sends it back to New. An assignment
+is checked for four conflicts per technician: overlapping visits, outside working hours, time off and missing
+skills. Any of them is rejected (409 with `details.conflicts`) unless the dispatcher gives an override reason, which
+is kept in the timeline with the overridden conflicts.
+
+Status changes also drive the clocks: En route starts travel time, Start and Resume start work time, and Hold,
+Complete, Cancel and Unschedule stop every clock on the job.
+
+## Files
+
+Uploads go straight from the browser to storage through short-lived signed URLs, then the server confirms them and
+makes thumbnails. With R2 configured the URLs are S3 presigned URLs; without it they point at `/api/files/…`, which
+checks an HMAC signature, the type and the size, and stores the file on the `fieldops_files` volume (ADR 015).
 
 ## Demo environment
 
 `DEMO_MODE=true` turns on one-click sign-in, captured emails (Demo inbox for visitors, Demo outbox for owners),
-5 MB image-only uploads, protection for the seeded accounts, and the nightly reset at 00:00 UTC: wipe, seed again
+5 MB image-only uploads (signatures and receipts included), protection for the seeded accounts, and the nightly reset at 00:00 UTC: wipe, seed again
 relative to the reset time, delete uploads. The seed is deterministic (fixed faker seed) and is covered by tests.
