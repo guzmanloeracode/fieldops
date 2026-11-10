@@ -7,7 +7,7 @@ import {
   PRIORITY_LABELS,
   type JobView,
 } from "@fieldops/core";
-import { jobListQuerySchema } from "@fieldops/shared";
+import { jobListQuerySchema, type SlaState } from "@fieldops/shared";
 import { format } from "date-fns";
 import { z } from "zod";
 import { csvRow } from "@/lib/csv";
@@ -37,6 +37,10 @@ const HEADER = [
   "Scheduled end",
   "Created",
   "Completed",
+  "Response due",
+  "Response SLA",
+  "Resolution due",
+  "Resolution SLA",
 ];
 
 function problem(status: number, title: string) {
@@ -45,6 +49,13 @@ function problem(status: number, title: string) {
     { status, headers: { "Content-Type": "application/problem+json" } },
   );
 }
+
+const SLA_LABELS: Record<SlaState, string> = {
+  on_track: "On track",
+  at_risk: "At risk",
+  breached: "Breached",
+  met: "Met",
+};
 
 function row(j: JobView, tz: string): string {
   const at = (d: Date | null) => (d ? format(inZone(d, tz), "yyyy-MM-dd HH:mm") : "");
@@ -63,6 +74,10 @@ function row(j: JobView, tz: string): string {
     at(j.scheduledEnd),
     at(j.createdAt),
     at(j.completedAt),
+    at(j.responseDueAt),
+    j.slaResponseState ? SLA_LABELS[j.slaResponseState] : "",
+    at(j.resolutionDueAt),
+    j.slaResolutionState ? SLA_LABELS[j.slaResolutionState] : "",
   ]);
 }
 

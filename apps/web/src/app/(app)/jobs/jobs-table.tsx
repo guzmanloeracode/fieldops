@@ -14,6 +14,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
+import { SlaBadge } from "@/components/app/sla-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -43,6 +44,8 @@ export interface JobRow {
   scheduledEnd: string | null;
   createdAt: string;
   needsReview: boolean;
+  /** The current SLA when it needs attention (at risk or breached), with a tooltip; null otherwise. */
+  sla?: { state: "at_risk" | "breached"; title: string } | null;
 }
 
 const SORTABLE: Record<string, string> = {
@@ -180,7 +183,14 @@ export function JobsTable({
       {
         id: "priority",
         header: t("col.priority"),
-        cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
+        cell: ({ row }) => (
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <PriorityBadge priority={row.original.priority} />
+            {row.original.sla ? (
+              <SlaBadge state={row.original.sla.state} prefixed title={row.original.sla.title} />
+            ) : null}
+          </span>
+        ),
       },
       {
         id: "scheduled",

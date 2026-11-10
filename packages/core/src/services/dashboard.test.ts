@@ -22,6 +22,9 @@ describe("getOverview (DSH-01 – DSH-03)", () => {
               created: 40,
               completed: 20,
               completedWithinTarget: 15,
+              completedSlaMeasured: 20,
+              responseMeasured: 30,
+              responseMet: 27,
               completedFirstVisit: 18,
               avgResponseMin: 90,
               avgResolutionMin: 1200,
@@ -30,6 +33,9 @@ describe("getOverview (DSH-01 – DSH-03)", () => {
               created: 30,
               completed: 0,
               completedWithinTarget: 0,
+              completedSlaMeasured: 0,
+              responseMeasured: 0,
+              responseMet: 0,
               completedFirstVisit: 0,
               avgResponseMin: null,
               avgResolutionMin: null,
@@ -44,7 +50,7 @@ describe("getOverview (DSH-01 – DSH-03)", () => {
         ];
       },
       async slaTrend() {
-        return [{ bucket: "2026-11-05", completed: 4, withinTarget: 3 }];
+        return [{ bucket: "2026-11-05", completed: 4, withinTarget: 3, measured: 4 }];
       },
       async byServiceType() {
         return [
@@ -70,6 +76,7 @@ describe("getOverview (DSH-01 – DSH-03)", () => {
       created: { value: 40, previous: 30 },
       completed: { value: 20, previous: 0 },
       slaCompliance: { value: 0.75, previous: null },
+      responseCompliance: { value: 0.9, previous: null },
       avgResponseMin: { value: 90, previous: null },
       avgResolutionMin: { value: 1200, previous: null },
       firstVisitRate: { value: 0.9, previous: null },
@@ -82,6 +89,7 @@ describe("getOverview (DSH-01 – DSH-03)", () => {
       bucket: "2026-11-05",
       completed: 4,
       withinTarget: 3,
+      measured: 4,
       rate: 0.75,
     });
     expect(out.slaTrend[0]).toMatchObject({ completed: 0, rate: null });
@@ -169,21 +177,25 @@ describe("getToday (DSH-04)", () => {
         expect([f.from, f.to]).toEqual(["2026-11-10", "2026-11-10"]);
         return [{ memberId: w.dispatcher.id, jobs: 1, scheduledMin: 60, completed: 0 }];
       },
-      async atRisk(now, limit) {
+      async atRisk(limit) {
         expect(limit).toBe(8);
-        const base = {
-          number: 7,
-          title: "Leak",
-          customerName: "Cara",
-          createdAt: created,
-          assignees: [],
-        };
         return {
           total: 2,
           rows: [
-            { ...base, id: "a", status: "new", priority: "urgent", scheduledEnd: null },
-            // Not at risk by the rule (e.g. stale row): dropped.
-            { ...base, id: "b", status: "completed", priority: "urgent", scheduledEnd: null },
+            {
+              id: "a",
+              number: 7,
+              title: "Leak",
+              customerName: "Cara",
+              createdAt: created,
+              assignees: [],
+              status: "new",
+              priority: "urgent",
+              scheduledEnd: null,
+              target: "response",
+              state: "breached",
+              dueAt: created,
+            },
           ],
         };
       },
@@ -214,8 +226,37 @@ describe("getToday (DSH-04)", () => {
     expect(out.unassigned.total).toBe(1);
     expect(out.unassigned.rows[0]!.id).toBe(queued.id);
     expect(out.atRisk.total).toBe(2);
-    expect(out.atRisk.rows.map((r) => [r.id, r.reason])).toEqual([["a", "response_overdue"]]);
+    expect(out.atRisk.rows.map((r) => [r.id, r.target, r.state])).toEqual([["a", "response", "breached"]]);
     expect(out.approvals.total).toBe(1);
+  });
+});
+
+describe("CSV sources (DSH-05)", () => {
+  it("lists every at-risk job and pending approval for the office", async () => {
+    const w = world();
+    const limits: number[] = [];
+    w.store.dashboard = fakeDashboard({
+      async atRisk(limit) {
+        limits.push(limit);
+        return { total: 0, rows: [] };
+      },
+      async pendingApprovals(limit) {
+        limits.push(limit);
+        return { total: 0, rows: [] };
+      },
+    });
+    const queued = await jobs.createJob(w.ctx(w.dispatcher), {
+      customer_id: w.customerId,
+      site_id: w.siteId,
+      title: "Waiting",
+    });
+    expect((await dashboard.getUnassigned(w.ctx(w.admin))).map((j) => j.id)).toEqual([queued.id]);
+    await expect(dashboard.getUnassigned(w.ctx(w.tom))).rejects.toThrow(ForbiddenError);
+    await dashboard.getAtRisk(w.ctx(w.dispatcher));
+    await dashboard.getPendingApprovals(w.ctx(w.owner), 50);
+    expect(limits).toEqual([1000, 50]);
+    await expect(dashboard.getAtRisk(w.ctx(w.tom))).rejects.toThrow(ForbiddenError);
+    await expect(dashboard.getPendingApprovals(w.ctx(w.tom))).rejects.toThrow(ForbiddenError);
   });
 });
 

@@ -22,13 +22,14 @@
     "serviceType": "Service type",
     "allServiceTypes": "All service types",
     "reset": "Reset",
-    "period": "{from} – {to}, compared with {prevFrom} – {prevTo}"
+    "period": "{from} – {to}, compared with {prevFrom} – {prevTo}",
+    "downloadKpis": "Download KPIs as CSV"
   },
   "kpi": {
     "created": "Jobs created",
     "completed": "Jobs completed",
     "sla": "SLA compliance",
-    "slaNote": "Provisional targets per priority until SLA policies arrive in 0.3",
+    "slaNote": "Resolution targets met · response {response}",
     "response": "Avg response time",
     "responseNote": "Created to first scheduled",
     "resolution": "Avg resolution time",
@@ -50,7 +51,7 @@
     "statusTitle": "Jobs by status",
     "statusDescription": "Jobs created per {bucket, select, week {week} other {day}}, by their current status. Select a bar or a table cell to open the jobs.",
     "slaTitle": "SLA compliance trend",
-    "slaDescription": "Share of completed jobs within the provisional resolution target, per {bucket, select, week {week} other {day}}.",
+    "slaDescription": "Share of completed jobs that met their resolution target, per {bucket, select, week {week} other {day}}.",
     "typeTitle": "Jobs by service type",
     "typeDescription": "Jobs created and completed in the period, per service type.",
     "workloadTitle": "Technician workload and utilization",
@@ -58,7 +59,7 @@
     "period": "Period",
     "total": "Total",
     "completed": "Completed",
-    "withinTarget": "Within target",
+    "withinTarget": "Met the target",
     "compliance": "Compliance",
     "created": "Created",
     "serviceType": "Service type",
@@ -70,7 +71,9 @@
     "utilization": "Utilization",
     "hours": "{value} h",
     "empty": "No jobs in this period.",
-    "noTechnicians": "No technicians yet."
+    "noTechnicians": "No technicians yet.",
+    "downloadCsv": "Download CSV",
+    "downloadCsvLabel": "Download CSV: {report}"
   },
   "today": {
     "scheduled": "Visits today",
@@ -88,21 +91,20 @@
     "queue": "Unassigned jobs",
     "queueEmpty": "Nothing waiting. Every job has a technician.",
     "risk": "At-risk jobs",
-    "riskNote": "Provisional rules until SLA policies arrive in 0.3",
-    "riskEmpty": "No job is past its target or its visit window.",
-    "reason": {
-      "response_overdue": "Response overdue",
-      "running_late": "Running late"
-    },
-    "dueSince": "due {when}",
-    "endedAt": "window ended {when}",
+    "riskNote": "Open jobs whose response or resolution deadline is near (75% of the time used) or has passed.",
+    "riskEmpty": "Every open job is on track for its SLA.",
     "approvalsTitle": "Pending approvals",
     "approvalsEmpty": "No parts or expenses waiting for approval.",
     "openApprovals": "Open approvals",
     "requestedBy": "{name} on {job}",
     "viewAll": "View all",
     "requested": "requested {when}",
-    "reviewBanner": "{count, plural, one {# portal request needs} other {# portal requests need}} review."
+    "reviewBanner": "{count, plural, one {# portal request needs} other {# portal requests need}} review.",
+    "dueIn": "{target} due {when}",
+    "wasDue": "{target} was due {when}",
+    "viewRisk": "View in jobs",
+    "downloadCsv": "Download CSV",
+    "downloadCsvLabel": "Download CSV: {report}"
   },
   "own": {
     "title": "Your numbers",

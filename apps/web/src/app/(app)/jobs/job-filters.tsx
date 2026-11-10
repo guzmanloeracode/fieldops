@@ -1,6 +1,6 @@
 "use client";
 import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
-import { JOB_PRIORITIES, JOB_STATUSES } from "@fieldops/shared";
+import { JOB_PRIORITIES, JOB_STATUSES, SLA_STATES } from "@fieldops/shared";
 import { ChevronDown, Inbox, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -29,6 +29,7 @@ export function JobFilters({
   const t = useTranslations("jobs");
   const ti = useTranslations("insights.filters");
   const ta = useTranslations("ai.filters");
+  const tsla = useTranslations("sla");
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -52,8 +53,8 @@ export function JobFilters({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  const multi = (key: "status" | "priority") => (params.get(key) ?? "").split(",").filter(Boolean);
-  const toggle = (key: "status" | "priority", value: string) => {
+  const multi = (key: "status" | "priority" | "sla") => (params.get(key) ?? "").split(",").filter(Boolean);
+  const toggle = (key: "status" | "priority" | "sla", value: string) => {
     const current = new Set(multi(key));
     if (current.has(value)) current.delete(value);
     else current.add(value);
@@ -73,6 +74,7 @@ export function JobFilters({
     "unassigned",
     "revisit",
     "needs_review",
+    "sla",
   ].filter((k) => params.get(k)).length;
   const needsReview = params.get("needs_review") === "true";
 
@@ -114,6 +116,12 @@ export function JobFilters({
           options={JOB_PRIORITIES.map((p) => ({ id: p, name: PRIORITY_LABELS[p] }))}
           selected={multi("priority")}
           onToggle={(v) => toggle("priority", v)}
+        />
+        <MultiSelect
+          label={tsla("filter.label")}
+          options={SLA_STATES.map((st) => ({ id: st, name: tsla(`state.${st}`) }))}
+          selected={multi("sla")}
+          onToggle={(v) => toggle("sla", v)}
         />
         {showTechnician ? (
           <Select

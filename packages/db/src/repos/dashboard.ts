@@ -9,23 +9,15 @@ import type {
   StatusBucketRow,
   WorkloadRow,
 } from "@fieldops/core";
-import { DEFAULT_SLA_TARGETS, JOB_PRIORITIES, type JobPriority, type JobStatus } from "@fieldops/shared";
+import type { JobPriority, JobStatus, SlaTarget } from "@fieldops/shared";
 import { sql, type SQL } from "drizzle-orm";
 import type { Tx } from "../client";
+import { currentSlaDue, currentSlaState, currentSlaTarget } from "./sla";
 
 // Dashboard aggregations (DSH-01 – DSH-04, DSH-06). Each query filters by organization first and ranges on
 // an indexed column: created_at, completed_at or scheduled_start (job_org_*_idx), or expense status.
 // Local dates become instants in the organization's time zone, so "today" means the business's day.
-
-/** Minutes allowed per priority, as a SQL CASE over j.priority (provisional targets until SLA-01). */
-function targetCase(kind: "responseMin" | "resolutionMin"): SQL {
-  const whens = JOB_PRIORITIES.map(
-    (p: JobPriority) => `when '${p}' then ${Number(DEFAULT_SLA_TARGETS[p][kind])}`,
-  ).join(" ");
-  return sql.raw(`(case j.priority ${whens} end)`);
-}
-const RESOLUTION = targetCase("resolutionMin");
-const RESPONSE = targetCase("responseMin");
+// SLA figures use the deadlines and states stored on each job (SLA-02).
 
 const startOf = (date: string, tz: string) => sql`((${date}::date)::timestamp at time zone ${tz})`;
 const endOf = (date: string, tz: string) => sql`(((${date}::date) + 1)::timestamp at time zone ${tz})`;
@@ -51,15 +43,20 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
   return {
     async kpis(f): Promise<KpiTotals> {
       const res = await tx.execute<Record<string, unknown>>(sql`
-        select
-          (select count(*)::int from job j where ${scope(f)} and ${inRange(sql`j.created_at`, f)}) as created,
-          (select avg(extract(epoch from (j.first_scheduled_at - j.created_at)) / 60)::float8
-             from job j
-            where ${scope(f)} and ${inRange(sql`j.created_at`, f)} and j.first_scheduled_at is not null) as avg_response,
-          c.completed, c.within_target, c.first_visit, c.avg_resolution
+        select r.created, r.avg_response, r.response_met, r.response_measured,
+          c.completed, c.within_target, c.measured, c.first_visit, c.avg_resolution
         from (
+          select count(*)::int as created,
+                 (avg(extract(epoch from (j.first_scheduled_at - j.created_at)) / 60)
+                   filter (where j.first_scheduled_at is not null))::float8 as avg_response,
+                 (count(*) filter (where j.sla_response_state = 'met'))::int as response_met,
+                 (count(*) filter (where j.sla_response_state in ('met', 'breached')))::int as response_measured
+            from job j
+           where ${scope(f)} and ${inRange(sql`j.created_at`, f)}
+        ) r, (
           select count(*)::int as completed,
-                 (count(*) filter (where j.completed_at - j.created_at <= make_interval(mins => ${RESOLUTION})))::int as within_target,
+                 (count(*) filter (where j.sla_resolution_state = 'met'))::int as within_target,
+                 (count(*) filter (where j.sla_resolution_state in ('met', 'breached')))::int as measured,
                  (count(*) filter (where not j.revisit))::int as first_visit,
                  avg(extract(epoch from (j.completed_at - j.created_at)) / 60)::float8 as avg_resolution
             from job j
@@ -70,6 +67,9 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
         created: Number(r.created),
         completed: Number(r.completed),
         completedWithinTarget: Number(r.within_target),
+        completedSlaMeasured: Number(r.measured),
+        responseMeasured: Number(r.response_measured),
+        responseMet: Number(r.response_met),
         completedFirstVisit: Number(r.first_visit),
         avgResponseMin: num(r.avg_response),
         avgResolutionMin: num(r.avg_resolution),
@@ -88,10 +88,16 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
     },
 
     async slaTrend(f, bucket): Promise<SlaBucketRow[]> {
-      const res = await tx.execute<{ bucket: string; completed: number; within_target: number }>(sql`
+      const res = await tx.execute<{
+        bucket: string;
+        completed: number;
+        within_target: number;
+        measured: number;
+      }>(sql`
         select to_char(date_trunc(${bucketSql(bucket)}, j.completed_at at time zone ${f.timeZone}), 'YYYY-MM-DD') as bucket,
                count(*)::int as completed,
-               (count(*) filter (where j.completed_at - j.created_at <= make_interval(mins => ${RESOLUTION})))::int as within_target
+               (count(*) filter (where j.sla_resolution_state = 'met'))::int as within_target,
+               (count(*) filter (where j.sla_resolution_state in ('met', 'breached')))::int as measured
           from job j
          where ${scope(f)} and j.status = 'completed' and ${inRange(sql`j.completed_at`, f)}
          group by 1
@@ -100,6 +106,7 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
         bucket: r.bucket,
         completed: Number(r.completed),
         withinTarget: Number(r.within_target),
+        measured: Number(r.measured),
       }));
     },
 
@@ -162,7 +169,7 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
       return res.rows.map((r) => ({ status: r.status, count: Number(r.count) }));
     },
 
-    async atRisk(now, limit) {
+    async atRisk(limit) {
       const res = await tx.execute<{
         id: string;
         number: number;
@@ -173,6 +180,9 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
         created_at: Date | string;
         scheduled_end: Date | string | null;
         assignees: string[];
+        target: SlaTarget;
+        state: "at_risk" | "breached";
+        due_at: Date | string | null;
         total: number;
       }>(sql`
         select j.id, j.number, j.title, j.status, j.priority, c.name as customer_name, j.created_at, j.scheduled_end,
@@ -183,14 +193,14 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
                    join "user" u on u.id = m.user_id
                   where ja.organization_id = ${orgId} and ja.job_id = j.id
                ), '{}') as assignees,
+               ${currentSlaTarget("j")} as target, ${currentSlaState("j")} as state, ${currentSlaDue("j")} as due_at,
                (count(*) over ())::int as total
           from job j
           join customer c on c.id = j.customer_id
          where ${scope({})}
-           and ((j.status = 'new' and j.created_at + make_interval(mins => ${RESPONSE}) < ${now})
-             or (j.status in ('scheduled', 'en_route', 'in_progress', 'on_hold') and j.scheduled_end < ${now}))
-         order by case when j.status = 'new' then j.created_at + make_interval(mins => ${RESPONSE})
-                       else j.scheduled_end end asc, j.number asc
+           and j.status not in ('completed', 'canceled')
+           and ${currentSlaState("j")} in ('at_risk', 'breached')
+         order by ${currentSlaDue("j")} asc nulls last, j.number asc
          limit ${limit}`);
       const rows: RiskRow[] = res.rows.map((r) => ({
         id: r.id,
@@ -202,6 +212,9 @@ export function dashboardRepo(tx: Tx, orgId: string): DashboardRepo {
         createdAt: new Date(r.created_at),
         scheduledEnd: r.scheduled_end ? new Date(r.scheduled_end) : null,
         assignees: r.assignees,
+        target: r.target,
+        state: r.state,
+        dueAt: r.due_at ? new Date(r.due_at) : null,
       }));
       return { total: Number(res.rows[0]?.total ?? 0), rows };
     },

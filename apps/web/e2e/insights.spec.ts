@@ -13,7 +13,7 @@ test.describe("owner dashboard (DSH-01 – DSH-03)", () => {
     for (const key of ["created", "completed", "sla", "response", "resolution", "first-visit"]) {
       await expect(page.getByTestId(`kpi-${key}`)).toBeVisible();
     }
-    await expect(page.getByTestId("kpi-sla")).toContainText("Provisional");
+    await expect(page.getByTestId("kpi-sla")).toContainText("Resolution targets met");
     await expect(page.getByTestId("dashboard-period")).toContainText("compared with");
 
     // Period presets live in the URL.

@@ -1,5 +1,6 @@
 import { STATUS_LABELS, type dashboard } from "@fieldops/core";
 import { JOB_STATUSES, type DashboardRange } from "@fieldops/shared";
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -20,6 +21,7 @@ function ChartCard({
   chart,
   table,
   showData,
+  csv,
 }: {
   id: string;
   title: string;
@@ -27,6 +29,8 @@ function ChartCard({
   chart: ReactNode;
   table: ReactNode;
   showData: string;
+  /** The same data as a CSV download (DSH-05). */
+  csv: { href: string; label: string; text: string };
 }) {
   return (
     <Card>
@@ -40,16 +44,52 @@ function ChartCard({
         <figure aria-labelledby={`${id}-title`} aria-describedby={`${id}-desc`} className="m-0">
           {chart}
         </figure>
-        <details data-testid={`${id}-data`}>
-          <summary className="text-primary cursor-pointer text-sm hover:underline">{showData}</summary>
-          <div className="mt-2 max-h-80 overflow-auto rounded-md border">{table}</div>
-        </details>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <details data-testid={`${id}-data`} className="min-w-0 flex-1">
+            <summary className="text-primary cursor-pointer text-sm hover:underline">{showData}</summary>
+            <div className="mt-2 max-h-80 overflow-auto rounded-md border">{table}</div>
+          </details>
+          <CsvLink {...csv} testId={`${id}-csv`} />
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 const cellLink = "text-primary tabular-nums hover:underline";
+
+/** A plain download link: the browser saves the CSV the route handler returns. */
+export function CsvLink({
+  href,
+  label,
+  text,
+  testId,
+}: {
+  href: string;
+  label: string;
+  text: string;
+  testId: string;
+}) {
+  return (
+    <a
+      href={href}
+      download
+      aria-label={label}
+      data-testid={testId}
+      className="text-primary inline-flex items-center gap-1 text-sm whitespace-nowrap hover:underline"
+    >
+      <Download className="size-3.5" aria-hidden />
+      {text}
+    </a>
+  );
+}
+
+/** The CSV export of one dashboard report with the page's period and filters (DSH-05). */
+export function exportHref(report: string, params: Record<string, string | null | undefined> = {}) {
+  const p = new URLSearchParams({ report });
+  for (const [k, v] of Object.entries(params)) if (v) p.set(k, v);
+  return `/dashboard/export?${p.toString()}`;
+}
 
 /** Owner and dispatcher KPIs and charts (DSH-01 – DSH-03). */
 export async function Overview({
@@ -94,7 +134,7 @@ export async function Overview({
     {
       key: "sla",
       label: t("kpi.sla"),
-      note: t("kpi.slaNote"),
+      note: t("kpi.slaNote", { response: formatPercent(k.responseCompliance.value) }),
       value: k.slaCompliance,
       kind: "rate",
       higherIsBetter: true,
@@ -159,6 +199,18 @@ export async function Overview({
   const techHref = (id: string) =>
     jobsHref({ service_type: filters.serviceTypeId, technician: id, ...period });
   const hasJobs = data.statusSeries.some((s) => s.total > 0);
+  const query = {
+    range: preset,
+    from: preset === "custom" ? range.from : null,
+    to: preset === "custom" ? range.to : null,
+    technician: filters.technicianId,
+    service_type: filters.serviceTypeId,
+  };
+  const csv = (report: string, title: string) => ({
+    href: exportHref(report, query),
+    label: t("charts.downloadCsvLabel", { report: title }),
+    text: t("charts.downloadCsv"),
+  });
 
   return (
     <div className="space-y-6">
@@ -172,14 +224,22 @@ export async function Overview({
           technicians={technicians}
           serviceTypes={serviceTypes}
         />
-        <p className="text-muted-foreground text-sm" data-testid="dashboard-period">
-          {t("filters.period", {
-            from: longDate(range.from),
-            to: longDate(range.to),
-            prevFrom: longDate(range.prevFrom),
-            prevTo: longDate(range.prevTo),
-          })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <p className="text-muted-foreground text-sm" data-testid="dashboard-period">
+            {t("filters.period", {
+              from: longDate(range.from),
+              to: longDate(range.to),
+              prevFrom: longDate(range.prevFrom),
+              prevTo: longDate(range.prevTo),
+            })}
+          </p>
+          <CsvLink
+            href={exportHref("kpis", query)}
+            label={t("filters.downloadKpis")}
+            text={t("filters.downloadKpis")}
+            testId="kpis-csv"
+          />
+        </div>
       </div>
       <KpiTiles tiles={tiles} />
       <div className="grid gap-6 xl:grid-cols-2">
@@ -188,6 +248,7 @@ export async function Overview({
           title={t("charts.statusTitle")}
           description={t("charts.statusDescription", { bucket: range.bucket })}
           showData={t("charts.showData")}
+          csv={csv("status", t("charts.statusTitle"))}
           chart={
             hasJobs ? (
               <StatusChart data={statusPoints} />
@@ -241,8 +302,9 @@ export async function Overview({
         <ChartCard
           id="chart-sla"
           title={t("charts.slaTitle")}
-          description={`${t("charts.slaDescription", { bucket: range.bucket })} ${t("kpi.slaNote")}.`}
+          description={t("charts.slaDescription", { bucket: range.bucket })}
           showData={t("charts.showData")}
+          csv={csv("sla", t("charts.slaTitle"))}
           chart={<SlaChart data={slaPoints} name={t("charts.compliance")} />}
           table={
             <Table>
@@ -287,6 +349,7 @@ export async function Overview({
           title={t("charts.typeTitle")}
           description={t("charts.typeDescription")}
           showData={t("charts.showData")}
+          csv={csv("service_types", t("charts.typeTitle"))}
           chart={
             data.byServiceType.length ? (
               <PairChart
@@ -350,6 +413,7 @@ export async function Overview({
           title={t("charts.workloadTitle")}
           description={t("charts.workloadDescription")}
           showData={t("charts.showData")}
+          csv={csv("workload", t("charts.workloadTitle"))}
           chart={
             data.workload.length ? (
               <PairChart

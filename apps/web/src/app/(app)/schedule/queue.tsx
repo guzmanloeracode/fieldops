@@ -4,6 +4,7 @@ import { Inbox, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
 import { PriorityBadge } from "@/components/app/badges";
+import { SlaBadge } from "@/components/app/sla-badge";
 import { cn } from "@/lib/utils";
 import type { DragData } from "./board";
 import type { BoardJob } from "./board-data";
@@ -108,6 +109,7 @@ function QueueItem({
           {job.customer}
           {job.serviceType ? ` · ${job.serviceType}` : ""} · {job.durationMin} min
         </p>
+        {job.sla ? <SlaBadge state={job.sla.state} prefixed className="mt-1.5" /> : null}
       </div>
     </li>
   );

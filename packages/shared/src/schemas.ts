@@ -364,6 +364,11 @@ export const jobListQuerySchema = z.object({
   revisit: queryBool.optional(),
   /** Only portal requests waiting for a dispatcher to confirm them (AI-01). */
   needs_review: queryBool.optional(),
+  /**
+   * The job's current SLA state (SLA-02): the worse of its open targets (response until first scheduled,
+   * resolution until completed); for completed jobs the resolution outcome.
+   */
+  sla: csvEnum(SLA_STATES).optional(),
   sort: z
     .string()
     .regex(

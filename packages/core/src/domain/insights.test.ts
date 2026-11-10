@@ -12,7 +12,6 @@ import {
   workingMinutesOn,
 } from "./date-range";
 import { warrantyStatus } from "./equipment";
-import { metResolutionTarget, responseDeadline, riskOf } from "./risk";
 
 describe("date math", () => {
   it("reads the local date of an instant in a time zone", () => {
@@ -119,43 +118,6 @@ describe("working minutes", () => {
   it("adds up a range", () => {
     expect(workingMinutesBetween(hours, "2026-11-08", "2026-11-14")).toBe(1020);
     expect(workingMinutesBetween(hours, "2026-11-10", "2026-11-09")).toBe(0);
-  });
-});
-
-describe("provisional risk rules (DSH-04)", () => {
-  const created = new Date("2026-11-10T08:00:00Z");
-  it("flags unscheduled jobs past their response target", () => {
-    const job = { status: "new", priority: "urgent", createdAt: created, scheduledEnd: null } as const;
-    expect(responseDeadline(job).toISOString()).toBe("2026-11-10T10:00:00.000Z");
-    expect(riskOf(job, new Date("2026-11-10T09:59:00Z"))).toBeNull();
-    expect(riskOf(job, new Date("2026-11-10T10:01:00Z"))).toBe("response_overdue");
-    const low = { ...job, priority: "low" } as const;
-    expect(riskOf(low, new Date("2026-11-12T08:00:00Z"))).toBeNull();
-  });
-
-  it("flags open visits whose window has ended", () => {
-    const end = new Date("2026-11-10T12:00:00Z");
-    const later = new Date("2026-11-10T12:30:00Z");
-    for (const status of ["scheduled", "en_route", "in_progress", "on_hold"] as const) {
-      expect(riskOf({ status, priority: "normal", createdAt: created, scheduledEnd: end }, later)).toBe(
-        "running_late",
-      );
-    }
-    expect(
-      riskOf({ status: "scheduled", priority: "normal", createdAt: created, scheduledEnd: end }, end),
-    ).toBe(null);
-    expect(
-      riskOf({ status: "scheduled", priority: "normal", createdAt: created, scheduledEnd: null }, later),
-    ).toBeNull();
-    for (const status of ["completed", "canceled"] as const) {
-      expect(riskOf({ status, priority: "urgent", createdAt: created, scheduledEnd: end }, later)).toBeNull();
-    }
-  });
-
-  it("checks the resolution target per priority", () => {
-    const job = { priority: "high", createdAt: created } as const;
-    expect(metResolutionTarget(job, new Date("2026-11-13T08:00:00Z"))).toBe(true);
-    expect(metResolutionTarget(job, new Date("2026-11-13T08:01:00Z"))).toBe(false);
   });
 });
 

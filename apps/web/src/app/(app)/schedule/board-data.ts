@@ -1,5 +1,6 @@
 import { availability, formatJobNumber, type JobView, type schedule } from "@fieldops/core";
-import type { JobPriority, JobStatus } from "@fieldops/shared";
+import type { JobPriority, JobStatus, SlaTarget } from "@fieldops/shared";
+import { attentionSla } from "@/lib/sla";
 
 // Turns the core Board into plain, serializable props for the client board. Positions are wall-clock
 // minutes in the organization's time zone, so the client never does time zone math for layout.
@@ -25,6 +26,8 @@ export interface BoardJob {
   latitude: number | null;
   longitude: number | null;
   createdAt: string;
+  /** The current SLA when it needs attention (SLA-02); null when on track or met. */
+  sla: { state: "at_risk" | "breached"; target: SlaTarget } | null;
 }
 
 export interface LaneDay {
@@ -61,6 +64,13 @@ const minutesOn = (instant: Date, date: string, timeZone: string) =>
     60_000 +
   availability.localMinutesOf(instant, timeZone);
 
+/** Open work only: a finished job's SLA outcome isn't something to act on from the board. */
+function boardSla(j: JobView): BoardJob["sla"] {
+  if (j.status === "completed" || j.status === "canceled") return null;
+  const a = attentionSla(j);
+  return a ? { state: a.state, target: a.target } : null;
+}
+
 export function toBoardJob(j: JobView, timeZone: string): BoardJob {
   const date = j.scheduledStart ? availability.localDateOf(j.scheduledStart, timeZone) : null;
   const startMin = j.scheduledStart && date ? minutesOn(j.scheduledStart, date, timeZone) : 0;
@@ -83,6 +93,7 @@ export function toBoardJob(j: JobView, timeZone: string): BoardJob {
     latitude: j.site.latitude,
     longitude: j.site.longitude,
     createdAt: j.createdAt.toISOString(),
+    sla: boardSla(j),
   };
 }
 

@@ -33,6 +33,7 @@ import {
   user,
 } from "../schema";
 import { definedOnly, likeEscape, toAddress } from "./util";
+import { currentSlaState } from "./sla";
 
 const SORT_FIELDS = ["number", "scheduled_start", "created_at", "priority", "status", "title"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -212,6 +213,14 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       }
       if (f.revisit) where.push(eq(job.revisit, true));
       if (f.needs_review) where.push(eq(job.needsReview, true));
+      if (f.sla?.length) {
+        where.push(
+          sql`${currentSlaState('"job"')} in (${sql.join(
+            f.sla.map((v) => sql`${v}`),
+            sql`, `,
+          )})`,
+        );
+      }
       const tz = sql`(select o.timezone from organization o where o.id = ${orgId})`;
       const dateCol =
         f.date_field === "created"

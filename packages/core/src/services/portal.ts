@@ -14,6 +14,7 @@ import { normalizeEmail } from "../domain/contact";
 import { localDateOf, shiftDate, zonedInstant } from "../domain/availability";
 import { ConflictError, NotFoundError, ValidationError } from "../domain/errors";
 import { notify, usersWithRoles } from "./notify";
+import { slaForNewJob } from "./sla";
 import { parseInput } from "./validate";
 import type {
   PortalActor,
@@ -398,6 +399,8 @@ export async function createPortalRequest(
     needsReview: true,
     aiStatus: org.settings.ai.enabled ? "pending" : "skipped",
     createdBy: null,
+    // SLA deadlines start when the request arrives (SLA-02), like any other new job.
+    ...(await slaForNewJob(ctx, "normal")),
   });
   await store.jobs.addEvent({
     jobId: job.id,
