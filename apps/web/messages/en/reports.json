@@ -1,1 +1,76 @@
-{}
+{
+  "title": "Service report",
+  "none": "Write the report for the customer now that the job is done.",
+  "start": "Start the report",
+  "started": "Report started",
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent"
+  },
+  "ai": {
+    "badge": "AI draft",
+    "badgeEdited": "AI draft, edited",
+    "drafting": "The AI is drafting the report from the checklist, the notes for the customer and the photos.",
+    "draftingHint": "Prefilled from the checklist for now. The AI draft replaces it unless you edit it first.",
+    "drafted": "Drafted by AI from the checklist, the notes for the customer and the photos. Check it before sending.",
+    "failed": "The AI draft didn't work. The report is prefilled from the checklist and the notes for the customer.",
+    "prefilled": "Prefilled from the checklist and the notes for the customer."
+  },
+  "sentTo": "Sent to {to} on {date}.",
+  "changedSinceSent": "Changed since it was sent on {date}. Send it again to share the changes.",
+  "fields": {
+    "workPerformed": "Work performed",
+    "findings": "Findings",
+    "recommendations": "Recommendations",
+    "nextServiceDate": "Next service date",
+    "locale": "Language"
+  },
+  "locales": {
+    "en": "English",
+    "id": "Bahasa Indonesia"
+  },
+  "save": "Save report",
+  "saved": "Report saved",
+  "saveFirst": "Save your changes before sending or previewing the PDF.",
+  "editingSent": "This report was sent. Saving takes it back to draft until you send it again.",
+  "draftWithAi": "Draft with AI",
+  "regenerate": "Regenerate",
+  "drafted": "AI draft ready",
+  "refused": "The AI declined to draft this report. Write it by hand.",
+  "draftFailed": "The AI draft didn't work. Try again or write it by hand.",
+  "redraftTitle": "Replace the report text?",
+  "redraftDescription": "A new AI draft replaces the current text, including your changes.",
+  "preview": "Preview PDF",
+  "download": "Download PDF",
+  "send": "Send to customer",
+  "sendAgain": "Send again",
+  "sendTitle": "Send the report",
+  "sendDescription": "The customer gets an email with a link to download the PDF. The link works for 30 days without signing in.",
+  "recipient": "Recipient",
+  "noContacts": "None of the customer's contacts has an email address. Add one on the customer's page first.",
+  "sendConfirm": "Send",
+  "sentToast": "Report sent to {to}",
+  "cancel": "Cancel",
+  "timeline": {
+    "sent": "sent the service report to {to}"
+  },
+  "portal": {
+    "title": "Service report",
+    "sent": "Sent {date}",
+    "download": "Download PDF"
+  },
+  "share": {
+    "invalid": {
+      "title": "This link doesn't work",
+      "body": "The link to the service report is incomplete or no longer valid. Ask the business that sent it for a new one."
+    },
+    "expired": {
+      "title": "This link has expired",
+      "body": "Links to service reports work for 30 days. Ask the business that sent it for a new one, or download it from the customer portal."
+    },
+    "updating": {
+      "title": "This report is being updated",
+      "body": "The business is changing this service report. You'll get a new link when it's sent again."
+    }
+  }
+}

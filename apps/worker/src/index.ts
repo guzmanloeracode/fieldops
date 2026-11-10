@@ -2,6 +2,7 @@ import { createDb, releaseStuckAiDrafts, runMigrations, schema } from "@fieldops
 import { count } from "drizzle-orm";
 import { PgBoss } from "pg-boss";
 import { draftPending, intakeModel } from "./ai";
+import { draftPendingReports, releaseStuckReportDrafts } from "./reports";
 import { resetDemo } from "./demo";
 import { drainOutbox, releaseStuck } from "./email";
 import { env } from "./env";
@@ -90,13 +91,19 @@ async function run() {
       await new Promise((r) => setTimeout(r, 5_000));
     }
   };
-  // AI drafts for portal requests (AI-01): a short poll like the outbox; a slow model only delays this loop.
+  // AI drafts for portal requests (AI-01) and service reports (AI-03): a short poll like the outbox; a slow model
+  // only delays this loop.
   const aiLoop = async () => {
     let ticks = 0;
     while (!stopping) {
       try {
-        if (ticks++ % 20 === 0) await releaseStuckAiDrafts(db);
+        if (ticks++ % 20 === 0) {
+          await releaseStuckAiDrafts(db);
+          await releaseStuckReportDrafts(db);
+        }
         await draftPending(db);
+        // Service reports of completed jobs (AI-03).
+        await draftPendingReports(db);
       } catch (err) {
         log.error({ err }, "ai loop failed");
       }

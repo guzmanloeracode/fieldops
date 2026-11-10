@@ -272,7 +272,7 @@ describe("demo seed", () => {
     expect(c.calls).toBeGreaterThan(20);
     expect(c.ai_jobs).toBeGreaterThan(0);
     const drafts = await first.owner.execute<{ output: unknown }>(
-      sql`select output from ai_interaction where output is not null`,
+      sql`select output from ai_interaction where output is not null and feature = 'intake'`,
     );
     for (const d of drafts.rows) expect(intakeDraftSchema.safeParse(d.output).success).toBe(true);
   });
@@ -299,6 +299,59 @@ describe("demo seed", () => {
     expect(tom.get("job_assigned")).toBeDefined();
     expect(r.rows.every((x) => x.future === 0 && x.old === 0)).toBe(true);
     expect(r.rows.reduce((n, x) => n + x.unread, 0)).toBeGreaterThan(0);
+  });
+
+  it("writes service reports for recent completed jobs, sent ones with their event (AI-03)", async () => {
+    const summary = (db: Database) =>
+      db
+        .execute<{ row: string }>(
+          sql`select concat_ws('|', o.slug, j.number, r.status, r.locale, r.ai_status, r.ai_drafted,
+              r.edited_by is not null, r.next_service_date, r.sent_at, r.work_performed) as row
+            from service_report r join job j on j.id = r.job_id join organization o on o.id = r.organization_id
+            order by o.slug, j.number`,
+        )
+        .then((r) => r.rows.map((x) => x.row));
+    const [a, b] = await Promise.all([summary(first.owner), summary(second.owner)]);
+    expect(a).toEqual(b);
+    const r = await first.owner.execute<{
+      slug: string;
+      reports: number;
+      sent: number;
+      drafts: number;
+      ai: number;
+      edited: number;
+      locales: string;
+      events: number;
+      bad_jobs: number;
+      outcomes: string;
+    }>(sql`select o.slug,
+        count(r.id)::int as reports,
+        count(r.id) filter (where r.status = 'sent')::int as sent,
+        count(r.id) filter (where r.status = 'draft')::int as drafts,
+        count(r.id) filter (where r.ai_drafted)::int as ai,
+        count(r.id) filter (where r.edited_by is not null)::int as edited,
+        string_agg(distinct r.locale, ',') as locales,
+        (select count(*)::int from job_event e where e.organization_id = o.id and e.type = 'report_sent') as events,
+        count(r.id) filter (where j.status <> 'completed' or r.work_performed is null
+          or (r.status = 'sent' and (r.sent_to is null or r.sent_at < j.completed_at or r.sent_at > ${NOW}))) as bad_jobs,
+        (select string_agg(distinct i.outcome, ',' order by i.outcome) from ai_interaction i
+          where i.organization_id = o.id and i.feature = 'report') as outcomes
+      from organization o join service_report r on r.organization_id = o.id join job j on j.id = r.job_id
+      group by o.id, o.slug order by o.slug`);
+    expect(r.rows.map((x) => [x.slug, x.locales])).toEqual([
+      ["acme-air", "en"],
+      ["acme-teknik", "id"],
+    ]);
+    for (const x of r.rows) {
+      expect(x.reports).toBeGreaterThan(5);
+      expect(x.sent).toBeGreaterThan(x.drafts);
+      expect(x.drafts).toBeGreaterThan(0);
+      expect(x.ai).toBeGreaterThan(x.reports / 2);
+      expect(x.edited).toBeGreaterThan(0);
+      expect(x.events).toBe(x.sent);
+      expect(Number(x.bad_jobs)).toBe(0);
+      expect(x.outcomes).toContain("accepted");
+    }
   });
 
   it("wipes everything before a reset", async () => {

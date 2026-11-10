@@ -43,6 +43,7 @@ export async function Timeline({
   const ta = await getTranslations("ai.timeline");
   // Maintenance plans (JOB-13) and the SLA pause (SLA-04).
   const tr = await getTranslations("recurrences");
+  const trReport = await getTranslations("reports.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
@@ -111,6 +112,8 @@ export async function Timeline({
         if (!e.payload.confirmed) return ta("applied", { fields });
         return applied.length ? ta("confirmedApplied", { fields }) : ta("confirmed");
       }
+      case "report_sent":
+        return trReport("sent", { to: String(e.payload.to ?? "") });
       default:
         return e.type;
     }

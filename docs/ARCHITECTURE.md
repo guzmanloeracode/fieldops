@@ -46,8 +46,10 @@ skeleton must not wrap the detail pages next to them.
 - **`packages/db`**: Drizzle schema, migrations (`drizzle/`), RLS policies, the `Store` implementation, the demo
   seed and the migration runner.
 - **`packages/email`**: React Email templates rendered by the web app and the worker into the outbox.
-- **`packages/ai`**: the intake model (Claude through the official SDK, and a test double), its prompt and the
-  evaluation set (`pnpm eval:intake`).
+- **`packages/ai`**: the intake and service report models (Claude through the official SDK, and test doubles),
+  their prompts and the evaluation set (`pnpm eval:intake`).
+- **`packages/documents`**: branded PDFs for quotes, invoices and service reports from plain view models, with
+  labels in English and Bahasa Indonesia.
 
 ## Audit log and live updates
 
@@ -72,6 +74,15 @@ AI intake runs behind the `IntakeModel` port (`packages/ai`): Claude when `ANTHR
 deterministic test double for E2E (`AI_PROVIDER=fixture`), otherwise "not configured". A draft is two short
 transactions with the model call between them, so no transaction waits on the model. Portal requests are drafted
 by the worker, which claims them like outbox rows. Rate limits are fixed-window counters in `rate_limit`.
+
+Service reports (AI-03) follow the same pattern. Completing a job creates its report in the customer's language,
+prefilled from the checklist, the notes marked for the customer and the parts used; with AI on it is `pending`,
+and the worker claims and drafts it (`drafting`, released after 10 minutes if the worker stops). A draft only
+replaces text nobody has edited since it was read. The writer sees notes for the customer only, never internal
+notes. PDFs (`packages/documents`, `@react-pdf/renderer` with an embedded Inter subset) are rendered after the data
+transaction, never inside it. Sending emails the customer a link to `/share/reports/<token>`: an HMAC-signed token
+(organization, report, expiry after 30 days) that needs no sign-in and serves the PDF only while the report is
+`sent`; editing a sent report or completing the job again takes it back to draft until someone sends it again.
 
 ## Customer portal
 

@@ -78,7 +78,7 @@ export interface InvoiceDocument extends DocumentBase {
 export interface ReportPhoto {
   tag: "before" | "after" | null;
   caption: string | null;
-  /** JPEG or PNG bytes, already downsized by the caller. */
+  /** JPEG or PNG bytes; other formats are skipped. At most MAX_REPORT_PHOTOS are printed. */
   image: Uint8Array;
 }
 
@@ -87,14 +87,15 @@ export interface ServiceReportDocument extends DocumentBase {
   title: string;
   customer: DocumentParty;
   site: DocumentParty;
-  /** When the job was completed, formatted in the organization's time zone and the report's language. */
+  /** YYYY-MM-DD: the day the job was completed, in the organization's time zone. */
   completedOn: string;
   technicians: string[];
   workPerformed: string;
   findings: string | null;
   recommendations: string | null;
   nextServiceDate: string | null;
-  checklist: { label: string; value: string }[];
+  /** Checklist results: `value` is the reading or text already formatted ("12.5 °C"), null for a checkbox. */
+  checklist: { label: string; value: string | null; done: boolean }[];
   partsUsed: { description: string; quantity: number; unit: string | null }[];
   photos: ReportPhoto[];
   signature: { name: string | null; image: Uint8Array } | null;

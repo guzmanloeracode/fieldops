@@ -6,14 +6,17 @@ export function Layout({
   title,
   children,
   footer,
+  lang = "en",
 }: {
   preview: string;
   title: string;
   children: ReactNode;
   footer?: string;
+  /** Language of the email's text. */
+  lang?: string;
 }) {
   return (
-    <Html lang="en">
+    <Html lang={lang}>
       <Head />
       <Preview>{preview}</Preview>
       <Body

@@ -58,6 +58,7 @@ import { z } from "zod";
 import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponsesObject } from "zod-openapi";
 import { env } from "@/env";
 import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
+import { reportPaths } from "./openapi-reports";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
@@ -473,6 +474,7 @@ export function openApiDocument() {
           },
         }),
       },
+      ...reportPaths({ op, json, body, errors, jobId, idempotencyHeader }),
       "/notifications": {
         get: op("Notifications", "List my notifications", {
           operationId: "listNotifications",
