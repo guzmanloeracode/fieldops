@@ -3,11 +3,19 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.0 |
+| **Status** | Draft 1.1 · release 0.1 built and deployed |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
 | **Repositories** | `fieldops` (web + mobile), `relay` (backend service), `fieldops-site` (marketing site) |
+| **Implementation docs** | `docs/ARCHITECTURE.md`, `docs/RUNBOOK.md`, `docs/adr/` |
+
+### Revision history
+
+| Version | Date | Changes |
+|---|---|---|
+| 1.0 | 10 Nov 2026 | First draft. |
+| 1.1 | 10 Nov 2026 | Release 0.1 built. Recorded the decisions made while building it: pinned versions (§14.3), services behind repository interfaces (§14.2), OpenFreeMap as the default map style (§14.3), Redis deferred to 0.3 (§15.3), the on-server release script until the Actions deploy is approved (§15.4), backups blocked until R2 is enabled (§15.5), the server capacity check (§23), and new open questions (§23). |
 
 ## Contents
 
@@ -762,6 +770,8 @@ UI (React Server Components and client components)
 
 Server actions and API routes call the same services, so the web app, mobile app and API behave the same way. Business rules (the status machine, SLA calculation, permissions, pricing and tax) live in `packages/core` as plain, fully tested TypeScript with no framework dependencies.
 
+*As built (0.1):* services in `packages/core/services` depend on a `Store` interface (repositories bound to one organization and one transaction). `packages/db` implements it with Drizzle; unit tests use an in-memory store (ADR 013).
+
 ### 14.3 Stack
 
 | Area | Choice | Why |
@@ -781,13 +791,15 @@ Server actions and API routes call the same services, so the web app, mobile app
 | Email | Resend with React Email templates (Mailpit locally) | Good deliverability, templates as components |
 | Payments | Stripe Checkout, Billing and webhooks (test mode) | The payment platform clients ask for most |
 | AI | Claude API through `@anthropic-ai/sdk` | Structured outputs, tool use, streaming |
-| Maps | MapLibre GL with MapTiler tiles (free tier) | Open-source renderer, no lock-in |
+| Maps | MapLibre GL; OpenFreeMap style by default (no key), MapTiler optional through `NEXT_PUBLIC_MAP_STYLE_URL` | Open-source renderer, no lock-in, no key needed for the demo |
 | PDF | `@react-pdf/renderer` | PDFs built from React components |
 | Internationalization | next-intl | Translation for both server and client components |
 | Observability | Sentry, pino JSON logs, external uptime monitor | Errors, traces and alerts |
 | Testing | Vitest, Testing Library, Playwright, axe-core | Unit, integration, end-to-end and accessibility tests |
 | CI/CD | GitHub Actions, GHCR images, SSH deploy, release-please, Renovate | Repeatable builds and releases |
 | Mobile | Expo, Expo Router, TanStack Query, NativeWind, EAS | See [§10](#10-fieldops-mobile) |
+
+**Versions in use (release 0.1, November 2026):** Node 24 (images) / 22 (local), pnpm 10, Turborepo 2.11, Next.js 16.4, React 19.3, TypeScript 6.0 (7.0's native compiler isn't supported by Next.js tooling yet, ADR 012), Tailwind CSS 4.3, Better Auth 1.7, Drizzle ORM 0.45, Zod 4.6, zod-openapi 6, pg-boss 12, PostgreSQL 18, Vitest 5, Playwright 1.65, TanStack Table 8.
 
 ### 14.4 Repository layout
 
@@ -856,6 +868,8 @@ FieldOps runs on a self-managed Linux server, not on a serverless platform:
 
 DNS is managed in Cloudflare. Records are proxied for CDN, TLS at the edge and DDoS protection, with SSL mode *Full (strict)* and a valid certificate on the origin. Live updates send a heartbeat every 30 seconds so they stay under Cloudflare's idle timeout.
 
+*As built:* the `fieldops` A record is proxied. The zone's SSL mode stays *Full* for the other sites on it; a Cloudflare configuration rule sets *Full (strict)* for `fieldops.tinggalpake.com` only. The origin certificate is Let's Encrypt (certbot, nginx).
+
 ### 15.3 Production stack (Docker Compose)
 
 | Service | Image | Notes |
@@ -863,10 +877,13 @@ DNS is managed in Cloudflare. Records are proxied for CDN, TLS at the edge and D
 | `web` | `ghcr.io/<owner>/fieldops-web:<version>` | Next.js standalone, non-root user, health check on `/api/health` |
 | `worker` | `ghcr.io/<owner>/fieldops-worker:<version>` | pg-boss workers and cron schedules |
 | `postgres` | Official PostgreSQL image | Named volume. Not exposed outside the Docker network. |
-| `redis` | Official Redis image | Password-protected and internal only |
+| `redis` | Official Redis image | Password-protected and internal only. **Added in 0.3**, when rate limits and live updates need it; 0.1 runs without it to save memory on the shared server. |
+| `migrate` | Worker image, `migrate` command | One-shot container that runs the SQL migrations and sets the runtime role's password before `web` and `worker` start |
 | `relay`, `relay-worker` | From release 0.5 | See [§11](#11-relay-backend-service) |
 
 Only the reverse proxy listens on ports 80 and 443. Every other service is reachable only on the internal Docker network. The proxy setup follows whatever the server already uses (nginx, Caddy or Traefik), and the FieldOps site config lives in `infra/proxy/`.
+
+*As built:* nginx on the host proxies to the web container on `127.0.0.1:8097`. Memory limits: web 512 MB, worker 384 MB, postgres 384 MB. The web app connects as `fieldops_app` (row-level security enforced); the worker and `migrate` use the owner role.
 
 ### 15.4 Deployment pipeline
 
@@ -878,11 +895,13 @@ Only the reverse proxy listens on ports 80 and 443. Every other service is reach
 
 The target downtime per deploy is under 10 seconds. The demo's banner shows the running version and commit.
 
+*Interim (until the owner approves the Actions deploy):* releases run on the server with `infra/deploy/release.sh`. It builds both images from `git archive HEAD`, tags the running images for rollback first (the server's containerd image store drops an image as soon as its tag moves), runs `migrate`, restarts `web` and `worker`, waits for `/api/health` to report the new commit, checks the public URL and rolls back automatically on failure. Switching to steps 2–4 above needs a `deploy` user, an SSH key stored as a GitHub secret, and GHCR images; see §23.
+
 ### 15.5 Operations
 
 | Topic | Practice |
 |---|---|
-| Backups | Nightly `pg_dump` to Cloudflare R2, kept 14 days. Restores are tested every quarter and documented in `RUNBOOK.md`. |
+| Backups | Nightly `pg_dump` to Cloudflare R2, kept 14 days. Restores are tested every quarter and documented in `RUNBOOK.md`. *Blocked until R2 is enabled on the Cloudflare account (§23); the demo database is rebuilt from the seed every night, so nothing is lost meanwhile.* |
 | Monitoring | An external uptime check on `/api/health` every minute, Sentry alerts, and disk and memory alerts. |
 | Logs | JSON logs with rotation (Docker `local` driver, capped size). |
 | Server hardening | SSH keys only, a non-root deploy user, a firewall that allows only ports 22, 80 and 443, fail2ban and automatic security updates. Changes to an existing server are agreed with its owner first. |
@@ -1051,6 +1070,8 @@ Each delivery carries a `FieldOps-Signature: t=<unix>,v1=<hex HMAC-SHA256>` head
 
 **Coverage thresholds:** `packages/core` ≥ 90% of lines, the whole repository ≥ 70%.
 
+*Status at 0.1:* `packages/core` has 258 unit tests at 100% line coverage (services run against an in-memory store). `packages/db` has 74 integration tests against PostgreSQL 18 in Testcontainers, including a guard that fails CI when a tenant table lacks row-level security.
+
 ### 18.2 Continuous integration
 
 On every pull request:
@@ -1121,7 +1142,7 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 | Release | Theme | Scope | Target |
 |---|---|---|---|
-| **0.1** Core | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
+| **0.1** Core ✅ built and deployed 10 Nov 2026 (repository not yet public, see §23) | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
 | **0.2** Dispatch | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
 | **0.3** Automate | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes) | 2 weeks |
 | **0.4** Get paid | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
@@ -1177,10 +1198,14 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 | 1 | Final product name | FieldOps (working title) |
 | 2 | Domain for FieldOps Site: a subdomain of tinggalpake.com or a dedicated domain? | Decide before the Site release |
 | 3 | Model per AI feature: keep Claude Opus 5.5 everywhere, or use a cheaper model such as Claude Haiku 5.5 ($0.10 / $0.50 per million tokens) for intake once evaluations show quality holds? | Claude Opus 5.5 everywhere |
-| 4 | Server capacity: are CPU, memory and disk enough for FieldOps, Relay and the site next to existing services? | Check before 0.1 |
+| 4 | Server capacity: are CPU, memory and disk enough for FieldOps, Relay and the site next to existing services? | **Checked 10 Nov 2026:** 4 vCPU, 7.8 GB RAM with about 4 GB free, no swap, 22 GB free disk. FieldOps runs within ~1.3 GB of limits. Risk: a Next.js build next to a dev server triggered the OOM killer once (no production service was hit). Builds now cap the Node heap; adding a 4 GB swap file is recommended (owner's decision, it affects every service on the server). |
 | 5 | Apple Developer account for TestFlight, or Android plus video only? | Android plus video |
 | 6 | License: MIT, or AGPL to discourage closed forks? | MIT |
 | 7 | WhatsApp Business integration, which is valuable in the Indonesian market? | Backlog |
+| 8 | Enable Cloudflare R2 on the account (dashboard only; it asks for a payment method even on the free tier). Needed for attachments and backups. | Uploads are off in the demo until enabled; the bucket `fieldops-demo` and its CORS rules are scripted and ready. |
+| 9 | GitHub account and visibility for the public repositories (P1 requires them public). | Repository stays private until the owner confirms the account and the switch to public. |
+| 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | On-server release script (§15.4) |
+| 11 | Real email for non-demo sign-ups: Resend account and a sending domain (SPF/DKIM)? | Demo mode captures every email, so none is needed for the demo |
 
 ---
 
