@@ -87,7 +87,14 @@ export function aiRepo(tx: Tx, orgId: string): AiRepo {
       const [r] = await tx
         .select()
         .from(aiInteraction)
-        .where(and(scope, eq(aiInteraction.jobId, jobId), isNotNull(aiInteraction.output)))
+        .where(
+          and(
+            scope,
+            eq(aiInteraction.jobId, jobId),
+            eq(aiInteraction.feature, "intake"),
+            isNotNull(aiInteraction.output),
+          ),
+        )
         .orderBy(desc(aiInteraction.createdAt), desc(aiInteraction.id))
         .limit(1);
       return r ? toRecord(r) : null;

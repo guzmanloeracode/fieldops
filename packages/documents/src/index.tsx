@@ -1,72 +1,33 @@
-import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import { renderToBuffer } from "@react-pdf/renderer";
+import type { ReactElement } from "react";
+import { InvoicePdf, QuotePdf } from "./billing";
+import { ServiceReportPdf } from "./report";
+import { registerFonts } from "./theme";
 import type { InvoiceDocument, QuoteDocument, ServiceReportDocument } from "./types";
 
 export * from "./types";
+export { documentLabels, formatAmount, formatDate, type DocumentLabels } from "./labels";
+export { MAX_REPORT_PHOTOS } from "./report";
 
-// Branded PDFs for quotes, invoices and service reports (FIN-04). This first version is a plain layout so the
-// billing pages can link real files; the documents slice replaces it with the branded templates.
+// Branded PDFs for quotes, invoices and service reports (FIN-04). Callers build the view models in types.ts from
+// their records; the renderers never touch the database. Labels follow the document's language (en or id), the
+// letterhead uses the organization's logo or a monogram in its brand color, and long tables continue on the next
+// page under a repeated header.
 
-const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 10, fontFamily: "Helvetica" },
-  title: { fontSize: 18, marginBottom: 12 },
-  row: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
-});
-
-function Plain({ title, rows }: { title: string; rows: [string, string][] }) {
-  return (
-    <Document title={title}>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>{title}</Text>
-        {rows.map(([k, v], i) => (
-          <View key={i} style={styles.row}>
-            <Text>{k}</Text>
-            <Text>{v}</Text>
-          </View>
-        ))}
-      </Page>
-    </Document>
-  );
-}
-
-const money = (minor: number) => (minor / 100).toFixed(2);
-
-async function toBytes(el: React.ReactElement<React.ComponentProps<typeof Document>>): Promise<Uint8Array> {
-  return new Uint8Array(await renderToBuffer(el));
+async function render(element: ReactElement): Promise<Uint8Array> {
+  registerFonts();
+  // renderToBuffer is typed for <Document> elements; each layout returns one.
+  return new Uint8Array(await renderToBuffer(element as Parameters<typeof renderToBuffer>[0]));
 }
 
 export function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
-  return toBytes(
-    <Plain
-      title={`${doc.brand.name} · ${doc.number}`}
-      rows={[
-        ...doc.lines.map((l): [string, string] => [l.description, money(l.netMinor)]),
-        ["Total", `${doc.currency} ${money(doc.totals.totalMinor)}`],
-      ]}
-    />,
-  );
+  return render(<QuotePdf doc={doc} />);
 }
 
 export function renderInvoicePdf(doc: InvoiceDocument): Promise<Uint8Array> {
-  return toBytes(
-    <Plain
-      title={`${doc.brand.name} · ${doc.number}`}
-      rows={[
-        ...doc.lines.map((l): [string, string] => [l.description, money(l.netMinor)]),
-        ["Total", `${doc.currency} ${money(doc.totals.totalMinor)}`],
-        ["Balance", `${doc.currency} ${money(doc.totals.balanceMinor)}`],
-      ]}
-    />,
-  );
+  return render(<InvoicePdf doc={doc} />);
 }
 
 export function renderServiceReportPdf(doc: ServiceReportDocument): Promise<Uint8Array> {
-  return toBytes(
-    <Plain
-      title={`${doc.brand.name} · ${doc.jobNumber}`}
-      rows={[
-        ["Work performed", doc.workPerformed],
-        ["Completed", doc.completedOn],
-      ]}
-    />,
-  );
+  return render(<ServiceReportPdf doc={doc} />);
 }

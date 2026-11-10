@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { api, json, storageState } from "./fixtures";
+import { completedJobForJamie, sendReportToJamie } from "./report-helpers";
 
 // WCAG 2.2 AA checks on the key pages (PRD §13, §18.1): no serious or critical violations.
 async function audit(page: Page, path: string) {
@@ -100,6 +101,11 @@ test.describe("app pages as owner", () => {
     test(`axe: ${path}`, async ({ page }) => audit(page, path));
   }
   test("axe: job detail", async ({ page }) => audit(page, `/jobs/${jobNumber}`));
+  test("axe: job detail with its service report (AI-03)", async ({ page }) => {
+    const job = await completedJobForJamie(`E2E a11y report ${Date.now()}`);
+    await audit(page, `/jobs/${job.number}`);
+    await expect(page.getByTestId("service-report")).toBeVisible();
+  });
   test("axe: customer detail", async ({ page }) => audit(page, `/customers/${customerId}`));
   test("axe: equipment detail", async ({ page }) => {
     const client = await api("owner");
@@ -121,6 +127,59 @@ test.describe("app pages as owner", () => {
     const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
     expect(blocking.map((v) => v.id)).toEqual([]);
   });
+  test("axe: Ask FieldOps panel", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+    await page.keyboard.press("ControlOrMeta+j");
+    const panel = page.getByTestId("assistant-panel");
+    await expect(panel).toBeVisible();
+    await expect(
+      panel.getByTestId("assistant-starter").first().or(panel.getByTestId("assistant-unavailable")),
+    ).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[data-testid=assistant-panel]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+  });
+});
+
+test.describe("billing pages as owner (FIN)", () => {
+  test.use({ storageState: storageState("owner") });
+  for (const path of [
+    "/quotes",
+    "/quotes/new",
+    "/invoices",
+    "/invoices?status=overdue",
+    "/invoices/new",
+    "/settings/catalog",
+    "/settings/billing",
+  ]) {
+    test(`axe: ${path}`, async ({ page }) => audit(page, path));
+  }
+  const first = async <T>(path: string) => {
+    const client = await api("owner");
+    const page = await json<{ data: T[] }>(await client.get(path));
+    await client.dispose();
+    return page.data[0];
+  };
+  test("axe: sent quote", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=sent");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: draft quote with the line editor", async ({ page }) => {
+    const q = await first<{ number: string }>("/api/v1/quotes?limit=1&status=draft");
+    await audit(page, `/quotes/${q!.number}`);
+  });
+  test("axe: overdue invoice", async ({ page }) => {
+    const i = await first<{ id: string }>("/api/v1/invoices?limit=1&status=overdue");
+    await audit(page, `/invoices/${i!.id}`);
+  });
+  test("axe: new invoice for a completed job", async ({ page }) => {
+    const j = await first<{ number: string }>("/api/v1/jobs?limit=1&status=completed");
+    await audit(page, `/invoices/new?job=${j!.number}`);
+  });
 });
 
 test.describe("customer portal", () => {
@@ -133,6 +192,19 @@ test.describe("customer portal", () => {
     await audit(page, "/portal/acme-air/request");
     await audit(page, href!);
   });
+});
+
+test.describe("service report for customers (POR-04)", () => {
+  test("axe: portal job with a service report", async ({ page }) => {
+    const job = await completedJobForJamie(`E2E a11y portal report ${Date.now()}`);
+    await sendReportToJamie(job.id);
+    await page.goto("/portal/acme-air/sign-in");
+    await page.getByTestId("portal-demo-sign-in").click();
+    await expect(page).toHaveURL(/\/portal\/acme-air$/);
+    await audit(page, `/portal/acme-air/jobs/${job.number}`);
+    await expect(page.getByTestId("portal-report")).toBeVisible();
+  });
+  test("axe: an invalid report link", async ({ page }) => audit(page, "/share/reports/not.valid"));
 });
 
 test.describe("technician home", () => {
@@ -194,5 +266,39 @@ test.describe("loading skeletons", () => {
     release();
     await expect(page.getByRole("heading", { name: "Customers", level: 1 })).toBeVisible();
     await expect(skeleton).toHaveCount(0);
+  });
+});
+
+test.describe("maintenance plans and the SLA pause (JOB-13, SLA-04)", () => {
+  test.use({ storageState: storageState("owner") });
+
+  test("axe: customer with plans, and the plan dialog", async ({ page }) => {
+    const client = await api("owner");
+    const plans = await json<{ data: { customer: { id: string } }[] }>(
+      await client.get("/api/v1/recurrences?limit=1&active=true"),
+    );
+    await client.dispose();
+    await audit(page, `/customers/${plans.data[0]!.customer.id}`);
+    await page.getByTestId("plan-add").click();
+    await expect(page.getByTestId("plan-preview")).toBeVisible();
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .include("[role=dialog]")
+      .analyze();
+    const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    expect(blocking.map((v) => v.id)).toEqual([]);
+  });
+
+  test("axe: a recurring job and a paused SLA", async ({ page }) => {
+    const client = await api("owner");
+    type Row = { number: string; recurrence_id: string | null; sla_paused_at: string | null };
+    const fresh = await json<{ data: Row[] }>(
+      await client.get("/api/v1/jobs?limit=100&status=new&sort=-created_at"),
+    );
+    const held = await json<{ data: Row[] }>(await client.get("/api/v1/jobs?limit=100&status=on_hold"));
+    await client.dispose();
+    await audit(page, `/jobs/${fresh.data.find((j) => j.recurrence_id)!.number}`);
+    const paused = held.data.find((j) => j.sla_paused_at);
+    if (paused) await audit(page, `/jobs/${paused.number}`);
   });
 });

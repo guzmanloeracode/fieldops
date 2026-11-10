@@ -15,6 +15,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { SlaBadge } from "@/components/app/sla-badge";
+import { RecurringBadge } from "@/components/app/recurring-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -44,8 +45,10 @@ export interface JobRow {
   scheduledEnd: string | null;
   createdAt: string;
   needsReview: boolean;
-  /** The current SLA when it needs attention (at risk or breached), with a tooltip; null otherwise. */
-  sla?: { state: "at_risk" | "breached"; title: string } | null;
+  /** The current SLA when it needs attention (at risk or breached) or is paused, with a tooltip; null otherwise. */
+  sla?: { state: "at_risk" | "breached" | "paused"; title: string } | null;
+  /** Created by a maintenance plan (JOB-13): the plan's link for office roles and a tooltip. */
+  recurring?: { href: string | null; title: string } | null;
 }
 
 const SORTABLE: Record<string, string> = {
@@ -166,6 +169,14 @@ export function JobsTable({
               <span className="truncate">
                 {row.original.customer} · {row.original.city}
               </span>
+              {row.original.recurring ? (
+                // Kept clear of the title link above, so both stay easy to tap (WCAG 2.5.8).
+                <RecurringBadge
+                  href={row.original.recurring.href}
+                  title={row.original.recurring.title}
+                  className="mt-1"
+                />
+              ) : null}
               {row.original.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
                   <Inbox className="size-3" aria-hidden /> {t("needsReview")}

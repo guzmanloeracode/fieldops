@@ -7,6 +7,7 @@ import { formatDateTime, formatWindow } from "@/lib/format";
 import { getPortalOrg } from "@/server/portal/session";
 import { PortalStatus } from "../../status";
 import { loadPortalJob } from "./load";
+import { PortalReportCard } from "./report-card";
 
 /** One job as the customer sees it (POR-03): status, visit, technician's first name, request and history. */
 export default async function PortalJobPage({
@@ -70,6 +71,7 @@ export default async function PortalJobPage({
           </div>
         </CardContent>
       </Card>
+      <PortalReportCard slug={slug} number={j.number} timeZone={tz} />
       {j.description || d.requestedWindows.length || d.photos.length ? (
         <Card>
           <CardHeader>

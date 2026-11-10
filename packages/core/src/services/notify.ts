@@ -30,7 +30,8 @@ export async function notify(
   const stored = new Map(
     (await deps.store.notifications.preferences(recipients, input.event)).map((p) => [p.userId, p]),
   );
-  const inApp = recipients.filter((id) => stored.get(id)?.inApp ?? defaults.inApp);
+  const inApp =
+    defaults.inApp === null ? [] : recipients.filter((id) => stored.get(id)?.inApp ?? defaults.inApp);
   if (inApp.length > 0) {
     await deps.store.notifications.create(
       inApp.map((userId) => ({ userId, type: input.event, payload: input.payload })),

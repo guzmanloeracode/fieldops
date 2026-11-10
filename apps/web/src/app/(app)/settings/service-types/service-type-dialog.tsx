@@ -11,6 +11,8 @@ import { ChecklistTemplateEditor, SkillsEditor } from "./template-editor";
 import { toast } from "sonner";
 import { z } from "zod";
 import { FieldError } from "@/components/app/field-error";
+import { NativeSelect } from "@/components/app/native-select";
+import { percent } from "@/components/billing/money";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,16 +47,21 @@ export interface ServiceTypeValues {
   currency: Currency;
   requiredSkills: string[];
   checklistTemplate: ChecklistTemplateItem[];
+  /** Null uses the organization's default rate (FIN-01). */
+  taxRateBps: number | null;
 }
 
 export function ServiceTypeDialog({
   currency,
+  taxRates,
   serviceType,
 }: {
   currency: Currency;
+  taxRates: { name: string; rate_bps: number; default: boolean }[];
   serviceType?: ServiceTypeValues;
 }) {
   const t = useTranslations("settings.serviceTypes");
+  const tb = useTranslations("billing.serviceType");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -69,6 +76,7 @@ export function ServiceTypeDialog({
         active: serviceType.active,
         required_skills: serviceType.requiredSkills,
         checklist_template: serviceType.checklistTemplate.map((i) => ({ ...i, unit: i.unit ?? "" })),
+        tax_rate_bps: serviceType.taxRateBps,
       }
     : {
         name: "",
@@ -79,6 +87,7 @@ export function ServiceTypeDialog({
         active: true,
         required_skills: [],
         checklist_template: [],
+        tax_rate_bps: null,
       };
   const form = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(formSchema(t)),
@@ -166,6 +175,31 @@ export function ServiceTypeDialog({
               />
               <FieldError message={errors.price?.message} />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`${idp}-tax`}>{tb("tax")}</Label>
+            <NativeSelect
+              id={`${idp}-tax`}
+              className="sm:max-w-72"
+              value={form.watch("tax_rate_bps") == null ? "" : String(form.watch("tax_rate_bps"))}
+              aria-describedby={`${idp}-tax-hint`}
+              onChange={(e) =>
+                form.setValue("tax_rate_bps", e.target.value === "" ? null : Number(e.target.value), {
+                  shouldDirty: true,
+                })
+              }
+            >
+              <option value="">{tb("defaultRate")}</option>
+              {taxRates.map((r) => (
+                <option key={`${r.name}-${r.rate_bps}`} value={r.rate_bps}>
+                  {r.name} ({percent(r.rate_bps)})
+                </option>
+              ))}
+            </NativeSelect>
+            <p id={`${idp}-tax-hint`} className="text-muted-foreground text-xs">
+              {tb("taxHint")}
+            </p>
+            <FieldError message={errors.tax_rate_bps?.message} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">

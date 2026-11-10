@@ -147,10 +147,14 @@ export const NOTIFICATION_EVENTS = [
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number];
 
 /**
- * Default channels per event, from the notification matrix. `email: null` means the event has no email
- * (the channel isn't offered in the preferences either). Users change the rest per event (NOT-03).
+ * Default channels per event, from the notification matrix. `null` means the event has no such channel (it
+ * isn't offered in the preferences either): `email: null` is in-app only, `inApp: null` email only. Users
+ * change the rest per event (NOT-03).
  */
-export const NOTIFICATION_DEFAULTS: Record<NotificationEvent, { inApp: boolean; email: boolean | null }> = {
+export const NOTIFICATION_DEFAULTS: Record<
+  NotificationEvent,
+  { inApp: boolean | null; email: boolean | null }
+> = {
   job_assigned: { inApp: true, email: true },
   job_rescheduled: { inApp: true, email: true },
   portal_request: { inApp: true, email: true },
@@ -160,7 +164,8 @@ export const NOTIFICATION_DEFAULTS: Record<NotificationEvent, { inApp: boolean; 
   expense_decided: { inApp: true, email: null },
   quote_decided: { inApp: true, email: true },
   payment_received: { inApp: true, email: true },
-  daily_digest: { inApp: false, email: true },
+  // Email only; owners by default, admins who turn it on (NOT-04, see digestByDefault).
+  daily_digest: { inApp: null, email: true },
 };
 
 /**

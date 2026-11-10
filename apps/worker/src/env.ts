@@ -33,5 +33,7 @@ export const env = {
     apiKey: process.env.ANTHROPIC_API_KEY || undefined,
     provider: process.env.AI_PROVIDER || undefined,
     intakeModel: process.env.AI_MODEL_INTAKE || undefined,
+    /** Service report drafts (AI-03). */
+    reportModel: process.env.AI_MODEL_REPORT || undefined,
   },
 };

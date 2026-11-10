@@ -17,6 +17,7 @@ import { assertCan, seesOnlyAssigned } from "../domain/permissions";
 import { assertValidWindow } from "../domain/schedule";
 import * as checklist from "./checklist";
 import * as notifications from "./notifications";
+import * as reports from "./reports";
 import { getJob, isAssigned } from "./job-access";
 import * as signatures from "./signature";
 import * as sla from "./sla";
@@ -203,9 +204,14 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       transition: rule.name,
       ...(input.reason ? { reason: input.reason } : {}),
       ...(input.hold_reason ? { hold_reason: input.hold_reason } : {}),
+      // SLA-04: the resolution clock stopped for the customer, or how long it was stopped.
+      ...sla.pauseEventPayload(job, patch),
     },
   });
-  return (await ctx.store.jobs.get(job.id))!;
+  const after = (await ctx.store.jobs.get(job.id))!;
+  // The customer's service report (AI-03) starts as a draft when the job is completed.
+  if (rule.name === "complete") await reports.onJobCompleted(ctx, after);
+  return after;
 }
 
 /**
@@ -269,6 +275,7 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
       lead_member_id: lead,
       scheduled_start: start?.toISOString() ?? null,
       scheduled_end: end?.toISOString() ?? null,
+      ...sla.pauseEventPayload(job, patch),
       ...(input.override_reason && conflicts.length
         ? {
             override_reason: input.override_reason,

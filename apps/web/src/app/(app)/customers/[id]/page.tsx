@@ -27,6 +27,8 @@ import { requireActor, runService } from "@/server/context";
 import { DeleteCustomerButton } from "./delete-customer-button";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { SiteDialog } from "./site-dialog";
+import { MaintenancePlans } from "./maintenance-plans";
+import { CustomerBilling } from "./billing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("common.pageTitle");
@@ -265,6 +267,15 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             </CardContent>
           </Card>
 
+          {can(actor, "recurrences.manage") ? (
+            <MaintenancePlans
+              actor={actor}
+              customerId={customer.id}
+              sites={sites}
+              equipment={data.equipment}
+            />
+          ) : null}
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle>{t("detail.recentJobs")}</CardTitle>
@@ -307,6 +318,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
               )}
             </CardContent>
           </Card>
+
+          <CustomerBilling customerId={customer.id} />
         </div>
 
         <div className="space-y-6">

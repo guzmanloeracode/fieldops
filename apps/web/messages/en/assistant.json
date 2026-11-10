@@ -1,1 +1,67 @@
-{}
+{
+  "title": "Ask FieldOps",
+  "open": "Ask FieldOps",
+  "close": "Close",
+  "description": "Answers questions about your organization's data. It only reads; it never changes anything.",
+  "intro": "Ask about jobs, SLAs, schedules, customers or approvals. Answers link to the records they mention.",
+  "conversation": "Conversation",
+  "newConversation": "New conversation",
+  "inputLabel": "Your question",
+  "placeholder": "Ask a question…",
+  "send": "Send",
+  "stop": "Stop",
+  "thinking": "Thinking…",
+  "loading": "Loading…",
+  "you": "You",
+  "aiLabel": "AI-generated from your records. Check the details before acting on them.",
+  "starters": {
+    "title": "Try asking",
+    "slaRisks": "Which jobs are at risk of breaching SLA today?",
+    "acJobs": "How many AC jobs did we complete last month compared with the month before?",
+    "capacity": "Who has capacity tomorrow afternoon?"
+  },
+  "history": {
+    "title": "Recent conversations",
+    "back": "Back to the conversation",
+    "empty": "No conversations in the last 30 days.",
+    "retention": "Conversations are private to you and deleted 30 days after their last message.",
+    "delete": "Delete “{title}”",
+    "deleted": "Deleted “{title}”",
+    "opened": "Opened “{title}”"
+  },
+  "tool": {
+    "label": "Lookups",
+    "failed": "A lookup failed",
+    "running": {
+      "search_jobs": "Searching jobs…",
+      "get_job": "Opening the job…",
+      "list_sla_risks": "Checking SLAs…",
+      "technician_workload": "Checking schedules…",
+      "revenue_summary": "Adding up revenue…",
+      "customer_history": "Looking up the customer…",
+      "pending_approvals": "Checking approvals…"
+    },
+    "done": {
+      "search_jobs": "{count, plural, =0 {Found no jobs} one {Looked up # job} other {Looked up # jobs}}",
+      "get_job": "Opened the job",
+      "list_sla_risks": "{count, plural, =0 {Checked SLAs: none at risk} one {Checked SLAs: # job at risk} other {Checked SLAs: # jobs at risk}}",
+      "technician_workload": "{count, plural, one {Checked # schedule} other {Checked # schedules}}",
+      "revenue_summary": "Added up invoices and payments",
+      "customer_history": "{count, plural, one {Looked up the customer} other {Found # customers}}",
+      "pending_approvals": "{count, plural, =0 {No requests waiting} one {Found # request waiting} other {Found # requests waiting}}"
+    }
+  },
+  "error": {
+    "refused": "Ask FieldOps can't help with that request.",
+    "failed": "Ask FieldOps couldn't answer. Try again in a moment.",
+    "network": "The connection was lost before the answer finished. Try again.",
+    "quota": "This month's AI quota is used up.",
+    "rateLimited": "Too many questions in a short time. Wait a little and try again.",
+    "disabled": "AI features are turned off for your organization. An owner or admin can turn them on in Settings → AI.",
+    "notConfigured": "AI isn't configured on this server.",
+    "notFound": "That conversation is no longer available. Start a new one.",
+    "invalid": "Questions can be up to 2,000 characters.",
+    "noAnswer": "No answer was saved for this question.",
+    "stopped": "Stopped before the answer finished."
+  }
+}

@@ -1,4 +1,4 @@
-import { can, dashboard, jobs, organization } from "@fieldops/core";
+import { can, dashboard, jobs, organization, revenue } from "@fieldops/core";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { requireActor, runService } from "@/server/context";
 import { OwnStats } from "./_components/own-stats";
 import { Overview } from "./_components/overview";
+import { Revenue } from "./_components/revenue";
 import { Today } from "./_components/today";
 import { LiveRefresh } from "@/components/app/live-refresh";
 
@@ -136,13 +137,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     service_type: one(sp.service_type) || undefined,
   };
   const preset = dashboard.parseDashboardQuery(raw).range;
-  const { overview, members, serviceTypes } = await runService(async (ctx) => {
-    const [overview, members, serviceTypes] = await Promise.all([
+  const financial = can(actor, "dashboard.financial");
+  const { overview, members, serviceTypes, money } = await runService(async (ctx) => {
+    const [overview, members, serviceTypes, money] = await Promise.all([
       dashboard.getOverview(ctx, raw),
       organization.listAssignableMembers(ctx),
       organization.listServiceTypes(ctx),
+      // Revenue for owners and admins (DSH-01, DSH-02, 0.4).
+      financial ? revenue.getRevenue(ctx, raw) : Promise.resolve(null),
     ]);
-    return { overview, members, serviceTypes };
+    return { overview, members, serviceTypes, money };
   }, actor);
   return (
     <div>
@@ -154,6 +158,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         technicians={members.filter((m) => m.role === "technician").map((m) => ({ id: m.id, name: m.name }))}
         serviceTypes={serviceTypes.map((s) => ({ id: s.id, name: s.name }))}
       />
+      {money ? (
+        <div className="pt-6">
+          <Revenue data={money} preset={preset} />
+        </div>
+      ) : null}
     </div>
   );
 }

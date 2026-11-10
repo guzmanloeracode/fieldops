@@ -21,9 +21,12 @@ import { AiReview } from "./ai-review";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
 import { JobExpenses } from "./expenses";
+import { JobBilling } from "./billing";
 import { Checklist } from "./checklist";
 import { JobMenu } from "./job-menu";
 import { Notes } from "./notes";
+import { JobRecurrence } from "./recurrence-badge";
+import { ServiceReport } from "./service-report";
 import { SignatureCard } from "./signature-card";
 import { SlaCard } from "./sla-card";
 import { SiteMap } from "./site-map";
@@ -128,6 +131,7 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                 <StatusBadge status={job.status} />
               </span>
               <PriorityBadge priority={job.priority} />
+              <JobRecurrence job={job} actor={actor} />
               {job.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
                   <Inbox className="size-3" aria-hidden /> {t("needsReview")}
@@ -239,6 +243,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             </CardContent>
           </Card>
 
+          <ServiceReport jobId={job.id} completed={job.status === "completed"} />
+
           <Checklist
             jobId={job.id}
             canEdit={canWork && open}
@@ -316,6 +322,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
           />
 
           <JobExpenses jobId={job.id} status={job.status} assigned={assigned} />
+
+          <JobBilling jobId={job.id} jobNumber={jobNumber} status={job.status} />
 
           <Timeline
             timeZone={tz}

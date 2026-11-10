@@ -22,6 +22,11 @@ export function describeNotification(
     actor: p.actor_name ?? t("fallback.actor"),
     item: p.item ?? t("fallback.item"),
     decision: p.decision ?? "approved",
+    // 0.4 billing events.
+    quote: p.quote_number ?? t("fallback.quote"),
+    invoice: p.invoice_number ?? t("fallback.invoice"),
+    customer: p.customer_name ?? t("fallback.customer"),
+    amount: p.amount ?? t("fallback.amount"),
   });
   const about = [p.job_title, p.customer_name].filter(Boolean).join(" · ");
   let when: string | null = null;

@@ -32,7 +32,9 @@
     "sla_at_risk": "SLA at risk: {job}",
     "sla_breached": "SLA breached: {job}",
     "expense_requested": "{actor} requested {item} on {job}",
-    "expense_decided": "{item} was {decision, select, approved {approved} other {rejected}} on {job}"
+    "expense_decided": "{item} was {decision, select, approved {approved} other {rejected}} on {job}",
+    "quote_decided": "{quote} was {decision, select, approved {approved} other {declined}} by {customer}",
+    "payment_received": "{customer} paid {amount} on {invoice}"
   },
   "detail": {
     "starts": "Starts {when}",
@@ -41,16 +43,23 @@
   "fallback": {
     "actor": "Someone",
     "job": "a job",
-    "item": "A part"
+    "item": "A part",
+    "quote": "a quote",
+    "invoice": "an invoice",
+    "customer": "A customer",
+    "amount": "a payment"
   },
   "eventNames": {
+    "daily_digest": "Daily summary at 7:00: yesterday's numbers, overdue jobs and approvals",
     "job_assigned": "A job is assigned to me",
     "job_rescheduled": "One of my visits is rescheduled",
     "portal_request": "A customer sends a request from the portal",
     "sla_at_risk": "A job is at risk of missing its SLA",
     "sla_breached": "A job missed its SLA",
     "expense_requested": "A part or expense needs my approval",
-    "expense_decided": "My part or expense request is decided"
+    "expense_decided": "My part or expense request is decided",
+    "quote_decided": "A customer approves or declines a quote",
+    "payment_received": "A payment is recorded on an invoice"
   },
   "preferences": {
     "title": "Notification settings",

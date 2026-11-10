@@ -8,6 +8,7 @@ import {
 import { ConflictError, DemoRestrictedError, NotFoundError } from "../domain/errors";
 import { assertCan, canChangeRole } from "../domain/permissions";
 import { ForbiddenError } from "../domain/errors";
+import { checkTaxRate } from "./billing-common";
 import { parseInput } from "./validate";
 import type { OrganizationRecord, ServiceContext } from "./types";
 
@@ -120,6 +121,7 @@ export async function createServiceType(ctx: ServiceContext, raw: unknown) {
   assertCan(ctx.actor, "serviceTypes.manage");
   const input = parseInput(serviceTypeInputSchema, raw);
   const org = await ctx.store.organization.get();
+  checkTaxRate(org, input.tax_rate_bps);
   return ctx.store.serviceTypes.create({
     name: input.name,
     description: input.description ?? null,
@@ -130,12 +132,14 @@ export async function createServiceType(ctx: ServiceContext, raw: unknown) {
     active: input.active,
     requiredSkills: [...new Set(input.required_skills)],
     checklistTemplate: input.checklist_template,
+    taxRateBps: input.tax_rate_bps ?? null,
   });
 }
 
 export async function updateServiceType(ctx: ServiceContext, id: string, raw: unknown) {
   assertCan(ctx.actor, "serviceTypes.manage");
   const input = parseInput(serviceTypeUpdateSchema, raw);
+  if (input.tax_rate_bps !== undefined) checkTaxRate(await ctx.store.organization.get(), input.tax_rate_bps);
   const updated = await ctx.store.serviceTypes.update(id, {
     ...(input.name !== undefined && { name: input.name }),
     ...(input.description !== undefined && { description: input.description ?? null }),
@@ -145,6 +149,7 @@ export async function updateServiceType(ctx: ServiceContext, id: string, raw: un
     ...(input.checklist_template !== undefined && { checklistTemplate: input.checklist_template }),
     ...(input.color !== undefined && { color: input.color ?? null }),
     ...(input.active !== undefined && { active: input.active }),
+    ...(input.tax_rate_bps !== undefined && { taxRateBps: input.tax_rate_bps }),
   });
   if (!updated) throw new NotFoundError("Service type");
   return updated;

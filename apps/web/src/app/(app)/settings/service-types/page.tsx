@@ -33,7 +33,7 @@ export default async function ServiceTypesPage() {
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("description")}</CardDescription>
         </div>
-        <ServiceTypeDialog currency={org.currency} />
+        <ServiceTypeDialog currency={org.currency} taxRates={org.taxRates} />
       </CardHeader>
       <CardContent>
         {types.length === 0 ? (
@@ -82,6 +82,7 @@ export default async function ServiceTypesPage() {
                   <TableCell className="text-right">
                     <ServiceTypeDialog
                       currency={org.currency}
+                      taxRates={org.taxRates}
                       serviceType={{
                         id: st.id,
                         name: st.name,
@@ -93,6 +94,7 @@ export default async function ServiceTypesPage() {
                         currency: st.currency,
                         requiredSkills: st.requiredSkills,
                         checklistTemplate: st.checklistTemplate,
+                        taxRateBps: st.taxRateBps ?? null,
                       }}
                     />
                   </TableCell>

@@ -13,15 +13,18 @@ export function Layout({
   title,
   children,
   footer,
+  lang,
 }: {
   locale?: EmailLocale;
   preview: string;
   title: string;
   children: ReactNode;
   footer?: string;
+  /** Language of the email's text, when it isn't one of `EmailLocale` (defaults to `locale`). */
+  lang?: string;
 }) {
   return (
-    <Html lang={locale}>
+    <Html lang={lang ?? locale}>
       <Head />
       <Preview>{preview}</Preview>
       <Body

@@ -1,6 +1,15 @@
 import { JOB_PRIORITIES, slaPoliciesUpdateSchema, type JobPriority } from "@fieldops/shared";
 import { assertCan } from "../domain/permissions";
-import { defaultTargets, slaDeadlines, slaState, type SlaTargets } from "../domain/sla";
+import {
+  defaultTargets,
+  endSlaPause,
+  pausesResolution,
+  slaClockStart,
+  slaDeadlines,
+  slaState,
+  withPausedMinutes,
+  type SlaTargets,
+} from "../domain/sla";
 import { notify } from "./notify";
 import type { NotificationMailer } from "./notification-types";
 import { parseInput } from "./validate";
@@ -55,18 +64,36 @@ export async function updatePolicies(ctx: ServiceContext, raw: unknown): Promise
 }
 
 type SlaFields = Pick<JobRecord, JobSlaField>;
+/** SLA fields plus the pause of the resolution clock (SLA-04). */
+type SlaPatch = Partial<SlaFields & Pick<JobRecord, "slaPausedAt" | "slaPausedMinutes">>;
+
+/** The organization and the effective policy of a priority. */
+async function basisFor(store: Store, priority: JobPriority) {
+  const [org, policies] = await Promise.all([store.organization.get(), effectivePolicies(store)]);
+  return { org, policy: policies.find((p) => p.priority === priority)! };
+}
 
 /** Deadlines for a priority, counted from `createdAt` with the organization's policy and business hours. */
-async function deadlinesFor(store: Store, priority: JobPriority, createdAt: Date) {
-  const [org, policies] = await Promise.all([store.organization.get(), effectivePolicies(store)]);
-  const policy = policies.find((p) => p.priority === priority)!;
+async function deadlinesFor(
+  store: Store,
+  priority: JobPriority,
+  createdAt: Date,
+  pausedMinutes = 0,
+  known?: Awaited<ReturnType<typeof basisFor>>,
+) {
+  const { org, policy } = known ?? (await basisFor(store, priority));
+  const basis = { businessHours: policy.businessHours, hours: org.businessHours, timeZone: org.timezone };
   return {
     slaPolicyId: policy.id,
-    ...slaDeadlines({ createdAt, policy, businessHours: org.businessHours, timeZone: org.timezone }),
+    ...withPausedMinutes(
+      slaDeadlines({ createdAt, policy, businessHours: org.businessHours, timeZone: org.timezone }),
+      pausedMinutes,
+      basis,
+    ),
   };
 }
 
-/** SLA fields for a job being created now (SLA-02). */
+/** SLA fields for a job being created now (SLA-02), or whose clock starts at `createdAt`. */
 export async function slaForNewJob(
   ctx: Pick<ServiceContext, "store" | "now">,
   priority: JobPriority,
@@ -92,23 +119,61 @@ export async function slaForNewJob(
 
 /**
  * SLA fields after a change to a job, to merge into the update. A new priority recomputes the deadlines from
- * the creation time; the states follow the result: first scheduled → response met or breached, completed →
- * resolution met or breached, reopened → back to the live state, canceled → none.
+ * the clock start (keeping the minutes already paused); the states follow the result: first scheduled →
+ * response met or breached, completed → resolution met or breached, reopened → back to the live state,
+ * canceled → none.
+ *
+ * SLA-04: going on hold for the customer pauses the resolution clock; leaving that hold in any way ends the
+ * pause and moves the resolution deadline by its length. While paused, the resolution state stays as it was
+ * when the pause began.
  */
 export async function refreshSla(
   ctx: Pick<ServiceContext, "store" | "now">,
   job: JobRecord,
   patch: Partial<JobRecord>,
-): Promise<Partial<SlaFields>> {
+): Promise<SlaPatch> {
   const next = { ...job, ...patch };
-  const deadlines =
-    patch.priority !== undefined && patch.priority !== job.priority
-      ? await deadlinesFor(ctx.store, next.priority, job.createdAt)
-      : null;
-  const d = { ...job, ...deadlines };
+  const recompute = patch.priority !== undefined && patch.priority !== job.priority;
+  const pausing = pausesResolution(next.status, next.holdReason) && job.resolutionDueAt !== null;
+  const pauseEnds = job.slaPausedAt !== null && !pausing;
+  const basis = recompute || pauseEnds ? await basisFor(ctx.store, next.priority) : null;
+  const deadlines = recompute
+    ? await deadlinesFor(
+        ctx.store,
+        next.priority,
+        slaClockStart(job, basis!.org.timezone),
+        job.slaPausedMinutes,
+        basis!,
+      )
+    : null;
+  let d = { ...job, ...deadlines };
+  const pause: SlaPatch = {};
+  if (pausing && job.slaPausedAt === null) pause.slaPausedAt = ctx.now;
+  if (pauseEnds) {
+    const end = endSlaPause({
+      pausedAt: job.slaPausedAt!,
+      now: ctx.now,
+      pausedMinutes: job.slaPausedMinutes,
+      resolutionDueAt: d.resolutionDueAt,
+      resolutionAtRiskAt: d.resolutionAtRiskAt,
+      businessHours: basis!.policy.businessHours,
+      hours: basis!.org.businessHours,
+      timeZone: basis!.org.timezone,
+    });
+    Object.assign(pause, {
+      slaPausedAt: null,
+      slaPausedMinutes: end.slaPausedMinutes,
+      resolutionDueAt: end.resolutionDueAt,
+      resolutionAtRiskAt: end.resolutionAtRiskAt,
+    });
+    d = { ...d, ...pause };
+  }
   const canceled = next.status === "canceled";
+  // A paused clock is judged at the moment it stopped.
+  const resolutionNow = pausing ? (job.slaPausedAt ?? ctx.now) : ctx.now;
   return {
     ...deadlines,
+    ...pause,
     slaResponseState: canceled
       ? null
       : slaState({
@@ -123,9 +188,24 @@ export async function refreshSla(
           dueAt: d.resolutionDueAt,
           atRiskAt: d.resolutionAtRiskAt,
           doneAt: next.status === "completed" ? next.completedAt : null,
-          now: ctx.now,
+          now: resolutionNow,
         }),
   };
+}
+
+/**
+ * What the timeline records about the SLA pause in a status change (SLA-04): that the clock stopped, or how long
+ * it was stopped and the new deadline.
+ */
+export function pauseEventPayload(job: JobRecord, patch: Partial<JobRecord>): Record<string, unknown> {
+  if (job.slaPausedAt === null && patch.slaPausedAt) return { sla_paused: true };
+  if (job.slaPausedAt !== null && patch.slaPausedAt === null) {
+    return {
+      sla_paused_minutes: (patch.slaPausedMinutes ?? job.slaPausedMinutes) - job.slaPausedMinutes,
+      resolution_due_at: patch.resolutionDueAt?.toISOString() ?? null,
+    };
+  }
+  return {};
 }
 
 /**

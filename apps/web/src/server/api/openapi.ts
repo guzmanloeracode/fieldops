@@ -3,6 +3,10 @@ import {
   agendaSchema,
   aiIntakeRequestSchema,
   aiIntakeResponseSchema,
+  assistantAskSchema,
+  assistantConversationDetailSchema,
+  assistantConversationSchema,
+  assistantStreamEventSchema,
   jobReviewSchema,
   attachmentSchema,
   attachmentUploadResponseSchema,
@@ -57,6 +61,9 @@ import {
 import { z } from "zod";
 import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponsesObject } from "zod-openapi";
 import { env } from "@/env";
+import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
+import { reportPaths } from "./openapi-reports";
+import { billingPaths, billingTags } from "./openapi-billing";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
@@ -198,7 +205,9 @@ export function openApiDocument() {
         description: "The signed-in user's notifications, their settings, and the live event stream",
       },
       { name: "Organization", description: "The current user, members and service types" },
+      ...billingTags,
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
+      RECURRENCES_TAG,
     ],
     components: {
       securitySchemes: {
@@ -471,6 +480,56 @@ export function openApiDocument() {
           },
         }),
       },
+      ...reportPaths({ op, json, body, errors, jobId, idempotencyHeader }),
+      "/ai/assistant": {
+        post: op("AI", "Ask FieldOps a question (streamed)", {
+          operationId: "askAssistant",
+          description:
+            "Ask FieldOps (AI-02): answers a question about the organization's own data with read-only tools (jobs, SLA risks, technician workload, customer history, pending approvals and, for owners and admins, revenue), at most 8 lookups per question. Tools run with the caller's organization and role; technicians only reach their own jobs. Send `conversation_id` to continue one of your conversations. The response is a `text/event-stream` of `AssistantStreamEvent`s: `conversation`, `text` deltas, `tool_started` and `tool_finished` (with a summary such as \"Looked up 12 jobs\" and the records it returned), then `done` or `error` (`refused` or `failed`). Counts against the monthly AI quota and the rate limits like intake; limits, a turned-off AI and validation errors are problem responses before the stream starts. `Idempotency-Key` is ignored.",
+          requestBody: body(assistantAskSchema),
+          responses: {
+            "200": {
+              description:
+                "The answer as server-sent events (`event: <type>`, `data: <AssistantStreamEvent JSON>`)",
+              content: { "text/event-stream": { schema: assistantStreamEventSchema } },
+            },
+            ...errors(400, 404, 415, 422, 429, 503),
+          },
+        }),
+      },
+      "/ai/conversations": {
+        get: op("AI", "List my assistant conversations", {
+          operationId: "listAssistantConversations",
+          description:
+            "The caller's Ask FieldOps conversations used in the last 30 days, most recent first. Conversations are private and deleted 30 days after their last message.",
+          responses: {
+            "200": json(
+              z
+                .object({ data: z.array(assistantConversationSchema) })
+                .meta({ id: "AssistantConversationList" }),
+              "Conversations",
+            ),
+            ...errors(),
+          },
+        }),
+      },
+      "/ai/conversations/{id}": {
+        get: op("AI", "Get one of my assistant conversations", {
+          operationId: "getAssistantConversation",
+          description:
+            "With every message and, for answers, the tools that ran and the records they returned.",
+          requestParams: { path: uuidParam("Conversation") },
+          responses: {
+            "200": json(assistantConversationDetailSchema, "The conversation"),
+            ...errors(404),
+          },
+        }),
+        delete: op("AI", "Delete one of my assistant conversations", {
+          operationId: "deleteAssistantConversation",
+          requestParams: { path: uuidParam("Conversation") },
+          responses: { "204": { description: "Deleted" }, ...errors(404) },
+        }),
+      },
       "/notifications": {
         get: op("Notifications", "List my notifications", {
           operationId: "listNotifications",
@@ -670,6 +729,7 @@ export function openApiDocument() {
           responses: { "200": json(slaPolicyListSchema, "The saved policies"), ...errors(415, 422) },
         }),
       },
+      ...recurrencePaths({ op, json, body, errors, uuidParam, idempotencyHeader }),
       "/service-types": {
         get: op("Organization", "List service types", {
           operationId: "listServiceTypes",
@@ -680,6 +740,17 @@ export function openApiDocument() {
           },
         }),
       },
+      ...billingPaths({
+        op,
+        json,
+        body,
+        errors,
+        list,
+        etagHeader,
+        idempotencyHeader,
+        ifMatchHeader,
+        uuidParam,
+      }),
     },
   });
   return cached;

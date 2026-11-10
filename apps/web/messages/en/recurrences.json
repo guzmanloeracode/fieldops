@@ -1,1 +1,95 @@
-{}
+{
+  "plans": {
+    "title": "Maintenance plans",
+    "description": "Recurring visits for maintenance contracts. Each plan creates its jobs a set number of days ahead.",
+    "add": "Add plan",
+    "empty": "No maintenance plans yet. Add one to schedule recurring visits, such as a quarterly AC service.",
+    "rule": "{unit, select, day {{count, plural, one {Every day} other {Every # days}}} week {{count, plural, one {Every week} other {Every # weeks}}} month {{count, plural, one {Every month} other {Every # months}}} other {{count, plural, one {Every year} other {Every # years}}}}",
+    "since": "from {date}",
+    "until": "until {date}",
+    "window": "{start}, {duration}",
+    "noWindow": "Any time",
+    "next": "Next visits",
+    "noNext": "No upcoming visits",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "jobs": "{count, plural, =0 {No jobs yet} one {# job created} other {# jobs created}}",
+    "lead": "Jobs created {days, plural, =0 {on the day} one {# day ahead} other {# days ahead}}",
+    "suggested": "Preferred technician: {name}",
+    "actions": "Actions for {title}",
+    "edit": "Edit",
+    "pause": "Pause",
+    "resume": "Resume",
+    "delete": "Delete",
+    "paused": "Plan paused. No new jobs until you resume it.",
+    "resumed": "Plan resumed",
+    "deleted": "Plan deleted",
+    "deleteTitle": "Delete “{title}”?",
+    "deleteDescription": "The plan stops creating jobs. The jobs it already created stay on the schedule.",
+    "confirmDelete": "Delete plan",
+    "cancel": "Cancel"
+  },
+  "form": {
+    "createTitle": "New maintenance plan",
+    "editTitle": "Edit maintenance plan",
+    "description": "FieldOps creates each visit's job ahead of time, unassigned, with the preferred time. Changes apply to jobs created from now on.",
+    "title": "Title",
+    "titlePlaceholder": "Quarterly AC service",
+    "notes": "Job description",
+    "notesPlaceholder": "Clean filters and coils, check refrigerant pressure",
+    "site": "Site",
+    "equipment": "Equipment",
+    "serviceType": "Service type",
+    "none": "None",
+    "priority": "Priority",
+    "count": "Repeat every",
+    "unit": "Unit",
+    "units": {
+      "day": "{count, plural, one {day} other {days}}",
+      "week": "{count, plural, one {week} other {weeks}}",
+      "month": "{count, plural, one {month} other {months}}",
+      "year": "{count, plural, one {year} other {years}}"
+    },
+    "startsOn": "First visit",
+    "endsOn": "Last visit (optional)",
+    "windowStart": "Preferred start (optional)",
+    "windowMinutes": "Visit window",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "hours": "{count, plural, one {# hour} other {# hours}}",
+    "leadDays": "Create jobs this many days ahead",
+    "leadMember": "Preferred technician",
+    "leadMemberHint": "Shown on each job as a suggestion; the dispatcher still assigns it.",
+    "preview": "Next visits",
+    "previewNone": "No visits left in this range.",
+    "previewHint": "Month ends stay put: a plan on the 31st visits on the last day of shorter months.",
+    "save": "Save plan",
+    "created": "{count, plural, =0 {Plan created} one {Plan created. # job is ready on the schedule.} other {Plan created. # jobs are ready on the schedule.}}",
+    "updated": "Plan saved"
+  },
+  "badge": {
+    "label": "Recurring",
+    "title": "Created by the maintenance plan for {date}",
+    "suggested": "Suggested: {name}"
+  },
+  "slaPause": {
+    "badge": "Paused",
+    "short": "SLA paused",
+    "tooltip": "Waiting for the customer since {when}. The resolution clock is paused.",
+    "card": "Paused since {when} while waiting for the customer. The deadline moves by the time paused.",
+    "total": "Paused {duration} in total",
+    "timelinePaused": "The resolution clock stopped while waiting for the customer.",
+    "timelineResumed": "The resolution clock was paused for {duration}. New deadline: {due}.",
+    "durationMinutes": "{m, plural, one {# minute} other {# minutes}}",
+    "durationHours": "{h} h{m, plural, =0 {} other { # min}}",
+    "durationDays": "{d, plural, one {# day} other {# days}}{h, plural, =0 {} other { # h}}"
+  },
+  "timeline": {
+    "created": "created the job from the maintenance plan “{title}” for {date}"
+  },
+  "digest": {
+    "emailOnly": "Email only"
+  }
+}

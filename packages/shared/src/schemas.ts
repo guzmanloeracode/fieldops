@@ -320,6 +320,8 @@ export const serviceTypeInputSchema = z
     active: z.boolean().default(true),
     required_skills: z.array(skillSchema).max(10).default([]),
     checklist_template: z.array(checklistTemplateItemSchema).max(50).default([]),
+    /** One of the organization's tax rates (FIN-01); null uses the default rate. */
+    tax_rate_bps: z.number().int().min(0).max(10_000).nullable().optional(),
   })
   .meta({ id: "ServiceTypeInput" });
 export type ServiceTypeInput = z.output<typeof serviceTypeInputSchema>;
@@ -342,6 +344,7 @@ export const serviceTypeUpdateSchema = z
     active: z.boolean(),
     required_skills: z.array(skillSchema).max(10),
     checklist_template: z.array(checklistTemplateItemSchema).max(50),
+    tax_rate_bps: z.number().int().min(0).max(10_000).nullable(),
   })
   .partial()
   .meta({ id: "ServiceTypeUpdate" });
@@ -436,6 +439,11 @@ export const jobSchema = z
     resolution_due_at: ts.nullable().meta({ description: "SLA: complete by this time" }),
     sla_response_state: slaStateSchema.nullable(),
     sla_resolution_state: slaStateSchema.nullable(),
+    sla_paused_at: ts
+      .nullable()
+      .meta({ description: "SLA-04: the resolution clock is paused while on hold for the customer" }),
+    recurrence_id: z.uuid().nullable().meta({ description: "The maintenance plan that generated the job" }),
+    occurrence_date: z.string().nullable().meta({ format: "date", description: "The plan's visit date" }),
     version: z.number().int().meta({ description: "Increments on every change. Sent as the ETag." }),
     created_at: ts,
     updated_at: ts,
@@ -560,6 +568,8 @@ export const serviceTypeSchema = z
     active: z.boolean(),
     required_skills: z.array(z.string()),
     checklist_template: z.array(checklistTemplateItemDtoSchema),
+    /** Null uses the organization's default tax rate. */
+    tax_rate_bps: z.number().int().nullable(),
   })
   .meta({ id: "ServiceType" });
 

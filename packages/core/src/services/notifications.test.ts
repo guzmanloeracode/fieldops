@@ -167,6 +167,14 @@ describe("notificationHref", () => {
     expect(notifications.notificationHref("expense_decided", {})).toBe("/approvals");
     expect(notifications.notificationHref("portal_request", {})).toBe("/notifications");
   });
+  it("links quote decisions to the quote and payments to the invoice (0.4)", () => {
+    expect(
+      notifications.notificationHref("quote_decided", { quote_number: "QUO-2026-0001", job_number: 7 }),
+    ).toBe("/quotes/QUO-2026-0001");
+    const id = "00000000-0000-4000-8000-000000000001";
+    expect(notifications.notificationHref("payment_received", { invoice_id: id })).toBe(`/invoices/${id}`);
+    expect(notifications.notificationHref("quote_decided", {})).toBe("/notifications");
+  });
 });
 
 describe("notification center", () => {
@@ -245,6 +253,7 @@ describe("notification preferences", () => {
       "sla_breached",
       "expense_requested",
       "expense_decided",
+      "quote_decided",
     ]);
   });
 

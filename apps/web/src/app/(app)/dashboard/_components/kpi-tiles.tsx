@@ -17,9 +17,12 @@ export interface KpiTile {
   /** Whether a higher value is good news. */
   higherIsBetter: boolean;
   href: string;
+  /** Formats the value instead of `kind`, e.g. money (0.4 revenue). */
+  display?: (v: number | null) => string;
 }
 
-function show(v: number | null, kind: Kind, locale: string) {
+function show(v: number | null, kind: Kind, locale: string, display?: (v: number | null) => string) {
+  if (display) return display(v);
   return kind === "rate"
     ? formatPercent(v, locale)
     : kind === "minutes"
@@ -43,7 +46,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
             tile.kind === "rate"
               ? t("points", { value: Math.abs(Math.round(diff * 100)) })
               : previous === 0
-                ? show(Math.abs(diff), tile.kind, locale)
+                ? show(Math.abs(diff), tile.kind, locale, tile.display)
                 : `${Math.abs(Math.round((diff / previous) * 100))}%`;
           delta = {
             text: direction === "same" ? t("same") : t(direction, { value: amount }),
@@ -61,7 +64,9 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
               className="bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full flex-col gap-1 rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <span className="text-muted-foreground text-xs font-medium">{tile.label}</span>
-              <span className="text-2xl font-semibold tabular-nums">{show(value, tile.kind, locale)}</span>
+              <span className="text-2xl font-semibold tabular-nums">
+                {show(value, tile.kind, locale, tile.display)}
+              </span>
               {delta ? (
                 <span
                   className={cn(
@@ -83,7 +88,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
                 <span className="text-muted-foreground text-xs">{t("noPrevious")}</span>
               )}
               <span className="text-muted-foreground text-xs">
-                {t("previous", { value: show(previous, tile.kind, locale) })}
+                {t("previous", { value: show(previous, tile.kind, locale, tile.display) })}
                 {tile.note ? <> · {tile.note}</> : null}
               </span>
             </Link>

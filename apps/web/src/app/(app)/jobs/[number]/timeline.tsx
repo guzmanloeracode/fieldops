@@ -3,6 +3,7 @@ import type { Currency, JobEventType, JobStatus } from "@fieldops/shared";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow, intlLocale } from "@/lib/format";
+import { formatDay, formatPause } from "@/lib/recurrence";
 
 type Event = {
   id: string;
@@ -45,10 +46,20 @@ export async function Timeline({
       : [];
   const ta = await getTranslations("ai.timeline");
   const tStatus = await getTranslations("common.status");
+  // Maintenance plans (JOB-13) and the SLA pause (SLA-04).
+  const tr = await getTranslations("recurrences");
+  const trReport = await getTranslations("reports.timeline");
+  const tb = await getTranslations("billing.timeline");
   const describe = (e: Event): string => {
     switch (e.type) {
       case "created":
         if (portalContact(e)) return tp("requested");
+        if (e.payload.source === "recurring" && typeof e.payload.occurrence_date === "string") {
+          return tr("timeline.created", {
+            title: String(e.payload.plan_title ?? ""),
+            date: formatDay(e.payload.occurrence_date, "long", locale),
+          });
+        }
         return t("timeline.created", { source: t(`source.${String(e.payload.source ?? "manual")}`) });
       case "status_changed":
         return t("timeline.status", {
@@ -107,6 +118,10 @@ export async function Timeline({
         if (!e.payload.confirmed) return ta("applied", { fields });
         return applied.length ? ta("confirmedApplied", { fields }) : ta("confirmed");
       }
+      case "report_sent":
+        return trReport("sent", { to: String(e.payload.to ?? "") });
+      case "invoiced":
+        return tb("invoiced", { number: String(e.payload.invoice_number ?? ""), amount: amount(e.payload) });
       default:
         return e.type;
     }
@@ -141,6 +156,20 @@ export async function Timeline({
               ) : null}
               {e.type === "expense_decided" && typeof e.payload.comment === "string" ? (
                 <p className="text-muted-foreground text-sm">“{e.payload.comment}”</p>
+              ) : null}
+              {e.payload.sla_paused === true ? (
+                <p className="text-muted-foreground text-sm">{tr("slaPause.timelinePaused")}</p>
+              ) : null}
+              {typeof e.payload.sla_paused_minutes === "number" ? (
+                <p className="text-muted-foreground text-sm" data-testid="timeline-sla-resumed">
+                  {tr("slaPause.timelineResumed", {
+                    duration: formatPause(tr, e.payload.sla_paused_minutes),
+                    due:
+                      typeof e.payload.resolution_due_at === "string"
+                        ? formatDateTime(e.payload.resolution_due_at, timeZone, locale)
+                        : "—",
+                  })}
+                </p>
               ) : null}
               {typeof e.payload.override_reason === "string" ? (
                 <p className="text-muted-foreground text-sm">

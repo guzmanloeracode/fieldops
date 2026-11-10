@@ -1,4 +1,5 @@
 import {
+  digestByDefault,
   NOTIFICATION_DEFAULTS,
   NOTIFICATION_EVENTS_BY_ROLE,
   notificationListQuerySchema,
@@ -6,6 +7,7 @@ import {
   notificationReadSchema,
   type NotificationEvent,
   type NotificationPayload,
+  type Role,
 } from "@fieldops/shared";
 import { ValidationError } from "../domain/errors";
 import { formatJobNumber } from "../domain/numbering";
@@ -22,6 +24,8 @@ import type { JobView, ServiceContext } from "./types";
 
 /** Where a notification leads in the app. Job events open the job; the rest fall back to a list. */
 export function notificationHref(type: NotificationEvent, payload: NotificationPayload): string {
+  if (type === "quote_decided" && payload.quote_number) return `/quotes/${payload.quote_number}`;
+  if (type === "payment_received" && payload.invoice_id) return `/invoices/${payload.invoice_id}`;
   if (payload.job_number !== undefined) return `/jobs/${formatJobNumber(payload.job_number)}`;
   if (type === "expense_requested" || type === "expense_decided") return "/approvals";
   return "/notifications";
@@ -148,9 +152,16 @@ export async function markRead(ctx: ServiceContext, raw: unknown): Promise<numbe
 
 export interface PreferenceRow {
   event: NotificationEvent;
-  inApp: boolean;
+  /** Null when the event has no in-app notification (the daily digest). */
+  inApp: boolean | null;
   /** Null when the event has no email. */
   email: boolean | null;
+}
+
+/** The default email choice of a role: the daily digest is on for owners only (NOT-04). */
+function defaultEmail(event: NotificationEvent, role: Role): boolean | null {
+  const d = NOTIFICATION_DEFAULTS[event].email;
+  return d !== null && event === "daily_digest" ? digestByDefault(role) : d;
 }
 
 /** The events the user's role can receive, with their stored choices or the defaults. */
@@ -163,8 +174,8 @@ export async function getPreferences(ctx: ServiceContext): Promise<PreferenceRow
     const s = stored.get(event);
     return {
       event,
-      inApp: s?.inApp ?? d.inApp,
-      email: d.email === null ? null : (s?.email ?? d.email),
+      inApp: d.inApp === null ? null : (s?.inApp ?? d.inApp),
+      email: d.email === null ? null : (s?.email ?? defaultEmail(event, ctx.actor.role)),
     };
   });
 }
@@ -182,7 +193,8 @@ export async function updatePreferences(ctx: ServiceContext, raw: unknown): Prom
     const hasEmail = NOTIFICATION_DEFAULTS[p.event].email !== null;
     return {
       event: p.event,
-      inApp: p.in_app,
+      // Email-only events store false for the channel they don't have.
+      inApp: NOTIFICATION_DEFAULTS[p.event].inApp !== null && p.in_app === true,
       // Events without email store false; a missing value keeps the current choice.
       email: hasEmail ? (p.email ?? current.get(p.event)?.email ?? false) === true : false,
     };
