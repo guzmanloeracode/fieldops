@@ -15,7 +15,13 @@ const securityHeaders = [
 const config: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(import.meta.dirname, "../../"),
-  transpilePackages: ["@fieldops/core", "@fieldops/shared", "@fieldops/db", "@fieldops/email", "@fieldops/ai"],
+  transpilePackages: [
+    "@fieldops/core",
+    "@fieldops/shared",
+    "@fieldops/db",
+    "@fieldops/email",
+    "@fieldops/ai",
+  ],
   serverExternalPackages: ["pg", "pino"],
   poweredByHeader: false,
   typedRoutes: false,
