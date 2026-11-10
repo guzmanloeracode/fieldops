@@ -40,13 +40,15 @@ A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that t
   already carry drafts.
 - **Audit log:** every change with who, when, before and after, written by the database itself.
 - **Also:** CSV export of every dashboard report, sign in with Google, a "Try these 5 things" card for demo
-  visitors.
+  visitors, and (0.3.1) a sidebar that collapses to icons with Ctrl/⌘ B.
 
-| Customer portal                                 | Notifications                                        |
-| ----------------------------------------------- | ---------------------------------------------------- |
-| ![Customer portal](docs/screenshots/portal.png) | ![Notifications](docs/screenshots/notifications.png) |
-| **Audit log**                                   | **SLA policies**                                     |
-| ![Audit log](docs/screenshots/audit-log.png)    | ![SLA policies](docs/screenshots/sla-policies.png)   |
+| Customer portal                                      | A portal request with its AI draft                                                          |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| ![Customer portal](docs/screenshots/portal.png)      | ![AI review of a portal request](docs/screenshots/ai-review.png)                            |
+| **Notifications**                                    | **Audit log**                                                                               |
+| ![Notifications](docs/screenshots/notifications.png) | ![Audit log](docs/screenshots/audit-log.png)                                                |
+| **SLA policies**                                     | **The board with the sidebar collapsed**                                                    |
+| ![SLA policies](docs/screenshots/sla-policies.png)   | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png) |
 
 Release 0.2 added the dispatch board with conflict checks, the technician workspace, parts approvals and the KPI
 dashboard; release 0.1 laid the base: accounts and roles, customers and sites, the job lifecycle, the REST API with
