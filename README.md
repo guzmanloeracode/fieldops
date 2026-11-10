@@ -8,8 +8,8 @@ the technician does the work on site, and the business sees every job from reque
 
 ![Dispatch board](docs/screenshots/schedule.png)
 
-> FieldOps is an open-source portfolio project. Every person, company and address in the demo is fictional, and the
-> demo resets every day at 00:00 UTC.
+> FieldOps is open source. Every person, company and address in the demo is fictional, and the demo resets every
+> day at 00:00 UTC.
 
 ## Try it
 

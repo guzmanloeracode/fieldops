@@ -1,7 +1,7 @@
 # Security policy
 
-FieldOps is a portfolio project with a public demo that holds only fictional data. Security still matters: the
-code is meant to be reused.
+FieldOps runs a public demo that holds only fictional data. Security still matters: the same code runs real
+organizations' data.
 
 ## Reporting a vulnerability
 
