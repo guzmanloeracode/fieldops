@@ -44,6 +44,7 @@
     "item": "A part"
   },
   "eventNames": {
+    "daily_digest": "Daily summary at 7:00: yesterday's numbers, overdue jobs and approvals",
     "job_assigned": "A job is assigned to me",
     "job_rescheduled": "One of my visits is rescheduled",
     "portal_request": "A customer sends a request from the portal",

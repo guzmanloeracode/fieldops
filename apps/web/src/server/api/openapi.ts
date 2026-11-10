@@ -57,6 +57,7 @@ import {
 import { z } from "zod";
 import { createDocument, type ZodOpenApiOperationObject, type ZodOpenApiResponsesObject } from "zod-openapi";
 import { env } from "@/env";
+import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
@@ -199,6 +200,7 @@ export function openApiDocument() {
       },
       { name: "Organization", description: "The current user, members and service types" },
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
+      RECURRENCES_TAG,
     ],
     components: {
       securitySchemes: {
@@ -670,6 +672,7 @@ export function openApiDocument() {
           responses: { "200": json(slaPolicyListSchema, "The saved policies"), ...errors(415, 422) },
         }),
       },
+      ...recurrencePaths({ op, json, body, errors, uuidParam, idempotencyHeader }),
       "/service-types": {
         get: op("Organization", "List service types", {
           operationId: "listServiceTypes",

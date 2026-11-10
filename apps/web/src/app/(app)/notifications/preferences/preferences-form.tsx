@@ -10,6 +10,7 @@ import { savePreferencesAction } from "../actions";
 
 export function PreferencesForm({ initial }: { initial: NotificationPreferenceDto[] }) {
   const t = useTranslations("notifications");
+  const tr = useTranslations("recurrences.digest");
   const [rows, setRows] = useState(initial);
   const [pending, start] = useTransition();
   const set = (event: string, patch: Partial<NotificationPreferenceDto>) =>
@@ -59,12 +60,20 @@ export function PreferencesForm({ initial }: { initial: NotificationPreferenceDt
                       {name}
                     </th>
                     <td className="py-3 text-center">
-                      <Checkbox
-                        checked={r.in_app}
-                        onCheckedChange={(v) => set(r.event, { in_app: v === true })}
-                        aria-label={t("preferences.toggle", { channel: t("preferences.inApp"), event: name })}
-                        data-testid={`pref-${r.event}-in_app`}
-                      />
+                      {/* Email-only events, such as the daily digest (NOT-04), have no in-app switch. */}
+                      {r.in_app === null ? (
+                        <span className="text-muted-foreground text-xs">{tr("emailOnly")}</span>
+                      ) : (
+                        <Checkbox
+                          checked={r.in_app}
+                          onCheckedChange={(v) => set(r.event, { in_app: v === true })}
+                          aria-label={t("preferences.toggle", {
+                            channel: t("preferences.inApp"),
+                            event: name,
+                          })}
+                          data-testid={`pref-${r.event}-in_app`}
+                        />
+                      )}
                     </td>
                     <td className="py-3 text-center">
                       {r.email === null ? (

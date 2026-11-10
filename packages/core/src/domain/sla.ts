@@ -11,6 +11,7 @@ import {
   localDateOf,
   shiftDate,
   workingWindows,
+  zonedInstant,
   type WorkingHoursEntry,
 } from "./availability";
 
@@ -177,4 +178,105 @@ export function currentSla(job: SlaFacts): CurrentSla | null {
 /** True for the states that need a dispatcher's attention. */
 export function needsAttention(state: SlaState | null | undefined): state is "at_risk" | "breached" {
   return state === "at_risk" || state === "breached";
+}
+
+// ---------------------------------------------------------------- pause (SLA-04)
+
+/** On hold waiting for the customer pauses the resolution clock (SLA-04); other holds don't. */
+export function pausesResolution(status: JobStatus, holdReason: string | null | undefined): boolean {
+  return status === "on_hold" && holdReason === "customer";
+}
+
+/**
+ * Minutes between two instants in a time basis: with working hours, only the minutes inside the windows (in the
+ * organization's time zone) count; without any usable hours, every minute counts. A started minute counts as a
+ * whole one, so even a short pause gives the minute back.
+ */
+export function elapsedMinutes(
+  from: Date,
+  to: Date,
+  hours: readonly WorkingHoursEntry[],
+  timeZone: string,
+): number {
+  if (to <= from) return 0;
+  if (!hasWindows(hours)) return Math.ceil((to.getTime() - from.getTime()) / MINUTE);
+  let ms = 0;
+  const last = localDateOf(to, timeZone);
+  let date = localDateOf(from, timeZone);
+  for (let day = 0; date <= last; day++, date = shiftDate(date, 1)) {
+    if (day >= MAX_DAYS) throw new RangeError("The span is too long to count in business hours");
+    for (const w of workingWindows(hours, date, timeZone)) {
+      const start = Math.max(w.start.getTime(), from.getTime());
+      const end = Math.min(w.end.getTime(), to.getTime());
+      if (end > start) ms += end - start;
+    }
+  }
+  return Math.ceil(ms / MINUTE);
+}
+
+export interface SlaPauseEnd {
+  /** Length of this pause in the policy's time basis. */
+  minutes: number;
+  /** The job's total paused minutes after this pause. */
+  slaPausedMinutes: number;
+  resolutionDueAt: Date | null;
+  resolutionAtRiskAt: Date | null;
+}
+
+/**
+ * Ends a pause of the resolution clock: measures it in the policy's basis (business minutes for business-hours
+ * policies, calendar minutes otherwise) and moves the resolution deadline and its at-risk point by the same
+ * amount in the same basis, so a job that waited for the customer gets that time back.
+ */
+export function endSlaPause(input: {
+  pausedAt: Date;
+  now: Date;
+  pausedMinutes: number;
+  resolutionDueAt: Date | null;
+  resolutionAtRiskAt: Date | null;
+  businessHours: boolean;
+  hours: readonly WorkingHoursEntry[];
+  timeZone: string;
+}): SlaPauseEnd {
+  const hours = input.businessHours ? input.hours : [];
+  const minutes = elapsedMinutes(input.pausedAt, input.now, hours, input.timeZone);
+  const shift = (d: Date | null) =>
+    d && minutes > 0 ? addBusinessMinutes(d, minutes, hours, input.timeZone) : d;
+  return {
+    minutes,
+    slaPausedMinutes: input.pausedMinutes + minutes,
+    resolutionDueAt: shift(input.resolutionDueAt),
+    resolutionAtRiskAt: shift(input.resolutionAtRiskAt),
+  };
+}
+
+/**
+ * Deadlines shifted by the minutes a job has already been paused, for a recomputation from the clock start (a
+ * priority change) that must keep the time the job waited for the customer.
+ */
+export function withPausedMinutes(
+  deadlines: SlaDeadlines,
+  pausedMinutes: number,
+  basis: { businessHours: boolean; hours: readonly WorkingHoursEntry[]; timeZone: string },
+): SlaDeadlines {
+  if (pausedMinutes <= 0) return deadlines;
+  const hours = basis.businessHours ? basis.hours : [];
+  const [resolutionDueAt, resolutionAtRiskAt] = [deadlines.resolutionDueAt, deadlines.resolutionAtRiskAt].map(
+    (d) => addBusinessMinutes(d, pausedMinutes, hours, basis.timeZone),
+  );
+  return { ...deadlines, resolutionDueAt: resolutionDueAt!, resolutionAtRiskAt: resolutionAtRiskAt! };
+}
+
+/**
+ * When a job's SLA clock starts: when it was created, or for a job a maintenance plan generated ahead of time
+ * (JOB-13), the start of its visit date in the organization's time zone. A job generated weeks ahead isn't late
+ * before its visit is due.
+ */
+export function slaClockStart(
+  job: { createdAt: Date; occurrenceDate: string | null },
+  timeZone: string,
+): Date {
+  if (!job.occurrenceDate) return job.createdAt;
+  const visitDay = zonedInstant(job.occurrenceDate, 0, timeZone);
+  return visitDay > job.createdAt ? visitDay : job.createdAt;
 }

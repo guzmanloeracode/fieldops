@@ -11,6 +11,7 @@ export * from "./domain/priority";
 export * as dates from "./domain/date-range";
 export * from "./domain/sla";
 export * from "./domain/equipment";
+export * as recurrenceRules from "./domain/recurrence";
 export * from "./services/types";
 export * from "./services/expense-types";
 export * from "./services/insights-types";
@@ -45,3 +46,6 @@ export * as audit from "./services/audit";
 export * as ai from "./services/ai";
 export * as sla from "./services/sla";
 export * as notifications from "./services/notifications";
+// 0.4 ops: maintenance plans (JOB-13) and the daily digest (NOT-04).
+export * as recurrences from "./services/recurrences";
+export * as digest from "./services/digest";

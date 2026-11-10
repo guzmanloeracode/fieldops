@@ -203,6 +203,8 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       transition: rule.name,
       ...(input.reason ? { reason: input.reason } : {}),
       ...(input.hold_reason ? { hold_reason: input.hold_reason } : {}),
+      // SLA-04: the resolution clock stopped for the customer, or how long it was stopped.
+      ...sla.pauseEventPayload(job, patch),
     },
   });
   return (await ctx.store.jobs.get(job.id))!;
@@ -269,6 +271,7 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
       lead_member_id: lead,
       scheduled_start: start?.toISOString() ?? null,
       scheduled_end: end?.toISOString() ?? null,
+      ...sla.pauseEventPayload(job, patch),
       ...(input.override_reason && conflicts.length
         ? {
             override_reason: input.override_reason,

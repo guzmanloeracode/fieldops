@@ -57,9 +57,11 @@ export function memoryAutomate(
             j.firstScheduledAt || !j.responseDueAt
               ? j.slaResponseState
               : slaState({ dueAt: j.responseDueAt, atRiskAt: j.responseAtRiskAt, doneAt: null, now });
-          const resolution = j.resolutionDueAt
-            ? slaState({ dueAt: j.resolutionDueAt, atRiskAt: j.resolutionAtRiskAt, doneAt: null, now })
-            : j.slaResolutionState;
+          // A paused resolution clock (SLA-04) doesn't move.
+          const resolution =
+            j.resolutionDueAt && !j.slaPausedAt
+              ? slaState({ dueAt: j.resolutionDueAt, atRiskAt: j.resolutionAtRiskAt, doneAt: null, now })
+              : j.slaResolutionState;
           if (response !== j.slaResponseState || resolution !== j.slaResolutionState) {
             Object.assign(j, { slaResponseState: response, slaResolutionState: resolution });
             n += 1;
@@ -74,7 +76,9 @@ export function memoryAutomate(
             ...(j.firstScheduledAt
               ? []
               : [{ target: "response" as const, state: j.slaResponseState, dueAt: j.responseDueAt }]),
-            { target: "resolution" as const, state: j.slaResolutionState, dueAt: j.resolutionDueAt },
+            ...(j.slaPausedAt
+              ? []
+              : [{ target: "resolution" as const, state: j.slaResolutionState, dueAt: j.resolutionDueAt }]),
           ];
           for (const t of targets) {
             if (t.state !== "at_risk" && t.state !== "breached") continue;

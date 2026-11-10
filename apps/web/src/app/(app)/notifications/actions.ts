@@ -34,7 +34,7 @@ export async function markNotificationsReadAction(
 }
 
 export async function savePreferencesAction(input: {
-  preferences: { event: string; in_app: boolean; email: boolean | null }[];
+  preferences: { event: string; in_app: boolean | null; email: boolean | null }[];
 }): Promise<ActionResult<NotificationPreferenceDto[]>> {
   return action(() =>
     runService(async (ctx) => (await notifications.updatePreferences(ctx, input)).map(toPreferenceDto)),
