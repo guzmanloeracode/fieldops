@@ -10,10 +10,10 @@ import { Pagination } from "@/components/app/pagination";
 import { Button } from "@/components/ui/button";
 import { inZone } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
-import { JobFilters } from "./job-filters";
-import { JobsTable, type JobRow } from "./jobs-table";
-import { MyDay } from "./my-day";
-import { SavedViews } from "./saved-views";
+import { JobFilters } from "../job-filters";
+import { JobsTable, type JobRow } from "../jobs-table";
+import { MyDay } from "../my-day";
+import { SavedViews } from "../saved-views";
 import { formatJobNumber } from "@fieldops/core";
 
 export const metadata: Metadata = { title: "Jobs" };

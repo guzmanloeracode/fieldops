@@ -30,6 +30,12 @@ nginx on the host terminates TLS (Let's Encrypt, Cloudflare in front with Full (
 `/api/v1` follows the same path through `apiRoute()`: session cookie or bearer token, the same services, plus
 idempotency keys, ETags and problem details.
 
+Pages that load data have a `loading.tsx` skeleton (`src/components/app/skeletons.tsx`). The skeleton streams before
+the page renders, and from then on the response is a 200, so a check that must answer 404 (a role that can't use the
+page, another organization's record) runs in the segment's `layout.tsx` with the helpers in `src/server/guards.ts`.
+For the same reason list pages sit in route groups (`jobs/(list)`, `customers/(list)`, `schedule/(board)`): their
+skeleton must not wrap the detail pages next to them.
+
 ## Packages
 
 - **`packages/shared`**: constants and Zod schemas. Inputs and API representations use snake_case.

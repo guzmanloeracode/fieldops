@@ -8,7 +8,10 @@
   hidden from them and don't animate when reduced motion is on.
 - Filter, search and date changes within a page keep the current page on screen instead of flashing the skeleton,
   so the search box keeps its focus and text.
-- An E2E test holds a navigation, checks the skeleton with axe, then checks that the page replaces it.
+- Pages that must answer 404 (another organization's records, pages a role can't use) still return a real 404
+  status: their checks run in the segment layout, before the skeleton streams.
+- E2E: a test holds a navigation, checks the skeleton with axe and then the page that replaces it; the isolation
+  test now covers equipment, and a new test checks the 404 status of the pages a technician can't use.
 
 ## 0.2.0 — Dispatch (2026-11-10)
 

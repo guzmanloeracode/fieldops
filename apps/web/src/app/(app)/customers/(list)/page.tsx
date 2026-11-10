@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
-import { listCustomerTags } from "./queries";
+import { listCustomerTags } from "../queries";
 
 export const metadata: Metadata = { title: "Customers" };
 

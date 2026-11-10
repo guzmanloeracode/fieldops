@@ -7,10 +7,10 @@ import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { requireActor, runService } from "@/server/context";
-import { DispatchBoard } from "./board";
-import { toBoardJob, toBoardProps, weekStart, type BoardView } from "./board-data";
-import { BoardMap } from "./board-map";
-import { BoardToolbar } from "./toolbar";
+import { DispatchBoard } from "../board";
+import { toBoardJob, toBoardProps, weekStart, type BoardView } from "../board-data";
+import { BoardMap } from "../board-map";
+import { BoardToolbar } from "../toolbar";
 
 export const metadata: Metadata = { title: "Dispatch board" };
 
