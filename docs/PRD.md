@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.7 · release 0.3.1 live, repository public |
+| **Status** | Draft 1.8 · release 0.4 built |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -20,8 +20,9 @@
 | 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
 | 1.4 | 10 Nov 2026 | Release 0.2.1: route-level loading skeletons for every page that loads data (§13 *As built (0.2.1)*). |
 | 1.5 | 10 Nov 2026 | Summary, market (§2), delivery goals (§4.2) and documentation and launch (§21) rewritten around the product and its customers. |
-| 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
 | 1.6 | 10 Nov 2026 | Release 0.3 built and live. Recorded the decisions made while building it in *As built (0.3)* notes: Google sign-in (§8.1), the live board (§8.4), SLA time basis, the monitor and notification rules (§8.7), the portal sign-in and requests (§8.9), real SLA figures and CSV export (§8.10), the audit log written by database triggers (§8.11, ADR 016), SLA and AI settings (§8.12), AI rate limits (§8.14), AI intake (§9.2), live updates through PostgreSQL instead of Redis (§14.3, §15.3, ADR 011), new tables and endpoints (§16.3, §17.2) and the 0.3 seed (§19). |
+| 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
+| 1.8 | 10 Nov 2026 | Release 0.4 built: billing, documents, the assistant and operations. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, PDFs, reminders and totals (§8.8), report downloads in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings (§8.12), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–019 and the missing 016 in the ADR list (§14.5), new tables and endpoints (§16.3, §17.2) and the 0.4 seed (§19). |
 
 ## Contents
 
@@ -377,6 +378,13 @@ stateDiagram-v2
 - **JOB-10:** the signature is an attachment of kind `signature` (caption = signer's name), uploaded like any file and confirmed through `POST /jobs/{id}/signature`. It is required only when the organization turns on *Require a customer signature* (§8.12); the demo's Acme Air does.
 - **JOB-11:** ⌘K / Ctrl+K opens a palette that searches job numbers and titles, customers and sites, and lists page shortcuts for the role. Technicians only find their assigned work.
 
+*As built (0.4), JOB-13:* recurring work is set up as **maintenance plans** on the customer page (office roles) or through `/recurrences`. A plan names a site, optional equipment and service type, a title and priority, an interval (every N days, weeks, months or years), a start date, an optional end date (inclusive), an optional visit window in the organization's time zone, the lead days (up to 90) and a suggested technician.
+- **Dates:** occurrence *n* is always start + *n* × interval, never the previous date plus one interval, so month ends don't drift (Jan 31 → Feb 28 or 29 → Mar 31).
+- **Generation:** jobs are created up to today + the lead days, when a plan is created or changed and hourly in the worker, each built like a manual job (service type duration and checklist, SLA deadlines, source *recurring*). A unique index on plan and visit date and `FOR UPDATE SKIP LOCKED` on the plan make a repeated or concurrent run create nothing twice.
+- **Assignment:** generated jobs arrive *New* and unassigned. The plan's technician is only a suggestion: the dispatcher assigns with the usual conflict checks, and nobody is notified weeks ahead.
+- **SLA:** a generated job's clock starts at local midnight of its visit date (or when it is created, if later), so a job made weeks ahead isn't late before its visit.
+- **Changes:** a plan that starts in the past, a changed rule and a resume continue from today after the dates that already have jobs, so no backlog of past visits is created. Other changes apply to jobs generated from then on. Deleting a plan keeps its jobs. The jobs list and the job page show a badge with the plan's visit date.
+
 ### 8.4 Scheduling and dispatch (SCH)
 
 | ID | Requirement | Pri | Rel |
@@ -424,6 +432,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 
 *As built (0.2):* thresholds live in `organization.settings` and compare strictly ("below"). Defaults: auto-approve below $50 / Rp500,000, dispatchers approve below $250 / Rp2,500,000. A request can be decided once (a second decision is a 409, race-safe). Requests are allowed on any open job, including new and scheduled ones, so parts can be ordered before a visit. Receipts are ordinary job attachments captioned "Receipt". Approved parts can be marked used (TEC-03). Bulk decisions are a web action only, with a result per request; there is no bulk API endpoint. Notifications to requesters and approvers wait for NOT-01 (0.3).
 
+*As built (0.4), EXP-04:* an invoice for a job is prefilled with every approved, billable part or expense not billed yet, priced at its unit cost plus the request's markup (cost × (1 + markup), rounded half away from zero). The markup can be changed per line, up to 1,000%; quantity and cost always come from the request. Parts become `part` lines and other expenses `expense` lines, at the organization's default tax rate. A request is billed once: a line on any invoice that isn't void counts, drafts included, so voiding an invoice frees its parts for another one. Saving or issuing an invoice locks the requests' rows first, so two invoices racing for the same part wait for each other and the second is refused with a 409 (ADR 017).
+
 ### 8.7 SLA and notifications (SLA, NOT)
 
 | ID | Requirement | Pri | Rel |
@@ -466,6 +476,11 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 - **Live updates (NOT-05):** `GET /api/v1/stream` (server-sent events, a heartbeat every 25 s). Messages carry ids only; office roles receive board events, everyone receives only their own notifications (ADR 011).
 - **Retention:** read notifications are kept 90 days, unread ones a year.
 
+*As built (0.4):*
+- **SLA-04:** putting a job on hold with the reason *customer* pauses its resolution clock; other hold reasons and the response target don't pause. Leaving that hold in any way (resume, reschedule or cancel) ends the pause. Its length is measured in the policy's time basis (business minutes for business-hours policies), a started minute counts as a whole one, and the resolution deadline and its at-risk moment move by the same amount in the same basis. While paused, the resolution state stays what it was when the pause began, and the monitor skips the job. A priority change keeps the minutes already paused. The timeline records the pause, then its length and the new deadline; badges show *Paused*. The job stores `sla_paused_at` and the total `sla_paused_minutes`.
+- **NOT-04:** an hourly worker pass sends the digest in the 07:00 hour of the organization's time zone, once per recipient and local day: a `daily_digest` row written in the same transaction as the email keeps a retried run from sending twice. Owners get it unless they turn it off, admins when they turn it on (notification settings); it is email only, with no in-app entry. It covers yesterday's jobs created and completed, resolution SLA compliance, first-visit completion and revenue invoiced and collected, plus the open jobs whose SLA is breached (the ten most overdue by name, the rest counted) and the pending approvals.
+- **New events:** `quote_decided` (a customer approved or declined a quote, or staff recorded it) goes to office roles and `payment_received` to owners, in-app and by email; nobody is notified about their own action. Customer emails (quote sent, invoice sent, payment receipt, overdue reminder and *Job completed*) go through the outbox in the customer's language and aren't user notifications. *Job completed* goes out when someone sends the service report, not at completion itself ([§9.4](#94-ai-03-service-report-writer-s-04)).
+
 ### 8.8 Quotes, invoices and payments (FIN)
 
 | ID | Requirement | Pri | Rel |
@@ -477,6 +492,14 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 | FIN-05 | Online payment through Stripe Checkout (test mode in the demo). A webhook marks the invoice paid. Manual payments (cash, bank transfer) can be recorded. | M | 0.4 |
 | FIN-06 | Overdue reminders after 3, 7 and 14 days. | S | 0.4 |
 | FIN-07 | Money stored as integer minor units with an ISO currency code. USD and IDR supported. | M | 0.4 |
+
+*As built (0.4):*
+- **FIN-01:** services and their prices stay the service types, which gained a tax rate (empty uses the organization's default rate). Parts and fees live in a catalog (`/settings/catalog`, Owner and Admin): name, SKU (unique per organization), unit, price, optional cost, optional tax rate and an active switch. Everyone who builds quotes and invoices searches it by name or SKU from the line pickers (`GET /catalog-items`).
+- **FIN-02:** a quote has lines (service, labor, part, expense or fee, each with its own tax rate), an optional discount (a percentage or an amount) and a validity date, by default today + the quote validity from billing settings. Statuses: draft → sent → approved, declined or expired. Only drafts are edited. A sent or expired quote can be revised back to draft and must be sent again before anyone decides on it. Approved and declined are final; *Duplicate* starts a new draft. A decision needs a sent quote that hasn't expired, is recorded once (race-safe), and comes from the customer's contact or from staff recording it on the customer's behalf; a decline needs a reason. Approval creates a *New* job (source *quote*) with the quote's customer, site, service type and title, its lines as the description, and SLA deadlines and checklist like any job. Office roles are notified. Sending emails the contact a link to the quote in the customer portal. The worker expires sent quotes past their validity date, by the organization's local date.
+- **FIN-03:** an invoice is drafted for a completed job or for a customer. From a job, the lines are prefilled: the service at its price and tax, or instead the lines (and discount) of the approved quote the job came from; one labor line per technician for the recorded work time, rounded up to the quarter hour, at the labor rate from billing settings and the default tax rate; and the parts and expenses not billed yet (EXP-04). Drafts have no number and can be edited. *Send* issues a draft: it gets the next number of the year, the issue date (today in the organization's time zone) and the due date (issue date + payment terms), the job's timeline records `invoiced`, and the bill-to contact gets an email with a link to the customer portal. A sent invoice becomes paid once payments cover the total; the worker marks one past its due date with a balance as overdue. Drafts and issued invoices without payments can be voided with a reason; an invoice with payments can't. Staff record payments made by cash, bank transfer, a card taken elsewhere or other means: at most the balance and never in the future; owners are notified and the contact gets a receipt. The invoices list shows the outstanding and overdue balances, and the job page and customer page list their quotes and invoices.
+- **FIN-04:** quotes, invoices and service reports are PDFs from `packages/documents` (ADR 018): a letterhead with the organization's name, address and a monogram in its brand color (darkened until it reads as text on white; logos aren't stored as files yet), labels in the document's language, amounts formatted like the app, line tables whose header repeats on every page, "Page 1 of 2" footers, PAID and VOID stamps on invoices, and Letter paper for USD organizations and A4 for IDR. The service report adds the checklist and readings, the parts used, up to six photos (before ones first) and the signature.
+- **FIN-06:** an hourly billing pass per organization, idempotent and keyed to its local date, records each reminder stage (3, 7 and 14 days after the due date) once per invoice in `invoice_reminder`. When several stages fall due together, for example right after reminders are turned on, one email goes out. Nothing is recorded while reminders are off or for a contact without an email. Reminders carry the balance and the payment instructions from billing settings.
+- **FIN-07:** every total is computed by pure functions in `packages/core` with BigInt (ADR 017). Line net = quantity (up to two decimals) × unit price. The discount is capped at the subtotal and split across the lines in proportion to their net so the shares add up exactly; each line's tax applies to its net after its share, at the line's rate in basis points. Total = subtotal − discount + tax. Rounding is half away from zero on each line, never again on the total. A document uses the organization's currency; limits are 100 lines, 100,000 per quantity and 100,000,000.00 per unit price.
 
 ### 8.9 Customer portal (POR)
 
@@ -493,6 +516,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 - **Sign-in** answers the same way whether or not the email is on file. Limits: 5 links per hour per email, 20 per hour per IP address, 10 requests per day per contact. The demo offers a one-click demo customer per organization.
 - **Requests:** a description, one of the customer's sites or a new address, 1–3 preferred visit windows (a day and a slot: morning, afternoon or any time, in the organization's time zone) and up to 3 photos. The request becomes a *New* job from the portal, marked *Needs review*, with SLA deadlines like any job; dispatchers are notified, and the staff timeline names the requesting contact and the windows.
 - **Tracking:** open jobs first, customer-friendly status labels, the visit window and the lead technician's first name; a job page with a customer-facing history, the request, the customer's own photos and notes marked for the customer. Another customer's job answers 404.
+
+*As built (0.4), POR-04 (reports):* a signed-in customer downloads the service report of one of their jobs from its portal page (`/portal/<slug>/jobs/<number>/report`) once someone has sent it; before that, and for another customer's job, the answer is 404. The *Job completed* email links to `/share/reports/<token>`, which needs no sign-in: the token is an HMAC over the organization, the report and an expiry 30 days after sending (ADR 018). A report changed after sending shows a short "being updated" page until it is sent again, and an expired link answers 410.
 
 ### 8.10 Dashboard and reports (DSH)
 
@@ -512,6 +537,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 - **DSH-04:** the *Today* tab is the default for dispatchers: today's status counts, each technician's load against working hours, unassigned and at-risk jobs, and pending approvals. Technicians get their own numbers instead.
 - **DSH-06:** `pnpm --filter @fieldops/db bench:dashboard` runs the queries as the RLS role; measured p95 is 35–76 ms per organization on the demo seed (0.3, with SLA states: worst p95 146 ms).
 - **DSH-05 (0.3):** every KPI, chart and *Today* list downloads as CSV (`/dashboard/export?report=…` with the page's filters, UTF-8 with a byte order mark for Excel; office roles). The jobs export gained the SLA columns.
+
+*As built (0.4), revenue (DSH-01, DSH-02):* owners and admins (`dashboard.financial`) see a revenue section on the overview; dispatchers don't. It shows revenue invoiced (invoices issued in the period, void ones excluded), revenue collected (payments received in the period), receivables at the end of the period and their overdue part, each against the previous period, and a trend of invoiced and collected amounts. Receivables are computed as of the end of each period, counting only payments made by then, so the previous period's figure is what was open at that time. Technician and service-type filters don't apply to money. The figures and the trend download as CSV (`report=revenue_kpis`, `report=revenue`).
 
 ### 8.11 Audit (AUD)
 
@@ -537,6 +564,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 *As built (0.2), SET-03:* service types carry required skills and a checklist template; `/settings/operations` (Owner, Admin) sets the two approval thresholds in the organization's currency and the *Require a customer signature* switch. *0.3:* SLA policies at `/settings/sla`; number prefixes are still to come.
 
 *As built (0.3), SET-04:* `/settings/ai` (Owner, Admin) turns AI on or off, sets the monthly quota (every call counts, failures included, per calendar month in UTC), and shows this month's calls, tokens and acceptance rate, the provider status and the active rate limits.
+
+*As built (0.4), SET-03 and billing:* Owners and Admins manage the parts and fees **catalog** at `/settings/catalog` (FIN-01) and the **billing settings** at `/settings/billing`: payment terms (0–365 days, default 14), quote validity (1–365 days, default 30), the labor rate per hour (default $95 or Rp150,000), the invoice and quote prefixes (1–10 letters or digits, default `INV` and `QUO`, and different from each other), overdue reminders on or off (on by default) and payment instructions, which are printed on invoices and in invoice and reminder emails. The prefixes complete SET-03's number prefixes; changing one doesn't restart the year's sequence. Each service type can name one of the organization's tax rates.
 
 ### 8.13 SaaS plans and billing (BIL)
 
@@ -618,6 +647,15 @@ A chat panel (⌘J) that answers questions about the organization's own data.
   - Conversations are kept for 30 days.
 - **Acceptance:** an evaluation set of 25 questions on the seed data, checking both the tools chosen and the numbers in the answer.
 
+*As built (0.4):*
+- **Panel:** ⌘J / Ctrl+J or the header button opens *Ask FieldOps* on every app page, for every staff role. Answers stream in; each lookup shows as a chip with its summary ("Looked up 12 jobs"). Job numbers and the names of records the tools returned become links; the answer renders a small Markdown subset as text, so raw HTML stays text and Markdown links show only their text. A polite live region announces progress. The panel has starter questions, the user's conversation history and a phone layout.
+- **Tools:** the seven tools above, offered by role: `revenue_summary` only to owners and admins (`dashboard.financial`) and `pending_approvals` only to members who can approve. Each call runs in its own short tenant transaction as the signed-in member, so the organization and role come from the session and no transaction stays open while the model writes. Results are capped at 50 rows with the total still given, and technicians only reach their own jobs, those jobs' customers and their own schedule. From the ninth call on, a tool answers with an error asking the model to answer with what it has, and the runner stops after 10 model requests either way (ADR 019).
+- **Injection guard:** tool results reach the model as JSON inside `<tool_result>` elements with `<` and `>` escaped, so text in a record can't close the element, and the system prompt says everything inside is data. A unit test runs a hostile job description through it.
+- **Model:** Claude through the SDK's tool runner with strict, Zod-typed tools and streaming: `claude-opus-5-5` (override with `AI_MODEL_ASSISTANT`), effort `medium`, server-side model fallback, and prompt caching on the system prompt and tool definitions and on the growing conversation. A refusal ends the answer with an error. `AI_PROVIDER=fixture` swaps in a keyword-based test double that runs the real tools.
+- **API and storage:** `POST /api/v1/ai/assistant` streams server-sent events over POST (`conversation`, `text`, `tool_started`, `tool_finished`, `done`, `error`); limits, a disabled AI and validation errors are problem responses before the stream starts. A question carries the conversation's last 20 messages. Conversations (`GET /ai/conversations`, `GET/DELETE /ai/conversations/{id}`) are private to their user and deleted by the worker 30 days after their last message. Refused or failed answers aren't saved.
+- **Limits:** a question counts against the monthly AI quota and the same per-user, per-visitor and global rate limits as intake.
+- **Evaluations:** the 25 questions are in `packages/ai/evals/assistant.jsonl`. `pnpm eval:assistant` checks the tools chosen and the numbers and records in each answer, with expected values computed from the seeded database when the run starts; it needs an API key, or runs the free fixture baseline. It hasn't been run against Claude yet.
+
 ### 9.4 AI-03 Service report writer (S, 0.4)
 
 When a job is completed, FieldOps drafts a customer-facing report.
@@ -625,6 +663,13 @@ When a job is completed, FieldOps drafts a customer-facing report.
 - **Input:** checklist results and readings, the technician's notes, parts used, and before and after photos.
 - **Output:** work performed, findings, recommendations and a suggested next service date, in the customer's language.
 - **Flow:** the dispatcher or technician edits the draft, then FieldOps sends it as a PDF and email.
+
+*As built (0.4):*
+- **Flow:** completing a job creates its report (one per job) in the customer's language, or the organization's when the customer has none. It is prefilled without AI from the checklist, the notes marked for the customer and the parts used, so it can always be finished by hand. With AI on and quota left it starts `pending` and the worker drafts it; otherwise `skipped`. *Draft with AI* on the job page (`POST /jobs/{id}/report-draft`) drafts it right away. Office roles and the job's technicians edit and send it.
+- **What the model sees:** checklist answers and readings, the job's request, notes marked for the customer (never internal notes), the parts used and up to four photos as small thumbnails, before ones first. Its output is validated and clipped on the server; a suggested next service date must fall after the completion date and within three years.
+- **People's edits win:** a worker draft only replaces text nobody has changed since it was read; otherwise it is logged as discarded. A refusal or an error keeps the current text.
+- **Customers only see a sent report.** Sending it to one of the customer's contacts records `report_sent` in the timeline and whether the AI draft went out as drafted or edited, and emails *Job completed* with a link valid for 30 days. Editing a sent report, or completing the job again, puts it back to draft until it is sent again. Completing again redoes an untouched draft and keeps an edited one; reopening changes nothing.
+- **Model:** `claude-opus-5-5` (override with `AI_MODEL_REPORT`), effort `medium`, output constrained to the shared Zod schema, cached system prompt, streamed and collected. Like intake, a draft is two short transactions with the model call between them. Calls are logged as feature `report` and count against the monthly quota; *Draft with AI* also counts against the rate limits. The fixture writes a templated draft for the E2E suite.
 
 ### 9.5 AI-04 Weekly insights (C, 0.5)
 
@@ -923,6 +968,10 @@ fieldops/
 | 013 | Services in `packages/core` depend on repository interfaces |
 | 014 | No hosted CI; checks run on the server as release gates |
 | 015 | Local file storage behind the same presigned-URL interface until R2 is enabled |
+| 016 | Audit log written by database triggers, read-only for the app |
+| 017 | Billing totals in BigInt minor units with line-level rounding; gap-free quote and invoice numbers from `org_counter` |
+| 018 | PDF documents with `@react-pdf/renderer` in the web server; signed share links for service reports |
+| 019 | *Ask FieldOps*: read-only tools bound to the session, one short transaction per call, streamed over POST |
 
 ---
 
@@ -1065,6 +1114,19 @@ erDiagram
 
 *As built (0.3)* (migration `0003_automate`): `sla_policy` (priority, response and resolution minutes, business-hours flag); `sla_alert` (job, target, kind: one row per alert raised); `notification` and `notification_preference`; `audit_log` (actor, action, entity type and id, before, after, IP, user agent); `portal_token` and `portal_session` (hashed tokens, contact, customer, expiry); `ai_interaction` (feature, model, tokens including cache reads and writes, latency, stop reason, outcome, the validated draft); `rate_limit` (key, window start, count; not tenant-scoped). `job` gained `sla_policy_id`, the response and resolution deadlines and at-risk times, the two SLA states and `ai_status` (pending, drafting, drafted, failed, skipped). The tenant tables have the row-level security policy; `audit_log` is read-only for the runtime role.
 
+*As built (0.4)* (migration `0004_get_paid`), twelve new tables:
+- `catalog_item`: kind (part or fee), name, SKU, unit, unit price and cost, tax rate, active.
+- `quote` and `quote_line`: number, customer, site, contact, service type, the job an approval created, title, notes, status, discount type and value, subtotal, discount, tax and total, valid until, sent, viewed and decided times, who decided (contact or staff) and the decline reason; lines with position, kind, catalog item or service type, description, quantity (`numeric(10,2)`), unit, unit price, tax rate, net and tax.
+- `invoice` and `invoice_line`: number (null until issued), customer, site, job, quote, bill-to contact, status, the same totals plus amount paid, issue and due dates, sent, viewed, paid and void times, void reason, and the open online checkout session; lines like quote lines plus the billed expense request, unit cost and markup.
+- `payment`: invoice, amount, currency, method, provider (`manual` or the online provider) and the provider's reference (unique per provider), a reference typed by staff, note, paid at, recorded by.
+- `invoice_reminder`: invoice and stage, one row per reminder sent.
+- `service_report`: one per job; status, locale, work performed, findings, recommendations, next service date, AI status and interaction, AI-drafted flag, edited by, sent at, sent to, sent by.
+- `job_recurrence`: customer, site, equipment, service type, title, description, priority, interval unit and count, start and end dates, visit window, lead days, next date, suggested technician, active.
+- `assistant_conversation` and `assistant_message`: user and title; role, content and the tools that ran.
+- `daily_digest`: user and local date, one row per digest sent.
+
+`job` gained `sla_paused_at`, `sla_paused_minutes`, `recurrence_id` and `occurrence_date` (unique per plan and date); `service_type` gained `tax_rate_bps`; `customer` gained `locale`; `organization.settings` holds `billing` (terms, validity, labor rate, prefixes, reminders, payment instructions) and the default `locale`. Quote and invoice numbers come from `org_counter` rows named `quote:<year>` and `invoice:<year>`. Every new table has the row-level security policy. The audit triggers cover the catalog, quotes, invoices, payments, service reports and maintenance plans; conversations, reminders and digests are logs of their own and aren't audited. Quote, invoice and payment changes publish live events.
+
 ---
 
 ## 17. API and integrations
@@ -1103,6 +1165,15 @@ erDiagram
 Internal routes such as `/api/webhooks/stripe` are not part of the public API.
 
 *As built (0.3):* `GET/PUT /sla-policies`, `GET /notifications`, `POST /notifications/read`, `GET/PUT /notifications/preferences`, `GET /stream`, `POST /ai/intake` and `POST /jobs/{id}/review` (confirm a portal request, optionally applying AI suggestions). Jobs gained `ai_status`, `response_due_at`, `resolution_due_at`, `sla_response_state` and `sla_resolution_state`, and the list filters `sla` and `needs_review`. The portal and the audit viewer have no public API yet.
+
+*As built (0.4):*
+- **Quotes:** `GET/POST /quotes`, `GET/PATCH /quotes/{id}` (UUID or number such as `QUO-2026-0042`), `POST /quotes/{id}/send`, `POST /quotes/{id}/decision` (staff recording the customer's answer), `GET /quotes/{id}/pdf`.
+- **Invoices:** `GET/POST /invoices`, `GET/PATCH /invoices/{id}`, `POST /invoices/{id}/send` (issues a draft, or emails an issued one again), `POST /invoices/{id}/void`, `GET/POST /invoices/{id}/payments`, `GET /invoices/{id}/pdf`; `GET /catalog-items`.
+- **Service reports:** `GET/PATCH /jobs/{id}/report`, `POST /jobs/{id}/report-draft`, `POST /jobs/{id}/report/send`, `GET /jobs/{id}/report/pdf`.
+- **Maintenance plans:** `GET/POST /recurrences`, `GET/PATCH/DELETE /recurrences/{id}` (PATCH also pauses and resumes).
+- **Assistant:** `POST /ai/assistant` (server-sent events over POST), `GET /ai/conversations`, `GET/DELETE /ai/conversations/{id}`.
+- **Changed:** jobs gained `sla_paused_at`, `recurrence_id` and `occurrence_date` and the sources `quote` and `recurring`; service types gained `tax_rate_bps`; notifications gained `quote_decided`, `payment_received` and `daily_digest`, whose preference has `in_app: null` because it is email only.
+- **Web only for now:** catalog edits, billing settings, revising and duplicating quotes. The report share link (`/share/reports/<token>`) and the portal's report download are outside `/api/v1`.
 
 ### 17.3 Webhook events
 
@@ -1227,6 +1298,12 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 *As built (0.3):* explicit SLA policies for both organizations (low priority at Acme Air and normal and low at Acme Teknik count business hours); deadlines and states for every job, consistent with its timeline (about 7% of completed jobs breached their resolution target, and each organization has a few at-risk and breached open jobs today), with past alerts recorded so the first monitor run raises nothing new. A demo portal customer per organization (Jamie Rivera at Acme Air, Dewi Lestari at Acme Teknik) and at least three open portal requests per organization with visit windows and AI drafts; 30 days of AI usage history; recent notifications for the demo users (the newest unread); about 7 days of audit history (job changes, customer and site edits, a role change, a settings change, sign-ins from documentation IP ranges). The seed runs with the audit log and live events turned off.
 
 *As built (0.3.1):* each service type lists its job titles with request texts written for each title, so a job's description always matches its title and service type; customers get access and billing notes from their own list. Open portal requests have no service type, estimate or checklist, like requests from the real portal, and their AI drafts suggest the service type and estimate, with checks and questions for that kind of job; drafts raise the priority only for faults. The random draws keep their order, so the rest of the demo data is unchanged.
+
+*As built (0.4):* each new part of the seed draws from its own seeded generator, so the earlier demo data is unchanged.
+- **Billing:** a catalog of 11 parts and fees at Acme Air and 10 at Acme Teknik. Quotes in every state over the last three months; approved ones are linked to manual jobs of that period (5 at Acme Air, 3 at Acme Teknik), whose source becomes *quote*. Invoices for about 88% of completed jobs, numbered per year in issue order with no gaps; about half of those for the last two days' jobs are still drafts. Payments by card, bank transfer, cash and other means, some partial; overdue invoices with the reminders already sent; an occasional 10% discount; and a voided invoice. The demo portal customers (Jamie Rivera, Dewi Lestari) each have a sent quote and an unpaid invoice.
+- **Service reports** for jobs completed in the last 60 days: most sent, about two in three drafted by AI (logged as AI calls), some of those edited before sending, and the last two days' still drafts. The text is built from each job's checklist and service type, never by a model, so the seed stays deterministic. Acme Teknik's reports are in Bahasa Indonesia.
+- **Operations:** one to three maintenance plans per commercial customer (about 8% paused, 6% ended), each active plan with the unassigned jobs it would have generated within its lead days; every job on hold waiting for the customer has its resolution clock paused; yesterday's digest is logged for each owner.
+- **Assistant:** a few past *Ask FieldOps* conversations per organization for the demo dispatcher and owner, answered from the seeded data with the tools that ran.
 
 ---
 
