@@ -8,7 +8,9 @@ export function assertValidWindow(start: Date, end: Date): void {
     throw new ValidationError("Invalid date", [{ path: "scheduled_start", message: "Invalid date" }]);
   }
   if (end <= start) {
-    throw new ValidationError("End must be after start", [{ path: "scheduled_end", message: "End must be after start" }]);
+    throw new ValidationError("End must be after start", [
+      { path: "scheduled_end", message: "End must be after start" },
+    ]);
   }
   if (end.getTime() - start.getTime() > MAX_JOB_DURATION_MS) {
     throw new ValidationError("A visit can last at most 24 hours", [

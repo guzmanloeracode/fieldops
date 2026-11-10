@@ -36,7 +36,14 @@ describe("repositories scoped to organization B", () => {
       expect(await store.jobs.get(a.ids.job)).toBeNull();
       expect(await store.jobs.events(a.ids.job)).toEqual([]);
       expect(await store.jobs.missingRequiredChecklistItems(a.ids.job)).toEqual([]);
-      expect(await store.jobs.overlapping(a.members.tech, new Date("2026-11-11T00:00:00Z"), new Date("2026-11-12T00:00:00Z"), b.ids.job)).toEqual([]);
+      expect(
+        await store.jobs.overlapping(
+          a.members.tech,
+          new Date("2026-11-11T00:00:00Z"),
+          new Date("2026-11-12T00:00:00Z"),
+          b.ids.job,
+        ),
+      ).toEqual([]);
       expect(await store.notes.list(a.ids.job)).toEqual([]);
       expect(await store.attachments.get(a.ids.attachment)).toBeNull();
       expect(await store.attachments.list(a.ids.job)).toEqual([]);
@@ -71,9 +78,15 @@ describe("repositories scoped to organization B", () => {
       await store.members.updateRole(a.members.tech, "owner");
       await store.members.remove(a.members.dispatcher);
     });
-    const [job] = await t.owner.execute<{ title: string; deleted_at: Date | null }>(sql`select title, deleted_at from job where id = ${a.ids.job}`).then((r) => r.rows);
+    const [job] = await t.owner
+      .execute<{ title: string; deleted_at: Date | null }>(
+        sql`select title, deleted_at from job where id = ${a.ids.job}`,
+      )
+      .then((r) => r.rows);
     expect(job).toEqual({ title: "Job a", deleted_at: null });
-    const roles = await t.owner.execute<{ role: string }>(sql`select role from member where organization_id = ${a.orgId} order by role`);
+    const roles = await t.owner.execute<{ role: string }>(
+      sql`select role from member where organization_id = ${a.orgId} order by role`,
+    );
     expect(roles.rows.map((r) => r.role)).toEqual(["dispatcher", "owner", "technician", "technician"]);
   });
 });
@@ -96,14 +109,24 @@ describe("row-level security for fieldops_app", () => {
 
   it("rejects writing a row for another organization (WITH CHECK)", async () => {
     expect(
-      await pgErrorOf(withTenant(t.app, a.orgId, (tx) => tx.execute(sql`insert into customer (organization_id, name) values (${b.orgId}, 'sneaky')`))),
+      await pgErrorOf(
+        withTenant(t.app, a.orgId, (tx) =>
+          tx.execute(sql`insert into customer (organization_id, name) values (${b.orgId}, 'sneaky')`),
+        ),
+      ),
     ).toMatch(/42501 new row violates row-level security policy/);
     expect(
-      await pgErrorOf(withTenant(t.app, a.orgId, (tx) => tx.execute(sql`update customer set organization_id = ${b.orgId} where id = ${a.ids.customer}`))),
+      await pgErrorOf(
+        withTenant(t.app, a.orgId, (tx) =>
+          tx.execute(sql`update customer set organization_id = ${b.orgId} where id = ${a.ids.customer}`),
+        ),
+      ),
     ).toMatch(/row-level security/);
-    expect(await pgErrorOf(t.app.execute(sql`insert into customer (organization_id, name) values (${a.orgId}, 'no tenant')`))).toMatch(
-      /row-level security/,
-    );
+    expect(
+      await pgErrorOf(
+        t.app.execute(sql`insert into customer (organization_id, name) values (${a.orgId}, 'no tenant')`),
+      ),
+    ).toMatch(/row-level security/);
   });
 
   it("can't update or delete another organization's rows even by id", async () => {
@@ -175,7 +198,9 @@ describe("schema guard", () => {
       where t.relnamespace = 'public'::regnamespace and not x.indisprimary`);
     const tenant = new Set<string>(TENANT_TABLES);
     // Trigram search indexes cover one text column and can't lead with organization_id.
-    const offenders = idx.rows.filter((r) => tenant.has(r.table) && r.first_col !== "organization_id" && !r.index.endsWith("_trgm_idx"));
+    const offenders = idx.rows.filter(
+      (r) => tenant.has(r.table) && r.first_col !== "organization_id" && !r.index.endsWith("_trgm_idx"),
+    );
     expect(offenders).toEqual([]);
   });
 });

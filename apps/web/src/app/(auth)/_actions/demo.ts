@@ -12,6 +12,9 @@ export async function demoSignIn(formData: FormData) {
   const role = String(formData.get("role") ?? "owner") as DemoRole;
   const email = DEMO_LOGINS[org]?.[role];
   if (!email) redirect("/sign-in");
-  await auth.api.signInEmail({ body: { email, password: env.DEMO_PASSWORD, rememberMe: false }, headers: await headers() });
+  await auth.api.signInEmail({
+    body: { email, password: env.DEMO_PASSWORD, rememberMe: false },
+    headers: await headers(),
+  });
   redirect(role === "technician" ? "/jobs?view=my-day" : "/dashboard");
 }

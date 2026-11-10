@@ -17,7 +17,9 @@ export function SettingsNav({ tabs }: { tabs: { href: string; label: string }[] 
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "-mb-px inline-flex items-center border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors",
-                  active ? "border-primary text-foreground font-medium" : "text-muted-foreground hover:text-foreground border-transparent",
+                  active
+                    ? "border-primary text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground border-transparent",
                 )}
               >
                 {tab.label}

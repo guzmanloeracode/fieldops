@@ -64,13 +64,18 @@ export async function createJob(ctx: ServiceContext, raw: unknown): Promise<JobV
   if (input.equipment_id) {
     const eq = await ctx.store.equipment.get(input.equipment_id);
     if (!eq || eq.siteId !== site.id) {
-      throw new ValidationError("The equipment isn't at this site", [{ path: "equipment_id", message: "Not at this site" }]);
+      throw new ValidationError("The equipment isn't at this site", [
+        { path: "equipment_id", message: "Not at this site" },
+      ]);
     }
   }
   let estimated = input.estimated_duration_min ?? null;
   if (input.service_type_id) {
     const st = await ctx.store.serviceTypes.get(input.service_type_id);
-    if (!st) throw new ValidationError("Unknown service type", [{ path: "service_type_id", message: "Unknown service type" }]);
+    if (!st)
+      throw new ValidationError("Unknown service type", [
+        { path: "service_type_id", message: "Unknown service type" },
+      ]);
     estimated ??= st.defaultDurationMin;
   }
   const number = await ctx.store.jobs.nextNumber();
@@ -106,18 +111,23 @@ export async function updateJob(ctx: ServiceContext, id: string, raw: unknown, e
   assertCan(ctx.actor, "jobs.update");
   const input = parseInput(jobUpdateSchema, raw);
   const current = await getJob(ctx, id);
-  if (expectedVersion !== undefined && current.version !== expectedVersion) throw new PreconditionFailedError();
+  if (expectedVersion !== undefined && current.version !== expectedVersion)
+    throw new PreconditionFailedError();
 
   const patch: Partial<JobRecord> = {};
   if (input.title !== undefined) patch.title = input.title;
   if (input.description !== undefined) patch.description = input.description ?? null;
   if (input.priority !== undefined) patch.priority = input.priority;
   if (input.estimated_duration_min !== undefined) patch.estimatedDurationMin = input.estimated_duration_min;
-  if (input.preferred_start !== undefined) patch.preferredStart = input.preferred_start ? new Date(input.preferred_start) : null;
-  if (input.preferred_end !== undefined) patch.preferredEnd = input.preferred_end ? new Date(input.preferred_end) : null;
+  if (input.preferred_start !== undefined)
+    patch.preferredStart = input.preferred_start ? new Date(input.preferred_start) : null;
+  if (input.preferred_end !== undefined)
+    patch.preferredEnd = input.preferred_end ? new Date(input.preferred_end) : null;
   if (input.service_type_id !== undefined) {
     if (input.service_type_id && !(await ctx.store.serviceTypes.get(input.service_type_id))) {
-      throw new ValidationError("Unknown service type", [{ path: "service_type_id", message: "Unknown service type" }]);
+      throw new ValidationError("Unknown service type", [
+        { path: "service_type_id", message: "Unknown service type" },
+      ]);
     }
     patch.serviceTypeId = input.service_type_id;
   }
@@ -125,7 +135,9 @@ export async function updateJob(ctx: ServiceContext, id: string, raw: unknown, e
     if (input.equipment_id) {
       const eq = await ctx.store.equipment.get(input.equipment_id);
       if (!eq || eq.siteId !== current.siteId) {
-        throw new ValidationError("The equipment isn't at this site", [{ path: "equipment_id", message: "Not at this site" }]);
+        throw new ValidationError("The equipment isn't at this site", [
+          { path: "equipment_id", message: "Not at this site" },
+        ]);
       }
     }
     patch.equipmentId = input.equipment_id;
@@ -159,7 +171,8 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
       assigned: isAssigned(ctx, job),
       hasAssignee: job.assignees.length > 0,
       hasSchedule: Boolean(job.scheduledStart && job.scheduledEnd),
-      missingRequiredItems: input.to === "completed" ? await ctx.store.jobs.missingRequiredChecklistItems(job.id) : [],
+      missingRequiredItems:
+        input.to === "completed" ? await ctx.store.jobs.missingRequiredChecklistItems(job.id) : [],
     },
   );
 
@@ -207,7 +220,8 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
   const members = await ctx.store.members.list();
   const known = new Set(members.map((m) => m.id));
   const unknown = memberIds.filter((m) => !known.has(m));
-  if (unknown.length) throw new ValidationError("Unknown member", [{ path: "member_ids", message: "Unknown member" }]);
+  if (unknown.length)
+    throw new ValidationError("Unknown member", [{ path: "member_ids", message: "Unknown member" }]);
 
   const start = input.scheduled_start ? new Date(input.scheduled_start) : null;
   const end = input.scheduled_end ? new Date(input.scheduled_end) : null;
@@ -299,7 +313,11 @@ export async function addNote(ctx: ServiceContext, jobId: string, raw: unknown) 
 // ------------------------------------------------------------------ attachments (JOB-06)
 
 function safeFileName(name: string): string {
-  const cleaned = name.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").slice(-120);
+  const cleaned = name
+    .normalize("NFKD")
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(-120);
   return cleaned || "file";
 }
 
@@ -312,7 +330,9 @@ export async function requestAttachmentUpload(ctx: ServiceContext, jobId: string
   const allowed: readonly string[] = ctx.demo ? DEMO_ATTACHMENT_TYPES : ALLOWED_ATTACHMENT_TYPES;
   const maxBytes = ctx.demo ? MAX_DEMO_ATTACHMENT_BYTES : MAX_ATTACHMENT_BYTES;
   if (!allowed.includes(input.mime_type)) {
-    throw new ValidationError("This file type isn't allowed", [{ path: "mime_type", message: `Allowed: ${allowed.join(", ")}` }]);
+    throw new ValidationError("This file type isn't allowed", [
+      { path: "mime_type", message: `Allowed: ${allowed.join(", ")}` },
+    ]);
   }
   if (input.size_bytes > maxBytes) {
     throw new ValidationError("The file is too large", [
@@ -371,7 +391,8 @@ export async function confirmAttachmentUpload(ctx: ServiceContext, attachmentId:
 export async function listAttachments(ctx: ServiceContext, jobId: string) {
   const job = await getJob(ctx, jobId);
   const rows = (await ctx.store.attachments.list(job.id)).filter((a) => a.status === "ready");
-  if (!ctx.files) return rows.map((a) => ({ ...a, url: null as string | null, thumbUrl: null as string | null }));
+  if (!ctx.files)
+    return rows.map((a) => ({ ...a, url: null as string | null, thumbUrl: null as string | null }));
   const files = ctx.files;
   return Promise.all(
     rows.map(async (a) => ({
@@ -390,5 +411,6 @@ export async function removeAttachment(ctx: ServiceContext, attachmentId: string
   if (!own) assertCan(ctx.actor, "jobs.update");
   else assertCan(ctx.actor, "jobs.work", { assigned: isAssigned(ctx, job) });
   await ctx.store.attachments.remove(attachmentId);
-  if (ctx.files) await ctx.files.remove([attachment.storageKey, ...(attachment.thumbKey ? [attachment.thumbKey] : [])]);
+  if (ctx.files)
+    await ctx.files.remove([attachment.storageKey, ...(attachment.thumbKey ? [attachment.thumbKey] : [])]);
 }

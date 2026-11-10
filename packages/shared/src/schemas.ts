@@ -130,7 +130,13 @@ export const jobCreateSchema = z
     source: jobSourceSchema.default("manual"),
     preferred_start: isoDateTime.nullable().optional(),
     preferred_end: isoDateTime.nullable().optional(),
-    estimated_duration_min: z.number().int().min(5).max(24 * 60).nullable().optional(),
+    estimated_duration_min: z
+      .number()
+      .int()
+      .min(5)
+      .max(24 * 60)
+      .nullable()
+      .optional(),
   })
   .refine((v) => !v.preferred_start || !v.preferred_end || v.preferred_end > v.preferred_start, {
     message: "Preferred end must be after preferred start",
@@ -149,7 +155,12 @@ export const jobUpdateSchema = z
     priority: jobPrioritySchema,
     preferred_start: isoDateTime.nullable(),
     preferred_end: isoDateTime.nullable(),
-    estimated_duration_min: z.number().int().min(5).max(24 * 60).nullable(),
+    estimated_duration_min: z
+      .number()
+      .int()
+      .min(5)
+      .max(24 * 60)
+      .nullable(),
   })
   .partial()
   .meta({ id: "JobUpdate" });
@@ -264,7 +275,12 @@ export const serviceTypeInputSchema = z
   .object({
     name: trimmed(120).min(1),
     description: optionalText(1000),
-    default_duration_min: z.number().int().min(5).max(24 * 60).default(60),
+    default_duration_min: z
+      .number()
+      .int()
+      .min(5)
+      .max(24 * 60)
+      .default(60),
     default_price_minor: z.number().int().min(0).default(0),
     color: z
       .string()
@@ -281,7 +297,11 @@ export const serviceTypeUpdateSchema = z
   .object({
     name: trimmed(120).min(1),
     description: optionalText(1000),
-    default_duration_min: z.number().int().min(5).max(24 * 60),
+    default_duration_min: z
+      .number()
+      .int()
+      .min(5)
+      .max(24 * 60),
     default_price_minor: z.number().int().min(0),
     color: z
       .string()
@@ -317,7 +337,9 @@ export const jobListQuerySchema = z.object({
   to: z.iso.date().optional(),
   sort: z
     .string()
-    .regex(/^-?(number|scheduled_start|created_at|priority|status|title)(,-?(number|scheduled_start|created_at|priority|status|title))*$/)
+    .regex(
+      /^-?(number|scheduled_start|created_at|priority|status|title)(,-?(number|scheduled_start|created_at|priority|status|title))*$/,
+    )
     .default("-created_at"),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   cursor: z.string().max(500).optional(),
@@ -464,7 +486,13 @@ export const meSchema = z
   .object({
     user: z.object({ id: z.uuid(), name: z.string(), email: z.string() }),
     organization: z
-      .object({ id: z.uuid(), name: z.string(), slug: z.string(), timezone: z.string(), currency: currencySchema })
+      .object({
+        id: z.uuid(),
+        name: z.string(),
+        slug: z.string(),
+        timezone: z.string(),
+        currency: currencySchema,
+      })
       .nullable(),
     role: roleSchema.nullable(),
   })
@@ -523,7 +551,9 @@ export const customerSummarySchema = z
     type: customerTypeSchema,
     name: z.string(),
     tags: z.array(z.string()),
-    primary_contact: z.object({ name: z.string(), email: z.string().nullable(), phone: z.string().nullable() }).nullable(),
+    primary_contact: z
+      .object({ name: z.string(), email: z.string().nullable(), phone: z.string().nullable() })
+      .nullable(),
     site_count: z.number().int(),
     open_job_count: z.number().int(),
     last_job_at: ts.nullable(),
@@ -537,7 +567,10 @@ export const customerCreatedSchema = customerSchema
   .extend({
     possible_duplicates: z
       .array(z.object({ id: z.uuid(), name: z.string(), matched_on: z.enum(["email", "phone"]) }))
-      .meta({ description: "Existing customers with a matching contact email or phone. The customer is created anyway." }),
+      .meta({
+        description:
+          "Existing customers with a matching contact email or phone. The customer is created anyway.",
+      }),
   })
   .meta({ id: "CustomerCreated" });
 

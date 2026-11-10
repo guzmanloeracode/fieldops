@@ -8,7 +8,13 @@ import * as s from "../src/schema";
 export async function freshDatabase() {
   const cfg = inject("pg");
   const name = `t_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
-  const admin = new pg.Client({ host: cfg.host, port: cfg.port, user: cfg.user, password: cfg.password, database: "postgres" });
+  const admin = new pg.Client({
+    host: cfg.host,
+    port: cfg.port,
+    user: cfg.user,
+    password: cfg.password,
+    database: "postgres",
+  });
   await admin.connect();
   for (let attempt = 0; ; attempt++) {
     try {
@@ -50,11 +56,21 @@ const id = (): string => randomUUID();
  */
 export async function createOrgWithData(db: Database, label: string) {
   const orgId = id();
-  await db.insert(s.organization).values({ id: orgId, name: `Org ${label}`, slug: `org-${label}-${orgId.slice(0, 6)}`, timezone: "America/Chicago" });
+  await db.insert(s.organization).values({
+    id: orgId,
+    name: `Org ${label}`,
+    slug: `org-${label}-${orgId.slice(0, 6)}`,
+    timezone: "America/Chicago",
+  });
   const users = { owner: id(), dispatcher: id(), tech: id(), tech2: id() };
   const members = { owner: id(), dispatcher: id(), tech: id(), tech2: id() };
   for (const role of ["owner", "dispatcher", "tech", "tech2"] as const) {
-    await db.insert(s.user).values({ id: users[role], name: `${label} ${role}`, email: `${role}.${orgId}@example.com`, emailVerified: true });
+    await db.insert(s.user).values({
+      id: users[role],
+      name: `${label} ${role}`,
+      email: `${role}.${orgId}@example.com`,
+      emailVerified: true,
+    });
     await db.insert(s.member).values({
       id: members[role],
       organizationId: orgId,
@@ -76,7 +92,9 @@ export async function createOrgWithData(db: Database, label: string) {
     attachment: id(),
   };
   await db.insert(s.orgCounter).values({ organizationId: orgId, name: "job", value: 1 });
-  await db.insert(s.serviceType).values({ id: ids.serviceType, organizationId: orgId, name: "AC repair", currency: "USD" });
+  await db
+    .insert(s.serviceType)
+    .values({ id: ids.serviceType, organizationId: orgId, name: "AC repair", currency: "USD" });
   await db.insert(s.customer).values({ id: ids.customer, organizationId: orgId, name: `Customer ${label}` });
   await db.insert(s.contact).values({
     id: ids.contact,
@@ -89,8 +107,18 @@ export async function createOrgWithData(db: Database, label: string) {
     phoneNorm: "15125550100",
     isPrimary: true,
   });
-  await db.insert(s.site).values({ id: ids.site, organizationId: orgId, customerId: ids.customer, label: "Home", line1: "1 Main", city: "Austin", country: "US" });
-  await db.insert(s.equipment).values({ id: ids.equipment, organizationId: orgId, siteId: ids.site, type: "Split AC" });
+  await db.insert(s.site).values({
+    id: ids.site,
+    organizationId: orgId,
+    customerId: ids.customer,
+    label: "Home",
+    line1: "1 Main",
+    city: "Austin",
+    country: "US",
+  });
+  await db
+    .insert(s.equipment)
+    .values({ id: ids.equipment, organizationId: orgId, siteId: ids.site, type: "Split AC" });
   await db.insert(s.job).values({
     id: ids.job,
     organizationId: orgId,
@@ -104,10 +132,26 @@ export async function createOrgWithData(db: Database, label: string) {
     scheduledStart: new Date("2026-11-11T15:00:00Z"),
     scheduledEnd: new Date("2026-11-11T17:00:00Z"),
   });
-  await db.insert(s.jobAssignment).values({ id: ids.assignment, organizationId: orgId, jobId: ids.job, memberId: members.tech, isLead: true });
-  await db.insert(s.checklistItem).values({ id: ids.checklist, organizationId: orgId, jobId: ids.job, label: "Photo", required: true });
-  await db.insert(s.jobEvent).values({ id: ids.event, organizationId: orgId, jobId: ids.job, type: "created", toStatus: "new" });
-  await db.insert(s.note).values({ id: ids.note, organizationId: orgId, jobId: ids.job, body: "note", authorUserId: users.dispatcher });
+  await db.insert(s.jobAssignment).values({
+    id: ids.assignment,
+    organizationId: orgId,
+    jobId: ids.job,
+    memberId: members.tech,
+    isLead: true,
+  });
+  await db
+    .insert(s.checklistItem)
+    .values({ id: ids.checklist, organizationId: orgId, jobId: ids.job, label: "Photo", required: true });
+  await db
+    .insert(s.jobEvent)
+    .values({ id: ids.event, organizationId: orgId, jobId: ids.job, type: "created", toStatus: "new" });
+  await db.insert(s.note).values({
+    id: ids.note,
+    organizationId: orgId,
+    jobId: ids.job,
+    body: "note",
+    authorUserId: users.dispatcher,
+  });
   await db.insert(s.attachment).values({
     id: ids.attachment,
     organizationId: orgId,

@@ -28,7 +28,10 @@ export async function demoInboxAddresses(): Promise<string[]> {
 
 export async function rememberDemoInbox(email: string) {
   if (!env.DEMO_MODE) return;
-  const list = [email.toLowerCase(), ...(await demoInboxAddresses()).filter((e) => e !== email.toLowerCase())].slice(0, 5);
+  const list = [
+    email.toLowerCase(),
+    ...(await demoInboxAddresses()).filter((e) => e !== email.toLowerCase()),
+  ].slice(0, 5);
   const payload = Buffer.from(JSON.stringify(list)).toString("base64url");
   (await cookies()).set(COOKIE, `${payload}.${sign(payload)}`, {
     httpOnly: true,

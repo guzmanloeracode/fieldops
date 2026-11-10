@@ -75,14 +75,29 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         }
       />
 
-      <form method="get" action="/customers" className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end" role="search">
+      <form
+        method="get"
+        action="/customers"
+        className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end"
+        role="search"
+      >
         <div className="space-y-1.5">
           <Label htmlFor="customer-q" className="sr-only">
             {t("searchLabel")}
           </Label>
           <div className="relative">
-            <Search aria-hidden className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-            <Input id="customer-q" name="q" type="search" defaultValue={query.q ?? ""} placeholder={t("search")} className="pl-8" />
+            <Search
+              aria-hidden
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+            />
+            <Input
+              id="customer-q"
+              name="q"
+              type="search"
+              defaultValue={query.q ?? ""}
+              placeholder={t("search")}
+              className="pl-8"
+            />
           </div>
         </div>
         <div className="space-y-1.5">
@@ -167,7 +182,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {result.rows.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="max-w-64">
-                    <Link href={`/customers/${c.id}`} className="flex items-center gap-2 font-medium hover:underline">
+                    <Link
+                      href={`/customers/${c.id}`}
+                      className="flex items-center gap-2 font-medium hover:underline"
+                    >
                       {c.type === "commercial" ? (
                         <Building2 aria-hidden className="text-muted-foreground size-4 shrink-0" />
                       ) : (
@@ -191,7 +209,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{c.siteCount}</TableCell>
                   <TableCell className="text-right tabular-nums">{c.openJobCount}</TableCell>
-                  <TableCell className="text-sm whitespace-nowrap">{formatDate(c.lastJobAt, actor.organization.timezone)}</TableCell>
+                  <TableCell className="text-sm whitespace-nowrap">
+                    {formatDate(c.lastJobAt, actor.organization.timezone)}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {c.tags.map((tag) => (

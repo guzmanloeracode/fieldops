@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { addMoney, CURRENCY_INFO, formatMoney, money, multiplyMoney, parseMajor, taxFor, toMajor } from "./money";
+import {
+  addMoney,
+  CURRENCY_INFO,
+  formatMoney,
+  money,
+  multiplyMoney,
+  parseMajor,
+  taxFor,
+  toMajor,
+} from "./money";
 
 describe("money", () => {
   it("adds amounts of the same currency", () => {

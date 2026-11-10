@@ -1,9 +1,35 @@
-import type { JobListFilters, JobRecord, JobRepo, JobView, Page, AssigneeRef, JobEventRecord } from "@fieldops/core";
+import type {
+  JobListFilters,
+  JobRecord,
+  JobRepo,
+  JobView,
+  Page,
+  AssigneeRef,
+  JobEventRecord,
+} from "@fieldops/core";
 import { decodeCursor, encodeCursor, parseJobNumber, parseSort, PRIORITY_RANK } from "@fieldops/core";
-import { JOB_STATUSES, type HoldReason, type JobEventType, type JobPriority, type JobSource, type JobStatus } from "@fieldops/shared";
+import {
+  JOB_STATUSES,
+  type HoldReason,
+  type JobEventType,
+  type JobPriority,
+  type JobSource,
+  type JobStatus,
+} from "@fieldops/shared";
 import { and, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { Tx } from "../client";
-import { checklistItem, customer, job, jobAssignment, jobEvent, member, orgCounter, serviceType, site, user } from "../schema";
+import {
+  checklistItem,
+  customer,
+  job,
+  jobAssignment,
+  jobEvent,
+  member,
+  orgCounter,
+  serviceType,
+  site,
+  user,
+} from "../schema";
 import { definedOnly, likeEscape, toAddress } from "./util";
 
 const SORT_FIELDS = ["number", "scheduled_start", "created_at", "priority", "status", "title"] as const;
@@ -122,7 +148,8 @@ function toView(r: ViewRow): JobView {
       longitude: r.site.longitude,
       accessNotes: r.site.accessNotes,
     },
-    serviceType: r.j.serviceTypeId && r.serviceTypeName ? { id: r.j.serviceTypeId, name: r.serviceTypeName } : null,
+    serviceType:
+      r.j.serviceTypeId && r.serviceTypeName ? { id: r.j.serviceTypeId, name: r.serviceTypeName } : null,
     assignees: r.assignees,
   };
 }
@@ -136,7 +163,10 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       .from(job)
       .innerJoin(customer, and(eq(customer.id, job.customerId), eq(customer.organizationId, orgId)))
       .innerJoin(site, and(eq(site.id, job.siteId), eq(site.organizationId, orgId)))
-      .leftJoin(serviceType, and(eq(serviceType.id, job.serviceTypeId), eq(serviceType.organizationId, orgId)));
+      .leftJoin(
+        serviceType,
+        and(eq(serviceType.id, job.serviceTypeId), eq(serviceType.organizationId, orgId)),
+      );
 
   async function getWhere(where: SQL | undefined): Promise<JobView | null> {
     const [r] = await baseView().where(and(scope, where));
@@ -164,11 +194,19 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       // Technicians who filter by another technician still only see their own jobs.
       if (f.assignedMemberId && f.technician && f.technician !== f.assignedMemberId) where.push(sql`false`);
       const tz = sql`(select o.timezone from organization o where o.id = ${orgId})`;
-      if (f.from) where.push(sql`coalesce(${job.scheduledStart}, ${job.createdAt}) >= (${f.from}::date)::timestamp at time zone ${tz}`);
-      if (f.to) where.push(sql`coalesce(${job.scheduledStart}, ${job.createdAt}) < ((${f.to}::date) + 1)::timestamp at time zone ${tz}`);
+      if (f.from)
+        where.push(
+          sql`coalesce(${job.scheduledStart}, ${job.createdAt}) >= (${f.from}::date)::timestamp at time zone ${tz}`,
+        );
+      if (f.to)
+        where.push(
+          sql`coalesce(${job.scheduledStart}, ${job.createdAt}) < ((${f.to}::date) + 1)::timestamp at time zone ${tz}`,
+        );
 
       const sorts = parseSort(f.sort, SORT_FIELDS);
-      const orderBy = [...sorts.map((s) => sql`${sortExpr(s.field, s.desc)} ${sql.raw(s.desc ? "desc" : "asc")}`)];
+      const orderBy = [
+        ...sorts.map((s) => sql`${sortExpr(s.field, s.desc)} ${sql.raw(s.desc ? "desc" : "asc")}`),
+      ];
       const lastDesc = sorts.at(-1)?.desc ?? true;
       orderBy.push(sql`${job.id} ${sql.raw(lastDesc ? "desc" : "asc")}`);
 
@@ -177,10 +215,22 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
         const values = c.v;
         // Lexicographic keyset condition that works for mixed sort directions:
         // (a > va) or (a = va and b > vb) or ... and finally the id tie-breaker.
-        const keys = [...sorts.map((s) => ({ expr: sortExpr(s.field, s.desc), desc: s.desc, field: s.field as SortField | "id" })), { expr: sql`${job.id}`, desc: lastDesc, field: "id" as const }];
+        const keys = [
+          ...sorts.map((s) => ({
+            expr: sortExpr(s.field, s.desc),
+            desc: s.desc,
+            field: s.field as SortField | "id",
+          })),
+          { expr: sql`${job.id}`, desc: lastDesc, field: "id" as const },
+        ];
         const ors: SQL[] = [];
         keys.forEach((k, i) => {
-          const eqs = keys.slice(0, i).map((p, j) => sql`${p.expr} = ${p.field === "id" ? sql`${values[j]}::uuid` : castValue(p.field, values[j] ?? null)}`);
+          const eqs = keys
+            .slice(0, i)
+            .map(
+              (p, j) =>
+                sql`${p.expr} = ${p.field === "id" ? sql`${values[j]}::uuid` : castValue(p.field, values[j] ?? null)}`,
+            );
           const v = k.field === "id" ? sql`${values[i]}::uuid` : castValue(k.field, values[i] ?? null);
           const cmp = k.desc ? sql`${k.expr} < ${v}` : sql`${k.expr} > ${v}`;
           ors.push(and(...eqs, cmp)!);
@@ -245,21 +295,38 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       const [r] = await tx
         .update(job)
         .set(definedOnly({ ...patch, version: sql`${job.version} + 1`, updatedAt: new Date() }))
-        .where(and(scope, eq(job.id, id), expectedVersion !== undefined ? eq(job.version, expectedVersion) : undefined))
+        .where(
+          and(
+            scope,
+            eq(job.id, id),
+            expectedVersion !== undefined ? eq(job.version, expectedVersion) : undefined,
+          ),
+        )
         .returning();
       return r ? toJobRecord(r) : null;
     },
 
     async softDelete(id) {
-      const r = await tx.update(job).set({ deletedAt: new Date() }).where(and(scope, eq(job.id, id))).returning({ id: job.id });
+      const r = await tx
+        .update(job)
+        .set({ deletedAt: new Date() })
+        .where(and(scope, eq(job.id, id)))
+        .returning({ id: job.id });
       return r.length > 0;
     },
 
     async setAssignments(jobId, assignments) {
-      await tx.delete(jobAssignment).where(and(eq(jobAssignment.organizationId, orgId), eq(jobAssignment.jobId, jobId)));
+      await tx
+        .delete(jobAssignment)
+        .where(and(eq(jobAssignment.organizationId, orgId), eq(jobAssignment.jobId, jobId)));
       if (assignments.length) {
         await tx.insert(jobAssignment).values(
-          assignments.map((a) => ({ organizationId: orgId, jobId, memberId: a.memberId, isLead: a.isLead })),
+          assignments.map((a) => ({
+            organizationId: orgId,
+            jobId,
+            memberId: a.memberId,
+            isLead: a.isLead,
+          })),
         );
       }
     },
@@ -299,7 +366,10 @@ export function jobRepo(tx: Tx, orgId: string): JobRepo {
       return tx
         .select({ id: job.id, number: job.number })
         .from(job)
-        .innerJoin(jobAssignment, and(eq(jobAssignment.jobId, job.id), eq(jobAssignment.organizationId, orgId)))
+        .innerJoin(
+          jobAssignment,
+          and(eq(jobAssignment.jobId, job.id), eq(jobAssignment.organizationId, orgId)),
+        )
         .where(
           and(
             scope,

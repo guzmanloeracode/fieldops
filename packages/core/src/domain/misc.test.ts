@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { normalizeEmail, normalizePhone } from "./contact";
 import { decodeCursor, encodeCursor, parseSort } from "./cursor";
-import { ConflictError, DemoRestrictedError, DomainError, ForbiddenError, HTTP_STATUS, NotFoundError, PreconditionFailedError, ValidationError } from "./errors";
+import {
+  ConflictError,
+  DemoRestrictedError,
+  DomainError,
+  ForbiddenError,
+  HTTP_STATUS,
+  NotFoundError,
+  PreconditionFailedError,
+  ValidationError,
+} from "./errors";
 import { formatJobNumber, formatYearlyNumber, parseJobNumber } from "./numbering";
 import { comparePriority, PRIORITY_LABELS, PRIORITY_RANK } from "./priority";
 import { assertValidWindow, MAX_JOB_DURATION_MS, minutesBetween, overlaps } from "./schedule";
@@ -64,13 +73,18 @@ describe("cursor", () => {
   it("round-trips a payload", () => {
     const c = encodeCursor({ s: "-created_at", v: ["2026-11-10T00:00:00.000Z", "abc"] });
     expect(c).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(decodeCursor(c, "-created_at")).toEqual({ s: "-created_at", v: ["2026-11-10T00:00:00.000Z", "abc"] });
+    expect(decodeCursor(c, "-created_at")).toEqual({
+      s: "-created_at",
+      v: ["2026-11-10T00:00:00.000Z", "abc"],
+    });
   });
   it("rejects a cursor made for another sort, or garbage", () => {
     const c = encodeCursor({ s: "number", v: [1, "x"] });
     expect(() => decodeCursor(c, "-number")).toThrow(ValidationError);
     expect(() => decodeCursor("not-base64-json", "number")).toThrow(ValidationError);
-    expect(() => decodeCursor(Buffer.from('{"s":"number","v":"nope"}').toString("base64url"), "number")).toThrow(ValidationError);
+    expect(() =>
+      decodeCursor(Buffer.from('{"s":"number","v":"nope"}').toString("base64url"), "number"),
+    ).toThrow(ValidationError);
     expect(() => decodeCursor(Buffer.from("null").toString("base64url"), "number")).toThrow(ValidationError);
   });
   it("parses sort expressions", () => {
@@ -112,7 +126,9 @@ describe("schedule", () => {
     expect(() => assertValidWindow(new Date("nope"), at(1))).toThrow(/Invalid date/);
     expect(() => assertValidWindow(at(11), at(9))).toThrow(/after start/);
     expect(() => assertValidWindow(at(9), at(9))).toThrow(ValidationError);
-    expect(() => assertValidWindow(at(0), new Date(at(0).getTime() + MAX_JOB_DURATION_MS + 1))).toThrow(/24 hours/);
+    expect(() => assertValidWindow(at(0), new Date(at(0).getTime() + MAX_JOB_DURATION_MS + 1))).toThrow(
+      /24 hours/,
+    );
   });
   it("detects overlaps (touching windows don't overlap)", () => {
     expect(overlaps({ start: at(9), end: at(11) }, { start: at(10), end: at(12) })).toBe(true);
@@ -148,7 +164,9 @@ describe("errors", () => {
       expect(HTTP_STATUS[err.code]).toBe(status);
     }
     expect(new NotFoundError("Job").message).toBe("Job not found");
-    expect(new ValidationError("bad", [{ path: "x", message: "y" }]).fields).toEqual([{ path: "x", message: "y" }]);
+    expect(new ValidationError("bad", [{ path: "x", message: "y" }]).fields).toEqual([
+      { path: "x", message: "y" },
+    ]);
     expect(HTTP_STATUS.invalid_transition).toBe(409);
   });
 });

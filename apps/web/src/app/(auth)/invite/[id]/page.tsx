@@ -29,9 +29,16 @@ export default async function InvitePage({ params }: { params: Promise<{ id: str
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">{valid ? t("invite.title", { org: inv.orgName }) : t("invite.invalidTitle")}</CardTitle>
+        <CardTitle className="text-xl">
+          {valid ? t("invite.title", { org: inv.orgName }) : t("invite.invalidTitle")}
+        </CardTitle>
         <CardDescription>
-          {valid ? t("invite.description", { role: ROLE_LABELS[inv.i.role as Role] ?? inv.i.role, email: inv.i.email }) : t("invite.invalid")}
+          {valid
+            ? t("invite.description", {
+                role: ROLE_LABELS[inv.i.role as Role] ?? inv.i.role,
+                email: inv.i.email,
+              })
+            : t("invite.invalid")}
         </CardDescription>
       </CardHeader>
       {valid ? (
@@ -39,7 +46,9 @@ export default async function InvitePage({ params }: { params: Promise<{ id: str
           {!session ? (
             <>
               <Button asChild className="w-full">
-                <Link href={`/sign-up?email=${encodeURIComponent(inv.i.email)}&next=/invite/${id}`}>{t("invite.createAccount")}</Link>
+                <Link href={`/sign-up?email=${encodeURIComponent(inv.i.email)}&next=/invite/${id}`}>
+                  {t("invite.createAccount")}
+                </Link>
               </Button>
               <Button asChild variant="outline" className="w-full">
                 <Link href={`/sign-in?next=/invite/${id}`}>{t("invite.signIn")}</Link>

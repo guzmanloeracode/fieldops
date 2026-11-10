@@ -25,7 +25,11 @@ export function SignInForm({ next }: { next: string }) {
         });
         setPending(false);
         if (error) {
-          setError(error.status === 403 ? "Confirm your email first. We sent you a link." : (error.message ?? "Couldn't sign in"));
+          setError(
+            error.status === 403
+              ? "Confirm your email first. We sent you a link."
+              : (error.message ?? "Couldn't sign in"),
+          );
           return;
         }
         router.push(next);

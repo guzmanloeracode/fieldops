@@ -25,7 +25,11 @@ export function createDb(url: string, opts: { max?: number; application?: string
  * Runs `fn` in a transaction scoped to one organization. `app.org_id` is set with is_local = true, so it
  * only lives for this transaction, and row-level security limits every tenant table to that organization.
  */
-export async function withTenant<T>(db: Database, organizationId: string, fn: (tx: Tx) => Promise<T>): Promise<T> {
+export async function withTenant<T>(
+  db: Database,
+  organizationId: string,
+  fn: (tx: Tx) => Promise<T>,
+): Promise<T> {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.org_id', ${organizationId}, true)`);
     return fn(tx);

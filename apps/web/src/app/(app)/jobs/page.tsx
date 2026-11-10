@@ -12,6 +12,7 @@ import { inZone } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 import { JobFilters } from "./job-filters";
 import { JobsTable, type JobRow } from "./jobs-table";
+import { MyDay } from "./my-day";
 import { formatJobNumber } from "@fieldops/core";
 
 export const metadata: Metadata = { title: "Jobs" };
@@ -25,6 +26,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const tz = actor.organization.timezone;
   const myDay = one(sp.view) === "my-day";
+  if (myDay) return <MyDay actor={actor} />;
   const today = format(inZone(new Date(), tz), "yyyy-MM-dd");
 
   const raw = {
@@ -82,13 +84,28 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     return `/jobs?${p.toString()}`;
   };
 
-  const filtered = Boolean(query.q || query.status || query.priority || query.technician || query.service_type || query.customer || query.from || query.to);
+  const filtered = Boolean(
+    query.q ||
+    query.status ||
+    query.priority ||
+    query.technician ||
+    query.service_type ||
+    query.customer ||
+    query.from ||
+    query.to,
+  );
 
   return (
     <div>
       <PageHeader
         title={myDay ? t("myDay") : t("title")}
-        description={myDay ? t("myDayDescription") : data.customer ? t("forCustomer", { name: data.customer.name }) : t("description")}
+        description={
+          myDay
+            ? t("myDayDescription")
+            : data.customer
+              ? t("forCustomer", { name: data.customer.name })
+              : t("description")
+        }
         actions={
           can(actor, "jobs.create") ? (
             <Button asChild>
@@ -123,7 +140,12 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
       ) : (
         <>
           <JobsTable rows={rows} sort={query.sort} timeZone={actor.organization.timezone} sortable={!myDay} />
-          <Pagination page={query.page ?? 1} pageSize={query.limit} total={data.page.total ?? rows.length} buildHref={buildHref} />
+          <Pagination
+            page={query.page ?? 1}
+            pageSize={query.limit}
+            total={data.page.total ?? rows.length}
+            buildHref={buildHref}
+          />
         </>
       )}
     </div>

@@ -33,7 +33,10 @@ export class ForbiddenError extends DomainError {
 }
 
 export class ValidationError extends DomainError {
-  constructor(message: string, readonly fields: { path: string; message: string }[] = []) {
+  constructor(
+    message: string,
+    readonly fields: { path: string; message: string }[] = [],
+  ) {
     super("validation", message, { fields });
   }
 }

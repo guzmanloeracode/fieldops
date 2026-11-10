@@ -58,13 +58,25 @@ export function JobFilters({
     update({ [key]: [...current].join(",") || null });
   };
 
-  const activeCount = ["status", "priority", "technician", "service_type", "customer", "from", "to", "q"].filter((k) => params.get(k)).length;
+  const activeCount = [
+    "status",
+    "priority",
+    "technician",
+    "service_type",
+    "customer",
+    "from",
+    "to",
+    "q",
+  ].filter((k) => params.get(k)).length;
 
   return (
     <div className="mb-4 space-y-3" aria-busy={pending}>
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-72">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" aria-hidden />
+          <Search
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
+            aria-hidden
+          />
           <Input
             type="search"
             value={q}
@@ -87,7 +99,10 @@ export function JobFilters({
           onToggle={(v) => toggle("priority", v)}
         />
         {showTechnician ? (
-          <Select value={params.get("technician") ?? "all"} onValueChange={(v) => update({ technician: v === "all" ? null : v })}>
+          <Select
+            value={params.get("technician") ?? "all"}
+            onValueChange={(v) => update({ technician: v === "all" ? null : v })}
+          >
             <SelectTrigger className="w-44" aria-label={t("col.technician")}>
               <SelectValue placeholder={t("col.technician")} />
             </SelectTrigger>
@@ -101,7 +116,10 @@ export function JobFilters({
             </SelectContent>
           </Select>
         ) : null}
-        <Select value={params.get("service_type") ?? "all"} onValueChange={(v) => update({ service_type: v === "all" ? null : v })}>
+        <Select
+          value={params.get("service_type") ?? "all"}
+          onValueChange={(v) => update({ service_type: v === "all" ? null : v })}
+        >
           <SelectTrigger className="w-44" aria-label={t("col.serviceType")}>
             <SelectValue placeholder={t("col.serviceType")} />
           </SelectTrigger>
@@ -118,12 +136,24 @@ export function JobFilters({
           <Label htmlFor="from" className="sr-only">
             {t("from")}
           </Label>
-          <Input id="from" type="date" className="w-38" value={params.get("from") ?? ""} onChange={(e) => update({ from: e.target.value || null })} />
+          <Input
+            id="from"
+            type="date"
+            className="w-38"
+            value={params.get("from") ?? ""}
+            onChange={(e) => update({ from: e.target.value || null })}
+          />
           <span className="text-muted-foreground text-sm">–</span>
           <Label htmlFor="to" className="sr-only">
             {t("to")}
           </Label>
-          <Input id="to" type="date" className="w-38" value={params.get("to") ?? ""} onChange={(e) => update({ to: e.target.value || null })} />
+          <Input
+            id="to"
+            type="date"
+            className="w-38"
+            value={params.get("to") ?? ""}
+            onChange={(e) => update({ to: e.target.value || null })}
+          />
         </div>
         {activeCount > 0 ? (
           <Button
@@ -142,7 +172,12 @@ export function JobFilters({
         <div className="flex">
           <span className="bg-secondary inline-flex items-center gap-1.5 rounded-full py-1 pr-1 pl-3 text-xs">
             {t("customerChip", { name: customer.name })}
-            <button type="button" onClick={() => update({ customer: null })} className="hover:bg-background rounded-full p-0.5" aria-label={t("removeCustomerFilter")}>
+            <button
+              type="button"
+              onClick={() => update({ customer: null })}
+              className="hover:bg-background rounded-full p-0.5"
+              aria-label={t("removeCustomerFilter")}
+            >
               <X className="size-3" />
             </button>
           </span>
@@ -152,13 +187,27 @@ export function JobFilters({
   );
 }
 
-function MultiSelect({ label, options, selected, onToggle }: { label: string; options: Option[]; selected: string[]; onToggle: (v: string) => void }) {
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  options: Option[];
+  selected: string[];
+  onToggle: (v: string) => void;
+}) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="justify-between gap-2 font-normal">
           {label}
-          {selected.length ? <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-xs">{selected.length}</span> : null}
+          {selected.length ? (
+            <span className="bg-primary text-primary-foreground rounded-full px-1.5 text-xs">
+              {selected.length}
+            </span>
+          ) : null}
           <ChevronDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -166,7 +215,10 @@ function MultiSelect({ label, options, selected, onToggle }: { label: string; op
         <fieldset>
           <legend className="sr-only">{label}</legend>
           {options.map((o) => (
-            <label key={o.id} className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm">
+            <label
+              key={o.id}
+              className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm"
+            >
               <Checkbox checked={selected.includes(o.id)} onCheckedChange={() => onToggle(o.id)} />
               {o.name}
             </label>

@@ -3,7 +3,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 /** Offset pagination for tables (ADR 010). `buildHref` keeps the other filters in the URL. */
-export function Pagination({ page, pageSize, total, buildHref }: { page: number; pageSize: number; total: number; buildHref: (page: number) => string }) {
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  buildHref,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  buildHref: (page: number) => string;
+}) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -19,22 +29,22 @@ export function Pagination({ page, pageSize, total, buildHref }: { page: number;
         <Button asChild={page > 1} variant="outline" size="sm" disabled={page <= 1}>
           {page > 1 ? (
             <Link href={buildHref(page - 1)} aria-label="Previous page">
-              <ChevronLeft /> Previous
+              <ChevronLeft /> <span className="max-sm:sr-only">Previous</span>
             </Link>
           ) : (
-            <span>
-              <ChevronLeft /> Previous
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <ChevronLeft /> <span className="max-sm:sr-only">Previous</span>
             </span>
           )}
         </Button>
         <Button asChild={page < pages} variant="outline" size="sm" disabled={page >= pages}>
           {page < pages ? (
             <Link href={buildHref(page + 1)} aria-label="Next page">
-              Next <ChevronRight />
+              <span className="max-sm:sr-only">Next</span> <ChevronRight />
             </Link>
           ) : (
-            <span>
-              Next <ChevronRight />
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span className="max-sm:sr-only">Next</span> <ChevronRight />
             </span>
           )}
         </Button>

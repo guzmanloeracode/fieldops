@@ -5,12 +5,12 @@ reasons are in [adr/](adr).
 
 ## Containers
 
-| Container | What it runs | Database role | Limits |
-|---|---|---|---|
-| `web` | Next.js standalone server: pages, server actions, `/api/v1`, `/docs/api` | `fieldops_app` (RLS enforced) | 512 MB, 1 CPU |
-| `worker` | pg-boss schedules (nightly demo reset, maintenance), email outbox loop | owner | 384 MB, 1 CPU |
-| `migrate` | One-shot: SQL migrations, then sets the `fieldops_app` password | owner | exits |
-| `postgres` | PostgreSQL 18, internal network only | — | 384 MB, 1 CPU |
+| Container  | What it runs                                                             | Database role                 | Limits        |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------- | ------------- |
+| `web`      | Next.js standalone server: pages, server actions, `/api/v1`, `/docs/api` | `fieldops_app` (RLS enforced) | 512 MB, 1 CPU |
+| `worker`   | pg-boss schedules (nightly demo reset, maintenance), email outbox loop   | owner                         | 384 MB, 1 CPU |
+| `migrate`  | One-shot: SQL migrations, then sets the `fieldops_app` password          | owner                         | exits         |
+| `postgres` | PostgreSQL 18, internal network only                                     | —                             | 384 MB, 1 CPU |
 
 nginx on the host terminates TLS (Let's Encrypt, Cloudflare in front with Full (strict)) and proxies
 `fieldops.tinggalpake.com` to `127.0.0.1:8097`. The site config is in `infra/proxy/`.

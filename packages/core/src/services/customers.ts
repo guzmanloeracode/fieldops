@@ -44,12 +44,18 @@ export async function getCustomerDetail(ctx: ServiceContext, id: string) {
 
 export async function findDuplicateCustomers(
   ctx: ServiceContext,
-  input: { emails: (string | null | undefined)[]; phones: (string | null | undefined)[]; excludeCustomerId?: string },
+  input: {
+    emails: (string | null | undefined)[];
+    phones: (string | null | undefined)[];
+    excludeCustomerId?: string;
+  },
 ) {
   assertCan(ctx.actor, "customers.create");
   const org = await ctx.store.organization.get();
   const emails = input.emails.map(normalizeEmail).filter((v): v is string => Boolean(v));
-  const phones = input.phones.map((p) => normalizePhone(p, org.country)).filter((v): v is string => Boolean(v));
+  const phones = input.phones
+    .map((p) => normalizePhone(p, org.country))
+    .filter((v): v is string => Boolean(v));
   if (emails.length === 0 && phones.length === 0) return [];
   return ctx.store.customers.findDuplicates({ emails, phones, excludeCustomerId: input.excludeCustomerId });
 }
@@ -129,7 +135,9 @@ export async function createSite(ctx: ServiceContext, customerId: string, raw: u
 export async function getSite(ctx: ServiceContext, id: string): Promise<SiteRecord> {
   const site = await ctx.store.sites.get(id);
   if (!site) throw new NotFoundError("Site");
-  const assigned = seesOnlyAssigned(ctx.actor) ? await ctx.store.sites.isLinkedToMember(id, ctx.actor.memberId) : true;
+  const assigned = seesOnlyAssigned(ctx.actor)
+    ? await ctx.store.sites.isLinkedToMember(id, ctx.actor.memberId)
+    : true;
   if (!assigned) throw new NotFoundError("Site");
   assertCan(ctx.actor, "customers.view", { assigned });
   return site;

@@ -34,7 +34,10 @@ export function readIdempotencyKey(req: Request): string | null {
  * then sees the stored response. Keys older than 24 hours are reused as new.
  * Returns the stored response to replay, or null when the request should run.
  */
-export async function claimIdempotencyKey(tx: Tx, s: IdempotencyScope): Promise<{ status: number; body: unknown } | null> {
+export async function claimIdempotencyKey(
+  tx: Tx,
+  s: IdempotencyScope,
+): Promise<{ status: number; body: unknown } | null> {
   const t = schema.idempotencyKey;
   const placeholder = {
     organizationId: s.organizationId,
@@ -63,16 +66,34 @@ export async function claimIdempotencyKey(tx: Tx, s: IdempotencyScope): Promise<
     .from(t)
     .where(and(eq(t.organizationId, s.organizationId), eq(t.key, s.key)));
   if (!existing) return null;
-  if (existing.userId !== s.userId || existing.method !== s.method || existing.path !== s.path || existing.requestHash !== s.requestHash) {
-    throw new ApiProblem(422, "idempotency_mismatch", "This Idempotency-Key was already used with a different request");
+  if (
+    existing.userId !== s.userId ||
+    existing.method !== s.method ||
+    existing.path !== s.path ||
+    existing.requestHash !== s.requestHash
+  ) {
+    throw new ApiProblem(
+      422,
+      "idempotency_mismatch",
+      "This Idempotency-Key was already used with a different request",
+    );
   }
   if (existing.responseStatus === 0) {
-    throw new ApiProblem(409, "idempotency_in_progress", "A request with this Idempotency-Key is still being processed");
+    throw new ApiProblem(
+      409,
+      "idempotency_in_progress",
+      "A request with this Idempotency-Key is still being processed",
+    );
   }
   return { status: existing.responseStatus, body: existing.responseBody };
 }
 
-export async function storeIdempotentResponse(tx: Tx, s: Pick<IdempotencyScope, "organizationId" | "key">, status: number, body: unknown) {
+export async function storeIdempotentResponse(
+  tx: Tx,
+  s: Pick<IdempotencyScope, "organizationId" | "key">,
+  status: number,
+  body: unknown,
+) {
   const t = schema.idempotencyKey;
   await tx
     .update(t)

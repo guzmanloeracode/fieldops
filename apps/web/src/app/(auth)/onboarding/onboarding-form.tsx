@@ -11,7 +11,19 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createOrganizationAction } from "./actions";
 
-const TIMEZONES = ["America/Chicago", "America/New_York", "America/Denver", "America/Los_Angeles", "Europe/London", "Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "Asia/Singapore", "Australia/Sydney", "UTC"];
+const TIMEZONES = [
+  "America/Chicago",
+  "America/New_York",
+  "America/Denver",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Asia/Jakarta",
+  "Asia/Makassar",
+  "Asia/Jayapura",
+  "Asia/Singapore",
+  "Australia/Sydney",
+  "UTC",
+];
 
 export function OnboardingForm({ name }: { name: string }) {
   const t = useTranslations("auth");
@@ -39,7 +51,9 @@ export function OnboardingForm({ name }: { name: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">{t("onboarding.title", { name: name.split(" ")[0] ?? name })}</CardTitle>
+        <CardTitle className="text-xl">
+          {t("onboarding.title", { name: name.split(" ")[0] ?? name })}
+        </CardTitle>
         <CardDescription>{t("onboarding.description")}</CardDescription>
       </CardHeader>
       <CardContent>

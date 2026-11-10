@@ -1,4 +1,15 @@
-const RESERVED = new Set(["admin", "api", "app", "portal", "docs", "www", "demo", "settings", "new", "fieldops"]);
+const RESERVED = new Set([
+  "admin",
+  "api",
+  "app",
+  "portal",
+  "docs",
+  "www",
+  "demo",
+  "settings",
+  "new",
+  "fieldops",
+]);
 
 export function slugify(input: string): string {
   return input

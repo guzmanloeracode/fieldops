@@ -22,17 +22,30 @@ const roles = {
     member: ["create", "update", "delete"],
     invitation: ["create", "cancel"],
   }),
-  admin: ac.newRole({ organization: ["update"], member: ["create", "update", "delete"], invitation: ["create", "cancel"] }),
+  admin: ac.newRole({
+    organization: ["update"],
+    member: ["create", "update", "delete"],
+    invitation: ["create", "cancel"],
+  }),
   dispatcher: ac.newRole({}),
   technician: ac.newRole({}),
 };
 
 /** Paths a demo account may not use: credentials and account deletion stay fixed until the nightly reset. */
-const DEMO_BLOCKED_PATHS = ["/change-password", "/change-email", "/delete-user", "/organization/delete", "/organization/leave"];
+const DEMO_BLOCKED_PATHS = [
+  "/change-password",
+  "/change-email",
+  "/delete-user",
+  "/organization/delete",
+  "/organization/leave",
+];
 
 async function isDemoUser(userId: string | undefined): Promise<boolean> {
   if (!userId) return false;
-  const [u] = await db.select({ isDemo: schema.user.isDemo }).from(schema.user).where(eq(schema.user.id, userId));
+  const [u] = await db
+    .select({ isDemo: schema.user.isDemo })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
   return Boolean(u?.isDemo);
 }
 

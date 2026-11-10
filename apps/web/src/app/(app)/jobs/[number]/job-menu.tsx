@@ -18,7 +18,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,7 +43,17 @@ type Job = {
   preferredEnd: string | null;
 };
 
-export function JobMenu({ job, serviceTypes, canDelete, timeZone }: { job: Job; serviceTypes: { id: string; name: string }[]; canDelete: boolean; timeZone: string }) {
+export function JobMenu({
+  job,
+  serviceTypes,
+  canDelete,
+  timeZone,
+}: {
+  job: Job;
+  serviceTypes: { id: string; name: string }[];
+  canDelete: boolean;
+  timeZone: string;
+}) {
   const t = useTranslations("jobs");
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
@@ -108,17 +123,29 @@ export function JobMenu({ job, serviceTypes, canDelete, timeZone }: { job: Job; 
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-title">{t("new.jobTitle")}</Label>
-              <Input id="edit-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Input
+                id="edit-title"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
               {errors.title ? <p className="text-destructive text-xs">{errors.title}</p> : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-description">{t("new.descriptionLabel")}</Label>
-              <Textarea id="edit-description" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <Textarea
+                id="edit-description"
+                rows={4}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-priority">{t("col.priority")}</Label>
-                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as JobPriority })}>
+                <Select
+                  value={form.priority}
+                  onValueChange={(v) => setForm({ ...form, priority: v as JobPriority })}
+                >
                   <SelectTrigger id="edit-priority" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -133,7 +160,10 @@ export function JobMenu({ job, serviceTypes, canDelete, timeZone }: { job: Job; 
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-service">{t("col.serviceType")}</Label>
-                <Select value={form.service_type_id} onValueChange={(v) => setForm({ ...form, service_type_id: v })}>
+                <Select
+                  value={form.service_type_id}
+                  onValueChange={(v) => setForm({ ...form, service_type_id: v })}
+                >
                   <SelectTrigger id="edit-service" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -149,15 +179,32 @@ export function JobMenu({ job, serviceTypes, canDelete, timeZone }: { job: Job; 
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-start">{t("new.preferredStart")}</Label>
-                <Input id="edit-start" type="datetime-local" value={form.preferred_start} onChange={(e) => setForm({ ...form, preferred_start: e.target.value })} />
+                <Input
+                  id="edit-start"
+                  type="datetime-local"
+                  value={form.preferred_start}
+                  onChange={(e) => setForm({ ...form, preferred_start: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-end">{t("new.preferredEnd")}</Label>
-                <Input id="edit-end" type="datetime-local" value={form.preferred_end} onChange={(e) => setForm({ ...form, preferred_end: e.target.value })} />
+                <Input
+                  id="edit-end"
+                  type="datetime-local"
+                  value={form.preferred_end}
+                  onChange={(e) => setForm({ ...form, preferred_end: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-duration">{t("new.duration")}</Label>
-                <Input id="edit-duration" type="number" min={5} step={5} value={form.estimated_duration_min} onChange={(e) => setForm({ ...form, estimated_duration_min: e.target.value })} />
+                <Input
+                  id="edit-duration"
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={form.estimated_duration_min}
+                  onChange={(e) => setForm({ ...form, estimated_duration_min: e.target.value })}
+                />
               </div>
             </div>
           </div>

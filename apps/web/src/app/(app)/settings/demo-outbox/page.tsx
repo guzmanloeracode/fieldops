@@ -42,13 +42,23 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
   const selected = selectedId
     ? (
         await db
-          .select({ subject: schema.emailOutbox.subject, html: schema.emailOutbox.html, toEmail: schema.emailOutbox.toEmail })
+          .select({
+            subject: schema.emailOutbox.subject,
+            html: schema.emailOutbox.html,
+            toEmail: schema.emailOutbox.toEmail,
+          })
           .from(schema.emailOutbox)
-          .where(and(eq(schema.emailOutbox.id, selectedId), eq(schema.emailOutbox.organizationId, actor.organizationId)))
+          .where(
+            and(
+              eq(schema.emailOutbox.id, selectedId),
+              eq(schema.emailOutbox.organizationId, actor.organizationId),
+            ),
+          )
       )[0]
     : undefined;
 
-  const kindLabel = (k: string) => ((KINDS as readonly string[]).includes(k) ? t(`kinds.${k as (typeof KINDS)[number]}`) : k);
+  const kindLabel = (k: string) =>
+    (KINDS as readonly string[]).includes(k) ? t(`kinds.${k as (typeof KINDS)[number]}`) : k;
 
   return (
     <Card>
@@ -75,7 +85,9 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
                       <span className="text-muted-foreground block truncate text-xs">
                         {kindLabel(e.kind)} · {e.toEmail}
                       </span>
-                      <span className="text-muted-foreground block text-xs">{formatDateTime(e.createdAt, actor.organization.timezone)}</span>
+                      <span className="text-muted-foreground block text-xs">
+                        {formatDateTime(e.createdAt, actor.organization.timezone)}
+                      </span>
                     </Link>
                   </li>
                 );
@@ -97,7 +109,9 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
                   />
                 </>
               ) : (
-                <p className="text-muted-foreground flex h-full min-h-80 items-center justify-center p-6 text-center text-sm">{t("select")}</p>
+                <p className="text-muted-foreground flex h-full min-h-80 items-center justify-center p-6 text-center text-sm">
+                  {t("select")}
+                </p>
               )}
             </div>
           </div>

@@ -20,30 +20,31 @@ import { AddressFields } from "../../customers/_components/address-fields";
 import { updateOrganizationAction } from "./actions";
 
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM");
-const formSchema = organizationUpdateSchema
-  .omit({ business_hours: true, tax_rates: true })
-  .extend({
-    hours: z
-      .array(
-        z
-          .object({ enabled: z.boolean(), open: hhmm, close: hhmm })
-          .refine((h) => !h.enabled || h.close > h.open, { message: "Closing time must be after opening time", path: ["close"] }),
-      )
-      .length(7),
-    taxes: z
-      .array(
-        z.object({
-          name: z.string().trim().min(1, "Name is required").max(60),
-          rate: z
-            .string()
-            .trim()
-            .regex(/^\d{1,3}(\.\d{1,2})?$/, "Enter a percentage like 8.25")
-            .refine((v) => Number(v) <= 100, "Can't be more than 100%"),
-          default: z.boolean(),
+const formSchema = organizationUpdateSchema.omit({ business_hours: true, tax_rates: true }).extend({
+  hours: z
+    .array(
+      z
+        .object({ enabled: z.boolean(), open: hhmm, close: hhmm })
+        .refine((h) => !h.enabled || h.close > h.open, {
+          message: "Closing time must be after opening time",
+          path: ["close"],
         }),
-      )
-      .max(10),
-  });
+    )
+    .length(7),
+  taxes: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, "Name is required").max(60),
+        rate: z
+          .string()
+          .trim()
+          .regex(/^\d{1,3}(\.\d{1,2})?$/, "Enter a percentage like 8.25")
+          .refine((v) => Number(v) <= 100, "Can't be more than 100%"),
+        default: z.boolean(),
+      }),
+    )
+    .max(10),
+});
 type FormInput = z.input<typeof formSchema>;
 type FormOutput = z.output<typeof formSchema>;
 
@@ -78,7 +79,12 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
       country: org.country,
       brand_color: org.brandColor ?? "#0369a1",
       address: org.address
-        ? { ...org.address, line2: org.address.line2 ?? "", region: org.address.region ?? "", postal_code: org.address.postal_code ?? "" }
+        ? {
+            ...org.address,
+            line2: org.address.line2 ?? "",
+            region: org.address.region ?? "",
+            postal_code: org.address.postal_code ?? "",
+          }
         : { line1: "", line2: "", city: "", region: "", postal_code: "", country: org.country },
       hours: Array.from({ length: 7 }, (_, day) => {
         const h = org.businessHours.find((b) => b.day === day);
@@ -96,13 +102,20 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
     const payload = {
       ...rest,
       address: hasAddress ? rest.address : null,
-      business_hours: h.flatMap((row, day) => (row.enabled ? [{ day, open: row.open, close: row.close }] : [])),
-      tax_rates: tx.map((r) => ({ name: r.name, rate_bps: Math.round(Number(r.rate) * 100), default: r.default })),
+      business_hours: h.flatMap((row, day) =>
+        row.enabled ? [{ day, open: row.open, close: row.close }] : [],
+      ),
+      tax_rates: tx.map((r) => ({
+        name: r.name,
+        rate_bps: Math.round(Number(r.rate) * 100),
+        default: r.default,
+      })),
     };
     startTransition(async () => {
       const res = await updateOrganizationAction(payload);
       if (!res.ok) {
-        for (const f of res.error.fields ?? []) form.setError(f.path as Path<FormInput>, { message: f.message });
+        for (const f of res.error.fields ?? [])
+          form.setError(f.path as Path<FormInput>, { message: f.message });
         toast.error(res.error.message);
         return;
       }
@@ -142,7 +155,9 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
                 className="border-input h-9 w-14 cursor-pointer rounded-md border bg-transparent p-1"
                 aria-describedby="org-color-hint"
                 value={(form.watch("brand_color") ?? "#0369a1").toLowerCase()}
-                onChange={(e) => form.setValue("brand_color", e.target.value, { shouldDirty: true, shouldValidate: true })}
+                onChange={(e) =>
+                  form.setValue("brand_color", e.target.value, { shouldDirty: true, shouldValidate: true })
+                }
               />
               <span className="font-mono text-sm">{form.watch("brand_color")}</span>
             </div>
@@ -228,12 +243,17 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
               const enabled = hours?.[day]?.enabled;
               const dayLabel = t(`days.${day}`);
               return (
-                <li key={day} className="grid grid-cols-[1fr_auto] items-center gap-3 py-2.5 sm:grid-cols-[10rem_1fr]">
+                <li
+                  key={day}
+                  className="grid grid-cols-[1fr_auto] items-center gap-3 py-2.5 sm:grid-cols-[10rem_1fr]"
+                >
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`hours-${day}`}
                       checked={Boolean(enabled)}
-                      onCheckedChange={(v) => form.setValue(`hours.${day}.enabled`, v === true, { shouldDirty: true })}
+                      onCheckedChange={(v) =>
+                        form.setValue(`hours.${day}.enabled`, v === true, { shouldDirty: true })
+                      }
                     />
                     <Label htmlFor={`hours-${day}`} className="font-normal">
                       {dayLabel}
@@ -244,13 +264,25 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
                       <Label htmlFor={`hours-${day}-open`} className="sr-only">
                         {`${dayLabel}: ${t("opens")}`}
                       </Label>
-                      <Input id={`hours-${day}-open`} type="time" className="w-32" {...form.register(`hours.${day}.open`)} />
+                      <Input
+                        id={`hours-${day}-open`}
+                        type="time"
+                        className="w-32"
+                        {...form.register(`hours.${day}.open`)}
+                      />
                       <span aria-hidden>–</span>
                       <Label htmlFor={`hours-${day}-close`} className="sr-only">
                         {`${dayLabel}: ${t("closes")}`}
                       </Label>
-                      <Input id={`hours-${day}-close`} type="time" className="w-32" {...form.register(`hours.${day}.close`)} />
-                      <FieldError message={errors.hours?.[day]?.close?.message ?? errors.hours?.[day]?.open?.message} />
+                      <Input
+                        id={`hours-${day}-close`}
+                        type="time"
+                        className="w-32"
+                        {...form.register(`hours.${day}.close`)}
+                      />
+                      <FieldError
+                        message={errors.hours?.[day]?.close?.message ?? errors.hours?.[day]?.open?.message}
+                      />
                     </div>
                   ) : (
                     <span className="text-muted-foreground text-sm sm:col-span-1">{t("closed")}</span>
@@ -270,15 +302,27 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
         <CardContent className="space-y-3">
           {taxes.fields.length === 0 ? <p className="text-muted-foreground text-sm">{t("noTax")}</p> : null}
           {taxes.fields.map((field, i) => (
-            <div key={field.id} className="grid grid-cols-[1fr_6rem_auto] items-end gap-2 sm:grid-cols-[1fr_8rem_auto_auto]">
+            <div
+              key={field.id}
+              className="grid grid-cols-[1fr_6rem_auto] items-end gap-2 sm:grid-cols-[1fr_8rem_auto_auto]"
+            >
               <div className="space-y-1.5">
                 <Label htmlFor={`tax-${i}-name`}>{t("taxName")}</Label>
-                <Input id={`tax-${i}-name`} aria-invalid={Boolean(errors.taxes?.[i]?.name)} {...form.register(`taxes.${i}.name`)} />
+                <Input
+                  id={`tax-${i}-name`}
+                  aria-invalid={Boolean(errors.taxes?.[i]?.name)}
+                  {...form.register(`taxes.${i}.name`)}
+                />
                 <FieldError message={errors.taxes?.[i]?.name?.message} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor={`tax-${i}-rate`}>{t("taxRate")}</Label>
-                <Input id={`tax-${i}-rate`} inputMode="decimal" aria-invalid={Boolean(errors.taxes?.[i]?.rate)} {...form.register(`taxes.${i}.rate`)} />
+                <Input
+                  id={`tax-${i}-rate`}
+                  inputMode="decimal"
+                  aria-invalid={Boolean(errors.taxes?.[i]?.rate)}
+                  {...form.register(`taxes.${i}.rate`)}
+                />
                 <FieldError message={errors.taxes?.[i]?.rate?.message} />
               </div>
               <div className="flex h-9 items-center gap-2">
@@ -286,20 +330,35 @@ export function OrganizationForm({ org, timeZones }: { org: OrganizationFormValu
                   id={`tax-${i}-default`}
                   checked={Boolean(form.watch(`taxes.${i}.default`))}
                   onCheckedChange={(v) =>
-                    form.getValues("taxes").forEach((_, j) => form.setValue(`taxes.${j}.default`, v === true && j === i, { shouldDirty: true }))
+                    form
+                      .getValues("taxes")
+                      .forEach((_, j) =>
+                        form.setValue(`taxes.${j}.default`, v === true && j === i, { shouldDirty: true }),
+                      )
                   }
                 />
                 <Label htmlFor={`tax-${i}-default`} className="font-normal">
                   {t("taxDefault")}
                 </Label>
               </div>
-              <Button type="button" variant="ghost" size="icon" aria-label={t("removeTax", { index: i + 1 })} onClick={() => taxes.remove(i)}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("removeTax", { index: i + 1 })}
+                onClick={() => taxes.remove(i)}
+              >
                 <Trash2 />
               </Button>
             </div>
           ))}
           {taxes.fields.length < 10 ? (
-            <Button type="button" variant="outline" size="sm" onClick={() => taxes.append({ name: "", rate: "0", default: taxes.fields.length === 0 })}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => taxes.append({ name: "", rate: "0", default: taxes.fields.length === 0 })}
+            >
               <Plus /> {t("addTax")}
             </Button>
           ) : null}

@@ -48,7 +48,8 @@ export function InviteForm({ roleLabels }: { roleLabels: Record<Role, string> })
     startTransition(async () => {
       const res = await inviteMemberAction(values);
       if (!res.ok) {
-        for (const f of res.error.fields ?? []) form.setError(f.path as "email" | "role", { message: f.message });
+        for (const f of res.error.fields ?? [])
+          form.setError(f.path as "email" | "role", { message: f.message });
         toast.error(res.error.message);
         return;
       }
@@ -61,7 +62,13 @@ export function InviteForm({ roleLabels }: { roleLabels: Record<Role, string> })
     <form onSubmit={onSubmit} noValidate className="grid gap-3 sm:grid-cols-[1fr_12rem_auto] sm:items-end">
       <div className="space-y-1.5">
         <Label htmlFor="invite-email">{t("email")}</Label>
-        <Input id="invite-email" type="email" autoComplete="off" aria-invalid={Boolean(errors.email)} {...form.register("email")} />
+        <Input
+          id="invite-email"
+          type="email"
+          autoComplete="off"
+          aria-invalid={Boolean(errors.email)}
+          {...form.register("email")}
+        />
         <FieldError message={errors.email?.message} />
       </div>
       <div className="space-y-1.5">
@@ -98,7 +105,8 @@ export function RoleSelect({
   const t = useTranslations("settings.members");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  if (disabled) return <span className="text-sm">{options.find((o) => o.value === role)?.label ?? role}</span>;
+  if (disabled)
+    return <span className="text-sm">{options.find((o) => o.value === role)?.label ?? role}</span>;
   return (
     <div className="flex items-center gap-2">
       <Label htmlFor={`role-${memberId}`} className="sr-only">
@@ -193,7 +201,12 @@ export function InvitationActions({ invitationId, email }: { invitationId: strin
     });
   return (
     <div className="flex gap-2">
-      <Button variant="outline" size="sm" disabled={pending} onClick={() => run(() => resendInvitationAction(invitationId), t("resent"))}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={pending}
+        onClick={() => run(() => resendInvitationAction(invitationId), t("resent"))}
+      >
         <Send /> {t("resend")}
       </Button>
       <Button

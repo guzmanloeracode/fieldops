@@ -1,5 +1,11 @@
 import "server-only";
-import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { FileStorage } from "@fieldops/core";
 import { env, fileStorageConfigured } from "@/env";
@@ -22,7 +28,12 @@ export const files: FileStorage | undefined = fileStorageConfigured
         const expiresIn = 600;
         const url = await getSignedUrl(
           s3(),
-          new PutObjectCommand({ Bucket: env.S3_BUCKET, Key: key, ContentType: contentType, ...(sizeBytes ? { ContentLength: sizeBytes } : {}) }),
+          new PutObjectCommand({
+            Bucket: env.S3_BUCKET,
+            Key: key,
+            ContentType: contentType,
+            ...(sizeBytes ? { ContentLength: sizeBytes } : {}),
+          }),
           { expiresIn, signableHeaders: new Set(["content-type"]) },
         );
         return { url, headers: { "Content-Type": contentType }, expiresIn };
@@ -34,7 +45,9 @@ export const files: FileStorage | undefined = fileStorageConfigured
             Bucket: env.S3_BUCKET,
             Key: key,
             ...(opts?.downloadName
-              ? { ResponseContentDisposition: `inline; filename="${opts.downloadName.replace(/[^\w.\- ]/g, "_")}"` }
+              ? {
+                  ResponseContentDisposition: `inline; filename="${opts.downloadName.replace(/[^\w.\- ]/g, "_")}"`,
+                }
               : {}),
           }),
           { expiresIn: 3600 },
@@ -51,7 +64,10 @@ export const files: FileStorage | undefined = fileStorageConfigured
       async remove(keys) {
         if (!keys.length) return;
         await s3().send(
-          new DeleteObjectsCommand({ Bucket: env.S3_BUCKET, Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true } }),
+          new DeleteObjectsCommand({
+            Bucket: env.S3_BUCKET,
+            Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+          }),
         );
       },
     }

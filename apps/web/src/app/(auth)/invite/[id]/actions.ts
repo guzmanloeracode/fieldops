@@ -8,7 +8,10 @@ export async function acceptInvitationAction(formData: FormData) {
   const h = await headers();
   const result = await auth.api.acceptInvitation({ body: { invitationId }, headers: h });
   if (result?.member) {
-    await auth.api.setActiveOrganization({ body: { organizationId: result.member.organizationId }, headers: h });
+    await auth.api.setActiveOrganization({
+      body: { organizationId: result.member.organizationId },
+      headers: h,
+    });
   }
   redirect("/dashboard");
 }

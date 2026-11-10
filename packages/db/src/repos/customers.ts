@@ -1,4 +1,10 @@
-import type { CustomerListFilters, CustomerListRow, CustomerRecord, CustomerRepo, Page } from "@fieldops/core";
+import type {
+  CustomerListFilters,
+  CustomerListRow,
+  CustomerRecord,
+  CustomerRepo,
+  Page,
+} from "@fieldops/core";
 import { decodeCursor, encodeCursor } from "@fieldops/core";
 import type { Address, CustomerType } from "@fieldops/shared";
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
@@ -61,7 +67,11 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
         const c = decodeCursor(f.cursor, f.sort);
         const [v, id] = c.v as [string, string];
         const value = field === "name" ? v : new Date(v);
-        where.push(descending ? sql`(${col}, ${customer.id}) < (${value}, ${id})` : sql`(${col}, ${customer.id}) > (${value}, ${id})`);
+        where.push(
+          descending
+            ? sql`(${col}, ${customer.id}) < (${value}, ${id})`
+            : sql`(${col}, ${customer.id}) > (${value}, ${id})`,
+        );
       }
 
       const condition = and(...where);
@@ -75,7 +85,9 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
             order by c.is_primary desc, c.created_at limit 1)`,
           siteCount: sql<number>`(select count(*)::int from ${site} s where s.organization_id = ${orgId} and s.customer_id = "customer"."id" and s.deleted_at is null)`,
           openJobCount: sql<number>`(select count(*)::int from ${job} j where j.organization_id = ${orgId} and j.customer_id = "customer"."id" and j.deleted_at is null and j.status not in ('completed','canceled'))`,
-          lastJobAt: sql<string | null>`(select max(coalesce(j.scheduled_start, j.created_at)) from ${job} j where j.organization_id = ${orgId} and j.customer_id = "customer"."id" and j.deleted_at is null)`,
+          lastJobAt: sql<
+            string | null
+          >`(select max(coalesce(j.scheduled_start, j.created_at)) from ${job} j where j.organization_id = ${orgId} and j.customer_id = "customer"."id" and j.deleted_at is null)`,
         })
         .from(customer)
         .where(condition)
@@ -88,7 +100,10 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
       const last = pageRows.at(-1);
       let total: number | null = null;
       if (f.page) {
-        const [t] = await tx.select({ n: sql<number>`count(*)::int` }).from(customer).where(condition);
+        const [t] = await tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(customer)
+          .where(condition);
         total = t?.n ?? 0;
       }
       return {
@@ -101,14 +116,20 @@ export function customerRepo(tx: Tx, orgId: string): CustomerRepo {
         })),
         nextCursor:
           hasMore && last && !f.page
-            ? encodeCursor({ s: f.sort, v: [field === "name" ? last.c.name : last.c.createdAt.toISOString(), last.c.id] })
+            ? encodeCursor({
+                s: f.sort,
+                v: [field === "name" ? last.c.name : last.c.createdAt.toISOString(), last.c.id],
+              })
             : null,
         total,
       };
     },
 
     async get(id) {
-      const [r] = await tx.select().from(customer).where(and(scope, eq(customer.id, id)));
+      const [r] = await tx
+        .select()
+        .from(customer)
+        .where(and(scope, eq(customer.id, id)));
       return r ? toCustomer(r) : null;
     },
 

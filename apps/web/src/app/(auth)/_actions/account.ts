@@ -29,7 +29,8 @@ function messageOf(err: unknown, fallback: string): string {
 
 export async function signUpAction(input: z.input<typeof signUpSchema>): Promise<Result> {
   const parsed = signUpSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: "Check the highlighted fields", fields: fieldErrors(parsed.error) };
+  if (!parsed.success)
+    return { ok: false, message: "Check the highlighted fields", fields: fieldErrors(parsed.error) };
   const { name, email, password, next } = parsed.data;
   try {
     await auth.api.signUpEmail({
@@ -48,7 +49,10 @@ export async function requestPasswordResetAction(email: string): Promise<Result>
   const parsed = z.email().safeParse(email.trim().toLowerCase());
   if (!parsed.success) return { ok: false, message: "Enter a valid email" };
   try {
-    await auth.api.requestPasswordReset({ body: { email: parsed.data, redirectTo: `${env.APP_URL}/reset-password` }, headers: await headers() });
+    await auth.api.requestPasswordReset({
+      body: { email: parsed.data, redirectTo: `${env.APP_URL}/reset-password` },
+      headers: await headers(),
+    });
   } catch (err) {
     return { ok: false, message: messageOf(err, "Couldn't send the email") };
   }
@@ -59,7 +63,10 @@ export async function requestPasswordResetAction(email: string): Promise<Result>
 
 export async function resendVerificationAction(email: string): Promise<Result> {
   try {
-    await auth.api.sendVerificationEmail({ body: { email, callbackURL: "/onboarding" }, headers: await headers() });
+    await auth.api.sendVerificationEmail({
+      body: { email, callbackURL: "/onboarding" },
+      headers: await headers(),
+    });
   } catch (err) {
     return { ok: false, message: messageOf(err, "Couldn't send the email") };
   }

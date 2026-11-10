@@ -177,5 +177,7 @@
     "description": "The job disappears from lists and reports. Its history stays in the database.",
     "confirm": "Delete",
     "done": "Job deleted"
-  }
+  },
+  "myDayToday": "{count, plural, =0 {Today} one {Today · # visit} other {Today · # visits}}",
+  "myDayUpcoming": "Next 7 days"
 }

@@ -8,7 +8,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -36,7 +44,9 @@ export function AssignCard(props: {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [selected, setSelected] = useState<string[]>(props.assignees.map((a) => a.memberId));
-  const [lead, setLead] = useState<string>(props.assignees.find((a) => a.isLead)?.memberId ?? props.assignees[0]?.memberId ?? "");
+  const [lead, setLead] = useState<string>(
+    props.assignees.find((a) => a.isLead)?.memberId ?? props.assignees[0]?.memberId ?? "",
+  );
   const [start, setStart] = useState(toLocalInput(props.scheduledStart, props.timeZone));
   const [end, setEnd] = useState(toLocalInput(props.scheduledEnd, props.timeZone));
   const [conflict, setConflict] = useState<string | null>(null);
@@ -57,7 +67,9 @@ export function AssignCard(props: {
       const d = new Date(`${v}:00`);
       d.setMinutes(d.getMinutes() + props.estimatedDurationMin);
       const pad = (n: number) => String(n).padStart(2, "0");
-      setEnd(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+      setEnd(
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`,
+      );
     }
   };
 
@@ -76,7 +88,10 @@ export function AssignCard(props: {
           const conflicts = result.error.details.conflicts as { memberId: string; jobs: number[] }[];
           setConflict(
             conflicts
-              .map((c) => `${props.members.find((m) => m.id === c.memberId)?.name ?? "?"}: ${c.jobs.map((n) => `JOB-${String(n).padStart(6, "0")}`).join(", ")}`)
+              .map(
+                (c) =>
+                  `${props.members.find((m) => m.id === c.memberId)?.name ?? "?"}: ${c.jobs.map((n) => `JOB-${String(n).padStart(6, "0")}`).join(", ")}`,
+              )
               .join("; "),
           );
           return;
@@ -99,20 +114,26 @@ export function AssignCard(props: {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" data-testid="assign-open">
-                <CalendarClock /> {props.assignees.length || props.scheduledStart ? t("assign.change") : t("assign.schedule")}
+                <CalendarClock />{" "}
+                {props.assignees.length || props.scheduledStart ? t("assign.change") : t("assign.schedule")}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>{t("assign.dialogTitle")}</DialogTitle>
-                <DialogDescription>{t("assign.dialogDescription", { timeZone: props.timeZone })}</DialogDescription>
+                <DialogDescription>
+                  {t("assign.dialogDescription", { timeZone: props.timeZone })}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">{t("assign.technicians")}</legend>
                   <div className="grid max-h-56 gap-1 overflow-y-auto rounded-md border p-2">
                     {props.members.map((m) => (
-                      <label key={m.id} className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm">
+                      <label
+                        key={m.id}
+                        className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm"
+                      >
                         <Checkbox checked={selected.includes(m.id)} onCheckedChange={() => toggle(m.id)} />
                         <span>{m.name}</span>
                         <span className="text-muted-foreground ml-auto text-xs capitalize">{m.role}</span>
@@ -125,7 +146,10 @@ export function AssignCard(props: {
                     <legend className="text-sm font-medium">{t("assign.lead")}</legend>
                     <RadioGroup value={lead} onValueChange={setLead} className="flex flex-wrap gap-2">
                       {selected.map((id) => (
-                        <label key={id} className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+                        <label
+                          key={id}
+                          className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
+                        >
                           <RadioGroupItem value={id} /> {props.members.find((m) => m.id === id)?.name}
                         </label>
                       ))}
@@ -135,21 +159,40 @@ export function AssignCard(props: {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="sched-start">{t("assign.start")}</Label>
-                    <Input id="sched-start" type="datetime-local" value={start} onChange={(e) => onStartChange(e.target.value)} />
+                    <Input
+                      id="sched-start"
+                      type="datetime-local"
+                      value={start}
+                      onChange={(e) => onStartChange(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="sched-end">{t("assign.end")}</Label>
-                    <Input id="sched-end" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
+                    <Input
+                      id="sched-end"
+                      type="datetime-local"
+                      value={end}
+                      onChange={(e) => setEnd(e.target.value)}
+                    />
                   </div>
                 </div>
                 {conflict ? (
-                  <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" role="alert">
+                  <div
+                    className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+                    role="alert"
+                  >
                     <p className="flex items-center gap-2 font-medium">
                       <AlertTriangle className="size-4" /> {t("assign.conflict")}
                     </p>
                     <p>{conflict}</p>
                     <Label htmlFor="override">{t("assign.overrideReason")}</Label>
-                    <Textarea id="override" rows={2} value={override} onChange={(e) => setOverride(e.target.value)} className="bg-background" />
+                    <Textarea
+                      id="override"
+                      rows={2}
+                      value={override}
+                      onChange={(e) => setOverride(e.target.value)}
+                      className="bg-background"
+                    />
                   </div>
                 ) : null}
                 {error ? (
@@ -162,7 +205,11 @@ export function AssignCard(props: {
                 <Button variant="outline" onClick={() => setOpen(false)}>
                   {t("cancel")}
                 </Button>
-                <Button onClick={save} disabled={pending || (Boolean(conflict) && !override.trim())} data-testid="assign-save">
+                <Button
+                  onClick={save}
+                  disabled={pending || (Boolean(conflict) && !override.trim())}
+                  data-testid="assign-save"
+                >
                   {pending ? <Loader2 className="animate-spin" /> : null}
                   {conflict ? t("assign.saveAnyway") : t("assign.save")}
                 </Button>
@@ -183,7 +230,9 @@ export function AssignCard(props: {
               {props.assignees.map((a) => (
                 <li key={a.memberId}>
                   {a.name}
-                  {a.isLead && props.assignees.length > 1 ? <span className="text-muted-foreground text-xs"> · {t("assign.leadShort")}</span> : null}
+                  {a.isLead && props.assignees.length > 1 ? (
+                    <span className="text-muted-foreground text-xs"> · {t("assign.leadShort")}</span>
+                  ) : null}
                 </li>
               ))}
             </ul>

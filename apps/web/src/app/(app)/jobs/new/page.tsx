@@ -19,14 +19,19 @@ export default async function NewJobPage({ searchParams }: { searchParams: Promi
   const { customer: customerId } = await searchParams;
   const data = await runService(async (ctx) => ({
     serviceTypes: await organization.listServiceTypes(ctx),
-    customer: customerId && /^[0-9a-f-]{36}$/i.test(customerId) ? await ctx.store.customers.get(customerId) : null,
+    customer:
+      customerId && /^[0-9a-f-]{36}$/i.test(customerId) ? await ctx.store.customers.get(customerId) : null,
   }));
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={t("new.title")} description={t("new.description")} />
       <NewJobForm
         timeZone={actor.organization.timezone}
-        serviceTypes={data.serviceTypes.map((s) => ({ id: s.id, name: s.name, duration: s.defaultDurationMin }))}
+        serviceTypes={data.serviceTypes.map((s) => ({
+          id: s.id,
+          name: s.name,
+          duration: s.defaultDurationMin,
+        }))}
         initialCustomer={data.customer ? { id: data.customer.id, name: data.customer.name } : null}
       />
     </div>

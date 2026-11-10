@@ -8,11 +8,18 @@ import { log } from "./log";
 async function clearUploads(): Promise<number> {
   const { endpoint, bucket, accessKeyId, secretAccessKey, region } = env.s3;
   if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) return 0;
-  const s3 = new S3Client({ endpoint, region, forcePathStyle: true, credentials: { accessKeyId, secretAccessKey } });
+  const s3 = new S3Client({
+    endpoint,
+    region,
+    forcePathStyle: true,
+    credentials: { accessKeyId, secretAccessKey },
+  });
   let removed = 0;
   let token: string | undefined;
   do {
-    const page = await s3.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: "org/", ContinuationToken: token, MaxKeys: 1000 }));
+    const page = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: "org/", ContinuationToken: token, MaxKeys: 1000 }),
+    );
     const keys = (page.Contents ?? []).map((o) => ({ Key: o.Key! }));
     if (keys.length) {
       await s3.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys, Quiet: true } }));
@@ -33,7 +40,11 @@ export async function resetDemo(db: Database) {
     return 0;
   });
   log.info(
-    { ms: Date.now() - started, orgs: result.organizations.map((o) => `${o.slug}:${o.jobs}`), filesRemoved: files },
+    {
+      ms: Date.now() - started,
+      orgs: result.organizations.map((o) => `${o.slug}:${o.jobs}`),
+      filesRemoved: files,
+    },
     "demo reset complete",
   );
 }

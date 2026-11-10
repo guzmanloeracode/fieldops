@@ -74,7 +74,8 @@ describe("permission matrix", () => {
 
   it("only technicians are limited to assigned work", () => {
     expect(seesOnlyAssigned({ role: "technician" })).toBe(true);
-    for (const role of ["owner", "admin", "dispatcher"] as const) expect(seesOnlyAssigned({ role })).toBe(false);
+    for (const role of ["owner", "admin", "dispatcher"] as const)
+      expect(seesOnlyAssigned({ role })).toBe(false);
   });
 
   it("labels every role", () => {
@@ -84,7 +85,8 @@ describe("permission matrix", () => {
 
 describe("canChangeRole", () => {
   it("owners can grant and revoke any role", () => {
-    for (const from of ROLES) for (const to of ROLES) expect(canChangeRole({ role: "owner" }, from, to)).toBe(true);
+    for (const from of ROLES)
+      for (const to of ROLES) expect(canChangeRole({ role: "owner" }, from, to)).toBe(true);
   });
   it("admins can't touch the owner role", () => {
     expect(canChangeRole({ role: "admin" }, "dispatcher", "technician")).toBe(true);

@@ -9,15 +9,40 @@ import { useForm, type Path } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { createSiteAction, updateSiteAction } from "../actions";
 import { SiteFields } from "../_components/site-fields";
 
 type FormInput = z.input<typeof siteCreateSchema>;
 type FormOutput = z.output<typeof siteCreateSchema>;
-type SiteValues = Pick<SiteDto, "label" | "address" | "latitude" | "longitude" | "access_notes" | "onsite_contact_name" | "onsite_contact_phone">;
+type SiteValues = Pick<
+  SiteDto,
+  | "label"
+  | "address"
+  | "latitude"
+  | "longitude"
+  | "access_notes"
+  | "onsite_contact_name"
+  | "onsite_contact_phone"
+>;
 
-export function SiteDialog({ customerId, defaultCountry, site }: { customerId: string; defaultCountry: string; site?: SiteValues & { id: string } }) {
+export function SiteDialog({
+  customerId,
+  defaultCountry,
+  site,
+}: {
+  customerId: string;
+  defaultCountry: string;
+  site?: SiteValues & { id: string };
+}) {
   const t = useTranslations("customers");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -25,7 +50,12 @@ export function SiteDialog({ customerId, defaultCountry, site }: { customerId: s
   const defaults: FormInput = site
     ? {
         label: site.label,
-        address: { ...site.address, line2: site.address.line2 ?? "", region: site.address.region ?? "", postal_code: site.address.postal_code ?? "" },
+        address: {
+          ...site.address,
+          line2: site.address.line2 ?? "",
+          region: site.address.region ?? "",
+          postal_code: site.address.postal_code ?? "",
+        },
         latitude: site.latitude,
         longitude: site.longitude,
         access_notes: site.access_notes ?? "",
@@ -41,13 +71,19 @@ export function SiteDialog({ customerId, defaultCountry, site }: { customerId: s
         onsite_contact_name: "",
         onsite_contact_phone: "",
       };
-  const form = useForm<FormInput, unknown, FormOutput>({ resolver: zodResolver(siteCreateSchema), defaultValues: defaults });
+  const form = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(siteCreateSchema),
+    defaultValues: defaults,
+  });
 
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
-      const res = site ? await updateSiteAction(customerId, site.id, values) : await createSiteAction(customerId, values);
+      const res = site
+        ? await updateSiteAction(customerId, site.id, values)
+        : await createSiteAction(customerId, values);
       if (!res.ok) {
-        for (const f of res.error.fields ?? []) form.setError(f.path as Path<FormInput>, { message: f.message });
+        for (const f of res.error.fields ?? [])
+          form.setError(f.path as Path<FormInput>, { message: f.message });
         toast.error(res.error.message);
         return;
       }

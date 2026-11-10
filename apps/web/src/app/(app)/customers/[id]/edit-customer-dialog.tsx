@@ -12,7 +12,14 @@ import { FieldError } from "@/components/app/field-error";
 import { NativeSelect } from "@/components/app/native-select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,7 +27,9 @@ import { updateCustomerAction } from "../actions";
 import { AddressFields } from "../_components/address-fields";
 import { splitTags } from "../_components/tags";
 
-const formSchema = customerUpdateSchema.omit({ tags: true }).extend({ tags_text: z.string().max(800).optional() });
+const formSchema = customerUpdateSchema
+  .omit({ tags: true })
+  .extend({ tags_text: z.string().max(800).optional() });
 type FormInput = z.input<typeof formSchema>;
 type FormOutput = z.output<typeof formSchema>;
 
@@ -28,7 +37,14 @@ export function EditCustomerDialog({
   customer,
   defaultCountry,
 }: {
-  customer: { id: string; type: CustomerType; name: string; tags: string[]; notes: string | null; billingAddress: Address | null };
+  customer: {
+    id: string;
+    type: CustomerType;
+    name: string;
+    tags: string[];
+    notes: string | null;
+    billingAddress: Address | null;
+  };
   defaultCountry: string;
 }) {
   const t = useTranslations("customers");
@@ -57,11 +73,18 @@ export function EditCustomerDialog({
 
   const onSubmit = form.handleSubmit((values) => {
     const { tags_text, ...rest } = values;
-    const payload = { ...rest, tags: splitTags(tags_text), billing_address: hasBilling ? rest.billing_address : null };
+    const payload = {
+      ...rest,
+      tags: splitTags(tags_text),
+      billing_address: hasBilling ? rest.billing_address : null,
+    };
     startTransition(async () => {
       const res = await updateCustomerAction(customer.id, payload);
       if (!res.ok) {
-        for (const f of res.error.fields ?? []) form.setError((f.path.startsWith("tags") ? "tags_text" : f.path) as Path<FormInput>, { message: f.message });
+        for (const f of res.error.fields ?? [])
+          form.setError((f.path.startsWith("tags") ? "tags_text" : f.path) as Path<FormInput>, {
+            message: f.message,
+          });
         toast.error(res.error.message);
         return;
       }
@@ -126,7 +149,9 @@ export function EditCustomerDialog({
                 {t("form.billingSection")}
               </Label>
             </div>
-            {hasBilling ? <AddressFields form={form} prefix="billing_address" idPrefix="edit-billing" /> : null}
+            {hasBilling ? (
+              <AddressFields form={form} prefix="billing_address" idPrefix="edit-billing" />
+            ) : null}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={pending}>

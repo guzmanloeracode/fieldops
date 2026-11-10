@@ -71,7 +71,11 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         }
         title={
           <span className="flex items-center gap-2">
-            {customer.type === "commercial" ? <Building2 aria-hidden className="text-muted-foreground size-6" /> : <User aria-hidden className="text-muted-foreground size-6" />}
+            {customer.type === "commercial" ? (
+              <Building2 aria-hidden className="text-muted-foreground size-6" />
+            ) : (
+              <User aria-hidden className="text-muted-foreground size-6" />
+            )}
             {customer.name}
           </span>
         }
@@ -88,7 +92,14 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             {canUpdate ? (
               <EditCustomerDialog
                 defaultCountry={data.country}
-                customer={{ id: customer.id, type: customer.type, name: customer.name, tags: customer.tags, notes: customer.notes, billingAddress: customer.billingAddress }}
+                customer={{
+                  id: customer.id,
+                  type: customer.type,
+                  name: customer.name,
+                  tags: customer.tags,
+                  notes: customer.notes,
+                  billingAddress: customer.billingAddress,
+                }}
               />
             ) : null}
             {canDelete ? <DeleteCustomerButton id={customer.id} name={customer.name} /> : null}
@@ -202,11 +213,20 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
               ) : (
                 <ul className="divide-y">
                   {data.recent.map((j) => (
-                    <li key={j.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0">
-                      <Link href={`/jobs/${formatJobNumber(j.number)}`} className="font-mono text-xs hover:underline">
+                    <li
+                      key={j.id}
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      <Link
+                        href={`/jobs/${formatJobNumber(j.number)}`}
+                        className="font-mono text-xs hover:underline"
+                      >
                         {formatJobNumber(j.number)}
                       </Link>
-                      <Link href={`/jobs/${formatJobNumber(j.number)}`} className="min-w-0 flex-1 truncate text-sm font-medium hover:underline">
+                      <Link
+                        href={`/jobs/${formatJobNumber(j.number)}`}
+                        className="min-w-0 flex-1 truncate text-sm font-medium hover:underline"
+                      >
                         {j.title}
                       </Link>
                       <PriorityBadge priority={j.priority} />
@@ -244,12 +264,18 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                       </p>
                       {c.role ? <p className="text-muted-foreground text-xs">{c.role}</p> : null}
                       {c.email ? (
-                        <a href={`mailto:${c.email}`} className="text-primary flex items-center gap-1.5 text-sm hover:underline">
+                        <a
+                          href={`mailto:${c.email}`}
+                          className="text-primary flex items-center gap-1.5 text-sm hover:underline"
+                        >
                           <Mail aria-hidden className="size-3.5" /> {c.email}
                         </a>
                       ) : null}
                       {c.phone ? (
-                        <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} className="text-primary flex items-center gap-1.5 text-sm hover:underline">
+                        <a
+                          href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
+                          className="text-primary flex items-center gap-1.5 text-sm hover:underline"
+                        >
                           <Phone aria-hidden className="size-3.5" /> {c.phone}
                         </a>
                       ) : null}

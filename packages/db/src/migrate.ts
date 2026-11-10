@@ -12,7 +12,9 @@ export async function runMigrations(opts: { url: string; migrationsFolder: strin
     if (opts.appPassword) {
       const client = await pool.connect();
       try {
-        await client.query(`ALTER ROLE fieldops_app LOGIN PASSWORD ${client.escapeLiteral(opts.appPassword)}`);
+        await client.query(
+          `ALTER ROLE fieldops_app LOGIN PASSWORD ${client.escapeLiteral(opts.appPassword)}`,
+        );
       } finally {
         client.release();
       }

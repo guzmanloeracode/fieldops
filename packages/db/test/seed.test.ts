@@ -46,12 +46,26 @@ describe("demo seed", () => {
     const [a, b] = await Promise.all([fingerprint(first.owner), fingerprint(second.owner)]);
     expect(a.counts).toEqual(b.counts);
     expect(a.jobs).toEqual(b.jobs);
-    expect(a.counts).toMatchObject({ orgs: 2, users: 19, members: 19, customers: 420, sites: 530, equipment: 680, service_types: 14 });
+    expect(a.counts).toMatchObject({
+      orgs: 2,
+      users: 19,
+      members: 19,
+      customers: 420,
+      sites: 530,
+      equipment: 680,
+      service_types: 14,
+    });
     expect(a.counts.jobs).toBeGreaterThan(1000);
   });
 
   it("numbers jobs 1..N per organization without gaps and sets the counter", async () => {
-    const r = await first.owner.execute<{ slug: string; n: number; min: number; max: number; counter: number }>(sql`
+    const r = await first.owner.execute<{
+      slug: string;
+      n: number;
+      min: number;
+      max: number;
+      counter: number;
+    }>(sql`
       select o.slug, count(*)::int as n, min(j.number) as min, max(j.number) as max,
         (select value from org_counter c where c.organization_id = o.id and c.name = 'job') as counter
       from job j join organization o on o.id = j.organization_id group by o.id, o.slug`);
@@ -95,7 +109,14 @@ describe("demo seed", () => {
   });
 
   it("shows a past history, a busy today and a week ahead, relative to the reset time", async () => {
-    const r = await first.owner.execute<{ slug: string; past: number; today: number; ahead: number; queue: number; review: number }>(sql`
+    const r = await first.owner.execute<{
+      slug: string;
+      past: number;
+      today: number;
+      ahead: number;
+      queue: number;
+      review: number;
+    }>(sql`
       select o.slug,
         count(*) filter (where j.scheduled_start < ${NOW.toISOString()}::timestamptz - interval '1 day')::int as past,
         count(*) filter (where (j.scheduled_start at time zone o.timezone)::date = ((${NOW.toISOString()}::timestamptz + interval '8 hours') at time zone o.timezone)::date)::int as today,
@@ -118,7 +139,13 @@ describe("demo seed", () => {
 
   it("creates the one-click demo accounts with verified emails and credentials", async () => {
     const emails = Object.values(DEMO_LOGINS).flatMap((o) => Object.values(o));
-    const r = await first.owner.execute<{ email: string; role: string; verified: boolean; has_password: boolean; is_demo: boolean }>(sql`
+    const r = await first.owner.execute<{
+      email: string;
+      role: string;
+      verified: boolean;
+      has_password: boolean;
+      is_demo: boolean;
+    }>(sql`
       select u.email, m.role, u.email_verified as verified, a.password is not null as has_password, u.is_demo
       from "user" u join member m on m.user_id = u.id
       join account a on a.user_id = u.id and a.provider_id = 'credential'
@@ -126,14 +153,19 @@ describe("demo seed", () => {
     expect(r.rows).toHaveLength(6);
     for (const [org, logins] of Object.entries(DEMO_LOGINS)) {
       for (const [role, email] of Object.entries(logins)) {
-        expect(r.rows.find((x) => x.email === email), `${org} ${role}`).toMatchObject({ role, verified: true, has_password: true, is_demo: true });
+        expect(
+          r.rows.find((x) => x.email === email),
+          `${org} ${role}`,
+        ).toMatchObject({ role, verified: true, has_password: true, is_demo: true });
       }
     }
   });
 
   it("wipes everything before a reset", async () => {
     await wipeAll(second.owner);
-    const r = await second.owner.execute<{ n: number }>(sql`select (select count(*) from job)::int + (select count(*) from "user")::int + (select count(*) from organization)::int as n`);
+    const r = await second.owner.execute<{ n: number }>(
+      sql`select (select count(*) from job)::int + (select count(*) from "user")::int + (select count(*) from organization)::int as n`,
+    );
     expect(r.rows[0]!.n).toBe(0);
   });
 });

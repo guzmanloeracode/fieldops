@@ -32,7 +32,10 @@ export function siteRepo(tx: Tx, orgId: string): SiteRepo {
       return rows.map(toSite);
     },
     async get(id) {
-      const [r] = await tx.select().from(site).where(and(scope, eq(site.id, id)));
+      const [r] = await tx
+        .select()
+        .from(site)
+        .where(and(scope, eq(site.id, id)));
       return r ? toSite(r) : null;
     },
     async create(customerId, data) {
@@ -65,7 +68,10 @@ export function siteRepo(tx: Tx, orgId: string): SiteRepo {
       const [r] = await tx
         .select({ id: job.id })
         .from(job)
-        .innerJoin(jobAssignment, and(eq(jobAssignment.jobId, job.id), eq(jobAssignment.organizationId, orgId)))
+        .innerJoin(
+          jobAssignment,
+          and(eq(jobAssignment.jobId, job.id), eq(jobAssignment.organizationId, orgId)),
+        )
         .where(
           and(
             eq(job.organizationId, orgId),
@@ -94,7 +100,10 @@ export function equipmentRepo(tx: Tx, orgId: string): EquipmentRepo {
   });
   return {
     async get(id) {
-      const [r] = await tx.select().from(equipment).where(and(scope, eq(equipment.id, id)));
+      const [r] = await tx
+        .select()
+        .from(equipment)
+        .where(and(scope, eq(equipment.id, id)));
       return r ? map(r) : null;
     },
     async listBySite(siteId) {

@@ -5,7 +5,13 @@ import { problemType } from "@/server/api/problem";
 function notFound(req: Request) {
   const path = new URL(req.url).pathname;
   return problemResponse(
-    { type: problemType("not_found"), title: "Not found", status: 404, detail: `No API route matches ${path}`, instance: path },
+    {
+      type: problemType("not_found"),
+      title: "Not found",
+      status: 404,
+      detail: `No API route matches ${path}`,
+      instance: path,
+    },
     crypto.randomUUID(),
   );
 }

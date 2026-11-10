@@ -37,9 +37,14 @@ describe("customer services", () => {
 
   it("finds duplicates by normalized phone", async () => {
     const w = world();
-    const dups = await customers.findDuplicateCustomers(w.ctx(w.dispatcher), { emails: [null], phones: ["+1 512 555 0142"] });
+    const dups = await customers.findDuplicateCustomers(w.ctx(w.dispatcher), {
+      emails: [null],
+      phones: ["+1 512 555 0142"],
+    });
     expect(dups).toEqual([{ id: w.customerId, name: "Cara Customer", matchedOn: "phone" }]);
-    expect(await customers.findDuplicateCustomers(w.ctx(w.dispatcher), { emails: [""], phones: ["12"] })).toEqual([]);
+    expect(
+      await customers.findDuplicateCustomers(w.ctx(w.dispatcher), { emails: [""], phones: ["12"] }),
+    ).toEqual([]);
   });
 
   it("validates input with field paths", async () => {
@@ -49,17 +54,30 @@ describe("customer services", () => {
       fields: [expect.objectContaining({ path: "name" })],
     });
     await expect(
-      customers.createCustomer(w.ctx(w.owner), { name: "X", contacts: [{ name: "Y", email: "not-an-email" }] }),
+      customers.createCustomer(w.ctx(w.owner), {
+        name: "X",
+        contacts: [{ name: "Y", email: "not-an-email" }],
+      }),
     ).rejects.toMatchObject({ fields: [expect.objectContaining({ path: "contacts.0.email" })] });
   });
 
   it("does not let technicians create, update or delete customers", async () => {
     const w = world();
-    await expect(customers.createCustomer(w.ctx(w.tom), { name: "X" })).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(customers.updateCustomer(w.ctx(w.tom), w.customerId, { name: "X" })).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(customers.deleteCustomer(w.ctx(w.dispatcher), w.customerId)).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(customers.createSite(w.ctx(w.tom), w.customerId, { label: "x", address: ADDRESS })).rejects.toBeInstanceOf(ForbiddenError);
-    await expect(customers.findDuplicateCustomers(w.ctx(w.tom), { emails: [], phones: [] })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(customers.createCustomer(w.ctx(w.tom), { name: "X" })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    await expect(customers.updateCustomer(w.ctx(w.tom), w.customerId, { name: "X" })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    await expect(customers.deleteCustomer(w.ctx(w.dispatcher), w.customerId)).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+    await expect(
+      customers.createSite(w.ctx(w.tom), w.customerId, { label: "x", address: ADDRESS }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      customers.findDuplicateCustomers(w.ctx(w.tom), { emails: [], phones: [] }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it("shows technicians only customers and sites of their assigned jobs, as not found otherwise", async () => {
@@ -68,40 +86,65 @@ describe("customer services", () => {
     await expect(customers.getSite(w.ctx(w.tom), w.siteId)).rejects.toBeInstanceOf(NotFoundError);
     expect((await customers.listCustomers(w.ctx(w.tom), listQuery)).rows).toEqual([]);
 
-    const job = await jobs.createJob(w.ctx(w.dispatcher), { customer_id: w.customerId, site_id: w.siteId, title: "Leak" });
+    const job = await jobs.createJob(w.ctx(w.dispatcher), {
+      customer_id: w.customerId,
+      site_id: w.siteId,
+      title: "Leak",
+    });
     await jobs.assignJob(w.ctx(w.dispatcher), job.id, { member_ids: [w.tom.id] });
 
     expect((await customers.getCustomer(w.ctx(w.tom), w.customerId)).name).toBe("Cara Customer");
     expect((await customers.getSite(w.ctx(w.tom), w.siteId)).id).toBe(w.siteId);
-    expect((await customers.listCustomers(w.ctx(w.tom), listQuery)).rows.map((c) => c.id)).toEqual([w.customerId]);
+    expect((await customers.listCustomers(w.ctx(w.tom), listQuery)).rows.map((c) => c.id)).toEqual([
+      w.customerId,
+    ]);
     await expect(customers.getCustomer(w.ctx(w.rina), w.customerId)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(customers.getCustomer(w.ctx(w.tom), w.otherCustomerId)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(customers.getCustomer(w.ctx(w.tom), w.otherCustomerId)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it("returns customer detail with contacts, sites and stats", async () => {
     const w = world();
-    await jobs.createJob(w.ctx(w.dispatcher), { customer_id: w.customerId, site_id: w.siteId, title: "Leak" });
+    await jobs.createJob(w.ctx(w.dispatcher), {
+      customer_id: w.customerId,
+      site_id: w.siteId,
+      title: "Leak",
+    });
     const d = await customers.getCustomerDetail(w.ctx(w.owner), w.customerId);
     expect(d.contacts).toHaveLength(1);
     expect(d.sites.map((s) => s.id)).toEqual([w.siteId]);
     expect(d.stats).toMatchObject({ jobCount: 1, openJobCount: 1, completedJobCount: 0 });
-    await expect(customers.getCustomerDetail(w.ctx(w.owner), "missing")).rejects.toBeInstanceOf(NotFoundError);
+    await expect(customers.getCustomerDetail(w.ctx(w.owner), "missing")).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it("updates only the fields that were sent", async () => {
     const w = world();
-    const c = await customers.updateCustomer(w.ctx(w.dispatcher), w.customerId, { notes: "Gate code 1234", tags: ["A", "a"] });
+    const c = await customers.updateCustomer(w.ctx(w.dispatcher), w.customerId, {
+      notes: "Gate code 1234",
+      tags: ["A", "a"],
+    });
     expect(c).toMatchObject({ name: "Cara Customer", notes: "Gate code 1234", tags: ["A"] });
-    const c2 = await customers.updateCustomer(w.ctx(w.dispatcher), w.customerId, { type: "commercial", name: "Cara Ltd", billing_address: ADDRESS });
+    const c2 = await customers.updateCustomer(w.ctx(w.dispatcher), w.customerId, {
+      type: "commercial",
+      name: "Cara Ltd",
+      billing_address: ADDRESS,
+    });
     expect(c2).toMatchObject({ type: "commercial", name: "Cara Ltd", billingAddress: ADDRESS });
-    await expect(customers.updateCustomer(w.ctx(w.dispatcher), "missing", { name: "x" })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      customers.updateCustomer(w.ctx(w.dispatcher), "missing", { name: "x" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it("soft-deletes customers (managers only)", async () => {
     const w = world();
     await customers.deleteCustomer(w.ctx(w.admin), w.customerId);
     await expect(customers.getCustomer(w.ctx(w.admin), w.customerId)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(customers.deleteCustomer(w.ctx(w.admin), w.customerId)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(customers.deleteCustomer(w.ctx(w.admin), w.customerId)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it("creates, lists and updates sites", async () => {
@@ -114,7 +157,10 @@ describe("customer services", () => {
       access_notes: "",
     });
     expect(site).toMatchObject({ label: "Office", accessNotes: null, latitude: 30.2 });
-    expect((await customers.listSites(w.ctx(w.owner), w.customerId)).map((s) => s.label)).toEqual(["Home", "Office"]);
+    expect((await customers.listSites(w.ctx(w.owner), w.customerId)).map((s) => s.label)).toEqual([
+      "Home",
+      "Office",
+    ]);
     const updated = await customers.updateSite(w.ctx(w.dispatcher), site.id, {
       label: "HQ",
       address: { ...ADDRESS, city: "Round Rock" },
@@ -124,14 +170,26 @@ describe("customer services", () => {
       onsite_contact_name: "Ann",
       onsite_contact_phone: "555",
     });
-    expect(updated).toMatchObject({ label: "HQ", accessNotes: "Back door", onsiteContactName: "Ann", latitude: null });
+    expect(updated).toMatchObject({
+      label: "HQ",
+      accessNotes: "Back door",
+      onsiteContactName: "Ann",
+      latitude: null,
+    });
     expect(updated.address.city).toBe("Round Rock");
-    await expect(customers.createSite(w.ctx(w.dispatcher), "missing", { label: "x", address: ADDRESS })).rejects.toBeInstanceOf(NotFoundError);
-    await expect(customers.updateSite(w.ctx(w.dispatcher), "missing", { label: "x" })).rejects.toBeInstanceOf(NotFoundError);
-    await expect(customers.getSite(w.ctx(w.owner), "missing")).rejects.toBeInstanceOf(NotFoundError);
-    await expect(customers.createSite(w.ctx(w.dispatcher), w.customerId, { label: "x", address: { ...ADDRESS, country: "USA" } })).rejects.toBeInstanceOf(
-      ValidationError,
+    await expect(
+      customers.createSite(w.ctx(w.dispatcher), "missing", { label: "x", address: ADDRESS }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await expect(customers.updateSite(w.ctx(w.dispatcher), "missing", { label: "x" })).rejects.toBeInstanceOf(
+      NotFoundError,
     );
+    await expect(customers.getSite(w.ctx(w.owner), "missing")).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      customers.createSite(w.ctx(w.dispatcher), w.customerId, {
+        label: "x",
+        address: { ...ADDRESS, country: "USA" },
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it("lists equipment at a visible site", async () => {

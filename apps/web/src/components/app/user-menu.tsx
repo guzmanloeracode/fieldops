@@ -23,7 +23,9 @@ export function UserMenu({ name, email, roleLabel }: { name: string; email: stri
     <DropdownMenu>
       <DropdownMenuTrigger className="hover:bg-sidebar-accent/60 flex w-full items-center gap-3 rounded-md p-2 text-left">
         <Avatar className="size-8">
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials(name)}</AvatarFallback>
+          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+            {initials(name)}
+          </AvatarFallback>
         </Avatar>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">{name}</span>

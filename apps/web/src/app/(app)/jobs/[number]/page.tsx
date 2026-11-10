@@ -17,7 +17,11 @@ import { SiteMap } from "./site-map";
 import { Timeline } from "./timeline";
 import { TransitionButtons } from "./transition-buttons";
 
-export async function generateMetadata({ params }: { params: Promise<{ number: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ number: string }>;
+}): Promise<Metadata> {
   const { number } = await params;
   return { title: number.toUpperCase() };
 }
@@ -37,16 +41,17 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
       if (err instanceof DomainError && err.code === "not_found") return null;
       throw err;
     }
-    const [actions, notes, events, attachments, members, serviceTypes, contacts, equipment] = await Promise.all([
-      jobs.getJobActions(ctx, job),
-      jobs.listNotes(ctx, job.id),
-      jobs.listJobEvents(ctx, job.id),
-      jobs.listAttachments(ctx, job.id),
-      office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
-      office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
-      ctx.store.customers.contacts(job.customerId),
-      job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
-    ]);
+    const [actions, notes, events, attachments, members, serviceTypes, contacts, equipment] =
+      await Promise.all([
+        jobs.getJobActions(ctx, job),
+        jobs.listNotes(ctx, job.id),
+        jobs.listJobEvents(ctx, job.id),
+        jobs.listAttachments(ctx, job.id),
+        office ? organization.listAssignableMembers(ctx) : Promise.resolve([]),
+        office ? organization.listServiceTypes(ctx) : Promise.resolve([]),
+        ctx.store.customers.contacts(job.customerId),
+        job.equipmentId ? ctx.store.equipment.get(job.equipmentId) : Promise.resolve(null),
+      ]);
     return { job, actions, notes, events, attachments, members, serviceTypes, contacts, equipment };
   });
   if (!data) notFound();
@@ -59,25 +64,35 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/jobs" className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm">
+        <Link
+          href="/jobs"
+          className="text-muted-foreground hover:text-foreground mb-3 inline-flex items-center gap-1 text-sm"
+        >
           <ArrowLeft className="size-4" /> {t("title")}
         </Link>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground font-mono">{jobNumber}</span>
-              <StatusBadge status={job.status} />
+              <span data-testid="job-status">
+                <StatusBadge status={job.status} />
+              </span>
               <PriorityBadge priority={job.priority} />
               {job.needsReview ? (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-200">
                   <Inbox className="size-3" aria-hidden /> {t("needsReview")}
                 </span>
               ) : null}
-              {job.holdReason ? <span className="text-muted-foreground text-xs">{t(`holdReason.${job.holdReason}`)}</span> : null}
+              {job.holdReason ? (
+                <span className="text-muted-foreground text-xs">{t(`holdReason.${job.holdReason}`)}</span>
+              ) : null}
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-balance">{job.title}</h1>
             <p className="text-muted-foreground text-sm">
-              <Link href={`/customers/${job.customer.id}`} className="hover:text-foreground font-medium underline-offset-2 hover:underline">
+              <Link
+                href={`/customers/${job.customer.id}`}
+                className="hover:text-foreground font-medium underline-offset-2 hover:underline"
+              >
                 {job.customer.name}
               </Link>{" "}
               · {job.site.label}, {job.site.address.city}
@@ -87,7 +102,11 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             <TransitionButtons
               jobId={job.id}
               version={job.version}
-              actions={data.actions.map((a) => ({ to: a.to, name: a.name, requiresReason: Boolean(a.requiresReason) }))}
+              actions={data.actions.map((a) => ({
+                to: a.to,
+                name: a.name,
+                requiresReason: Boolean(a.requiresReason),
+              }))}
             />
             {office ? (
               <JobMenu
@@ -118,16 +137,34 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
               <CardTitle className="text-base">{t("detail.details")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {job.description ? <p className="text-sm whitespace-pre-line">{job.description}</p> : <p className="text-muted-foreground text-sm">{t("detail.noDescription")}</p>}
+              {job.description ? (
+                <p className="text-sm whitespace-pre-line">{job.description}</p>
+              ) : (
+                <p className="text-muted-foreground text-sm">{t("detail.noDescription")}</p>
+              )}
               <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                 <Item label={t("col.serviceType")}>{job.serviceType?.name ?? "—"}</Item>
-                <Item label={t("detail.equipment")}>{data.equipment ? [data.equipment.type, data.equipment.brand, data.equipment.model].filter(Boolean).join(" · ") : "—"}</Item>
-                <Item label={t("detail.preferredWindow")}>{job.preferredStart ? formatWindow(job.preferredStart, job.preferredEnd, tz) : "—"}</Item>
-                <Item label={t("detail.estimate")}>{job.estimatedDurationMin ? t("detail.minutes", { n: job.estimatedDurationMin }) : "—"}</Item>
+                <Item label={t("detail.equipment")}>
+                  {data.equipment
+                    ? [data.equipment.type, data.equipment.brand, data.equipment.model]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : "—"}
+                </Item>
+                <Item label={t("detail.preferredWindow")}>
+                  {job.preferredStart ? formatWindow(job.preferredStart, job.preferredEnd, tz) : "—"}
+                </Item>
+                <Item label={t("detail.estimate")}>
+                  {job.estimatedDurationMin ? t("detail.minutes", { n: job.estimatedDurationMin }) : "—"}
+                </Item>
                 <Item label={t("detail.source")}>{t(`source.${job.source}`)}</Item>
                 <Item label={t("detail.created")}>{formatDateTime(job.createdAt, tz)}</Item>
-                {job.completedAt ? <Item label={STATUS_LABELS.completed}>{formatDateTime(job.completedAt, tz)}</Item> : null}
-                {job.canceledAt ? <Item label={STATUS_LABELS.canceled}>{formatDateTime(job.canceledAt, tz)}</Item> : null}
+                {job.completedAt ? (
+                  <Item label={STATUS_LABELS.completed}>{formatDateTime(job.completedAt, tz)}</Item>
+                ) : null}
+                {job.canceledAt ? (
+                  <Item label={STATUS_LABELS.canceled}>{formatDateTime(job.canceledAt, tz)}</Item>
+                ) : null}
               </dl>
             </CardContent>
           </Card>
@@ -136,7 +173,13 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
             jobId={job.id}
             canAdd={canWork}
             timeZone={tz}
-            notes={data.notes.map((n) => ({ id: n.id, body: n.body, visibility: n.visibility, author: n.author?.name ?? null, createdAt: n.createdAt.toISOString() }))}
+            notes={data.notes.map((n) => ({
+              id: n.id,
+              body: n.body,
+              visibility: n.visibility,
+              author: n.author?.name ?? null,
+              createdAt: n.createdAt.toISOString(),
+            }))}
           />
 
           <Attachments
@@ -168,7 +211,10 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
               payload: e.payload,
               createdAt: e.createdAt.toISOString(),
             }))}
-            members={Object.fromEntries([...data.members.map((m) => [m.id, m.name]), ...job.assignees.map((a) => [a.memberId, a.name])])}
+            members={Object.fromEntries([
+              ...data.members.map((m) => [m.id, m.name]),
+              ...job.assignees.map((a) => [a.memberId, a.name]),
+            ])}
           />
         </div>
 
@@ -201,7 +247,9 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                     {job.site.address.line1}
                     {job.site.address.line2 ? `, ${job.site.address.line2}` : ""}
                     <br />
-                    {[job.site.address.city, job.site.address.region, job.site.address.postal_code].filter(Boolean).join(", ")}
+                    {[job.site.address.city, job.site.address.region, job.site.address.postal_code]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
                   {job.site.latitude !== null && job.site.longitude !== null ? (
                     <a
@@ -226,7 +274,10 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                   <div>
                     <p className="font-medium">{primary.name}</p>
                     {primary.phone ? (
-                      <a href={`tel:${primary.phone.replace(/[^\d+]/g, "")}`} className="text-primary hover:underline">
+                      <a
+                        href={`tel:${primary.phone.replace(/[^\d+]/g, "")}`}
+                        className="text-primary hover:underline"
+                      >
                         {primary.phone}
                       </a>
                     ) : null}

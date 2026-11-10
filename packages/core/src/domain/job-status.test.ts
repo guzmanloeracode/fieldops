@@ -14,7 +14,12 @@ import {
   type TransitionFacts,
 } from "./job-status";
 
-const READY: TransitionFacts = { assigned: true, hasAssignee: true, hasSchedule: true, missingRequiredItems: [] };
+const READY: TransitionFacts = {
+  assigned: true,
+  hasAssignee: true,
+  hasSchedule: true,
+  missingRequiredItems: [],
+};
 const ALLOWED: [JobStatus, JobStatus][] = [
   ["new", "scheduled"],
   ["new", "canceled"],
@@ -46,7 +51,9 @@ describe("job status machine", () => {
       } else {
         it(`rejects ${from} → ${to}`, () => {
           expect(findTransition(from, to)).toBeUndefined();
-          expect(() => assertTransition({ role: "owner" }, from, fullRequest(to), READY)).toThrow(InvalidTransitionError);
+          expect(() => assertTransition({ role: "owner" }, from, fullRequest(to), READY)).toThrow(
+            InvalidTransitionError,
+          );
         });
       }
     }
@@ -59,10 +66,12 @@ describe("job status machine", () => {
       ["in_progress", "on_hold"],
       ["completed", "in_progress"],
     ] as [JobStatus, JobStatus][]) {
-      expect(() => assertTransition({ role: "owner" }, from, { to, holdReason: "parts" }, READY)).toThrow(/reason is required/);
-      expect(() => assertTransition({ role: "owner" }, from, { to, reason: "   ", holdReason: "parts" }, READY)).toThrow(
-        InvalidTransitionError,
+      expect(() => assertTransition({ role: "owner" }, from, { to, holdReason: "parts" }, READY)).toThrow(
+        /reason is required/,
       );
+      expect(() =>
+        assertTransition({ role: "owner" }, from, { to, reason: "   ", holdReason: "parts" }, READY),
+      ).toThrow(InvalidTransitionError);
     }
   });
 
@@ -90,9 +99,9 @@ describe("job status machine", () => {
   });
 
   it("needs a schedule before scheduling", () => {
-    expect(() => assertTransition({ role: "owner" }, "new", { to: "scheduled" }, { ...READY, hasSchedule: false })).toThrow(
-      /scheduled time/,
-    );
+    expect(() =>
+      assertTransition({ role: "owner" }, "new", { to: "scheduled" }, { ...READY, hasSchedule: false }),
+    ).toThrow(/scheduled time/);
     expect(() =>
       assertTransition({ role: "owner" }, "on_hold", { to: "scheduled" }, { ...READY, hasSchedule: false }),
     ).toThrow(/scheduled time/);
@@ -100,7 +109,12 @@ describe("job status machine", () => {
 
   it("lists missing checklist items when completing too early (JOB-08 acceptance)", () => {
     try {
-      assertTransition({ role: "technician" }, "in_progress", { to: "completed" }, { ...READY, missingRequiredItems: ["Photo of filter", "Pressure"] });
+      assertTransition(
+        { role: "technician" },
+        "in_progress",
+        { to: "completed" },
+        { ...READY, missingRequiredItems: ["Photo of filter", "Pressure"] },
+      );
       expect.unreachable();
     } catch (e) {
       expect(e).toBeInstanceOf(InvalidTransitionError);
@@ -112,43 +126,58 @@ describe("job status machine", () => {
     const office: Role[] = ["owner", "admin", "dispatcher"];
     it("office moves are closed to technicians, even assigned ones", () => {
       for (const t of TRANSITIONS.filter((x) => x.by === "office")) {
-        for (const role of office) expect(() => assertTransition({ role }, t.from, fullRequest(t.to), READY)).not.toThrow();
-        expect(() => assertTransition({ role: "technician" }, t.from, fullRequest(t.to), READY)).toThrow(ForbiddenError);
+        for (const role of office)
+          expect(() => assertTransition({ role }, t.from, fullRequest(t.to), READY)).not.toThrow();
+        expect(() => assertTransition({ role: "technician" }, t.from, fullRequest(t.to), READY)).toThrow(
+          ForbiddenError,
+        );
       }
     });
     it("work moves are open to the assigned technician only", () => {
       for (const t of TRANSITIONS.filter((x) => x.by === "work")) {
-        expect(() => assertTransition({ role: "technician" }, t.from, fullRequest(t.to), READY)).not.toThrow();
-        expect(() => assertTransition({ role: "technician" }, t.from, fullRequest(t.to), { ...READY, assigned: false })).toThrow(
-          ForbiddenError,
-        );
+        expect(() =>
+          assertTransition({ role: "technician" }, t.from, fullRequest(t.to), READY),
+        ).not.toThrow();
+        expect(() =>
+          assertTransition({ role: "technician" }, t.from, fullRequest(t.to), { ...READY, assigned: false }),
+        ).toThrow(ForbiddenError);
         for (const role of office) {
-          expect(() => assertTransition({ role }, t.from, fullRequest(t.to), { ...READY, assigned: false })).not.toThrow();
+          expect(() =>
+            assertTransition({ role }, t.from, fullRequest(t.to), { ...READY, assigned: false }),
+          ).not.toThrow();
         }
       }
     });
     it("reopen is for the office", () => {
-      expect(() => assertTransition({ role: "dispatcher" }, "completed", { to: "in_progress", reason: "Leak again" }, READY)).not.toThrow();
-      expect(() => assertTransition({ role: "technician" }, "completed", { to: "in_progress", reason: "x" }, READY)).toThrow(
-        ForbiddenError,
-      );
+      expect(() =>
+        assertTransition(
+          { role: "dispatcher" },
+          "completed",
+          { to: "in_progress", reason: "Leak again" },
+          READY,
+        ),
+      ).not.toThrow();
+      expect(() =>
+        assertTransition({ role: "technician" }, "completed", { to: "in_progress", reason: "x" }, READY),
+      ).toThrow(ForbiddenError);
     });
   });
 
   describe("availableTransitions", () => {
     it("shows a technician only work moves on assigned jobs", () => {
-      expect(availableTransitions({ role: "technician" }, "scheduled", { assigned: true }).map((t) => t.name)).toEqual(["depart", "start"]);
+      expect(
+        availableTransitions({ role: "technician" }, "scheduled", { assigned: true }).map((t) => t.name),
+      ).toEqual(["depart", "start"]);
       expect(availableTransitions({ role: "technician" }, "scheduled", { assigned: false })).toEqual([]);
       expect(availableTransitions({ role: "technician" }, "completed", { assigned: true })).toEqual([]);
     });
     it("shows a dispatcher every move from the status", () => {
-      expect(availableTransitions({ role: "dispatcher" }, "scheduled", { assigned: false }).map((t) => t.name)).toEqual([
-        "unschedule",
-        "depart",
-        "start",
-        "cancel",
-      ]);
-      expect(availableTransitions({ role: "dispatcher" }, "completed", { assigned: false }).map((t) => t.name)).toEqual(["reopen"]);
+      expect(
+        availableTransitions({ role: "dispatcher" }, "scheduled", { assigned: false }).map((t) => t.name),
+      ).toEqual(["unschedule", "depart", "start", "cancel"]);
+      expect(
+        availableTransitions({ role: "dispatcher" }, "completed", { assigned: false }).map((t) => t.name),
+      ).toEqual(["reopen"]);
       expect(availableTransitions({ role: "owner" }, "canceled", { assigned: true })).toEqual([]);
     });
   });

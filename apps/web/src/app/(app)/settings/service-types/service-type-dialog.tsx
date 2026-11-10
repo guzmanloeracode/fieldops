@@ -11,16 +11,24 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { FieldError } from "@/components/app/field-error";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { createServiceTypeAction, updateServiceTypeAction } from "./actions";
 
-const formSchema = serviceTypeInputSchema
-  .omit({ default_price_minor: true, color: true })
-  .extend({ price: z.string().trim().min(1, "Enter a price").max(20), color: z.string().regex(/^#[0-9a-fA-F]{6}$/) });
+const formSchema = serviceTypeInputSchema.omit({ default_price_minor: true, color: true }).extend({
+  price: z.string().trim().min(1, "Enter a price").max(20),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+});
 type FormInput = z.input<typeof formSchema>;
 type FormOutput = z.output<typeof formSchema>;
 
@@ -35,7 +43,13 @@ export interface ServiceTypeValues {
   currency: Currency;
 }
 
-export function ServiceTypeDialog({ currency, serviceType }: { currency: Currency; serviceType?: ServiceTypeValues }) {
+export function ServiceTypeDialog({
+  currency,
+  serviceType,
+}: {
+  currency: Currency;
+  serviceType?: ServiceTypeValues;
+}) {
   const t = useTranslations("settings.serviceTypes");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -51,7 +65,10 @@ export function ServiceTypeDialog({ currency, serviceType }: { currency: Currenc
         active: serviceType.active,
       }
     : { name: "", description: "", default_duration_min: 60, price: "0", color: "#0369a1", active: true };
-  const form = useForm<FormInput, unknown, FormOutput>({ resolver: zodResolver(formSchema), defaultValues: defaults });
+  const form = useForm<FormInput, unknown, FormOutput>({
+    resolver: zodResolver(formSchema),
+    defaultValues: defaults,
+  });
   const errors = form.formState.errors;
   const idp = serviceType ? `st-${serviceType.id}` : "st-new";
 
@@ -64,10 +81,14 @@ export function ServiceTypeDialog({ currency, serviceType }: { currency: Currenc
     const { price: _price, ...rest } = values;
     const payload = { ...rest, default_price_minor: minor };
     startTransition(async () => {
-      const res = serviceType ? await updateServiceTypeAction(serviceType.id, payload) : await createServiceTypeAction(payload);
+      const res = serviceType
+        ? await updateServiceTypeAction(serviceType.id, payload)
+        : await createServiceTypeAction(payload);
       if (!res.ok) {
         for (const f of res.error.fields ?? []) {
-          form.setError((f.path === "default_price_minor" ? "price" : f.path) as Path<FormInput>, { message: f.message });
+          form.setError((f.path === "default_price_minor" ? "price" : f.path) as Path<FormInput>, {
+            message: f.message,
+          });
         }
         toast.error(res.error.message);
         return;
@@ -122,7 +143,12 @@ export function ServiceTypeDialog({ currency, serviceType }: { currency: Currenc
             </div>
             <div className="space-y-1.5">
               <Label htmlFor={`${idp}-price`}>{t("price", { currency: priceCurrency })}</Label>
-              <Input id={`${idp}-price`} inputMode="decimal" aria-invalid={Boolean(errors.price)} {...form.register("price")} />
+              <Input
+                id={`${idp}-price`}
+                inputMode="decimal"
+                aria-invalid={Boolean(errors.price)}
+                {...form.register("price")}
+              />
               <FieldError message={errors.price?.message} />
             </div>
           </div>

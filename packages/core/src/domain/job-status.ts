@@ -105,10 +105,13 @@ export function assertTransition(
 ): TransitionRule {
   const rule = findTransition(from, request.to);
   if (!rule) {
-    throw new InvalidTransitionError(`A job can't move from ${STATUS_LABELS[from]} to ${STATUS_LABELS[request.to]}`, {
-      from,
-      to: request.to,
-    });
+    throw new InvalidTransitionError(
+      `A job can't move from ${STATUS_LABELS[from]} to ${STATUS_LABELS[request.to]}`,
+      {
+        from,
+        to: request.to,
+      },
+    );
   }
   if (!actorMayRun(actor, rule, facts.assigned)) throw new ForbiddenError();
 

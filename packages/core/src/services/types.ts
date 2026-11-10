@@ -120,7 +120,14 @@ export interface AssigneeRef {
 
 export interface JobView extends JobRecord {
   customer: { id: string; name: string };
-  site: { id: string; label: string; address: Address; latitude: number | null; longitude: number | null; accessNotes: string | null };
+  site: {
+    id: string;
+    label: string;
+    address: Address;
+    latitude: number | null;
+    longitude: number | null;
+    accessNotes: string | null;
+  };
   serviceType: { id: string; name: string } | null;
   assignees: AssigneeRef[];
 }
@@ -208,21 +215,39 @@ export interface CustomerRepo {
   list(filters: CustomerListFilters): Promise<Page<CustomerListRow>>;
   get(id: string): Promise<CustomerRecord | null>;
   create(data: Omit<CustomerRecord, "id" | "createdAt" | "updatedAt">): Promise<CustomerRecord>;
-  update(id: string, patch: Partial<Omit<CustomerRecord, "id" | "createdAt" | "updatedAt">>): Promise<CustomerRecord | null>;
+  update(
+    id: string,
+    patch: Partial<Omit<CustomerRecord, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<CustomerRecord | null>;
   softDelete(id: string): Promise<boolean>;
   contacts(customerId: string): Promise<ContactRecord[]>;
-  addContact(customerId: string, data: Omit<ContactRecord, "id" | "customerId"> & { emailNorm: string | null; phoneNorm: string | null }): Promise<ContactRecord>;
-  findDuplicates(match: { emails: string[]; phones: string[]; excludeCustomerId?: string }): Promise<{ id: string; name: string; matchedOn: "email" | "phone" }[]>;
+  addContact(
+    customerId: string,
+    data: Omit<ContactRecord, "id" | "customerId"> & { emailNorm: string | null; phoneNorm: string | null },
+  ): Promise<ContactRecord>;
+  findDuplicates(match: {
+    emails: string[];
+    phones: string[];
+    excludeCustomerId?: string;
+  }): Promise<{ id: string; name: string; matchedOn: "email" | "phone" }[]>;
   /** True when the member is assigned to at least one job for this customer. */
   isLinkedToMember(customerId: string, memberId: string): Promise<boolean>;
-  stats(customerId: string): Promise<{ jobCount: number; openJobCount: number; completedJobCount: number; lastJobAt: Date | null }>;
+  stats(
+    customerId: string,
+  ): Promise<{ jobCount: number; openJobCount: number; completedJobCount: number; lastJobAt: Date | null }>;
 }
 
 export interface SiteRepo {
   listByCustomer(customerId: string): Promise<SiteRecord[]>;
   get(id: string): Promise<SiteRecord | null>;
-  create(customerId: string, data: Omit<SiteRecord, "id" | "customerId" | "createdAt" | "updatedAt">): Promise<SiteRecord>;
-  update(id: string, patch: Partial<Omit<SiteRecord, "id" | "customerId" | "createdAt" | "updatedAt">>): Promise<SiteRecord | null>;
+  create(
+    customerId: string,
+    data: Omit<SiteRecord, "id" | "customerId" | "createdAt" | "updatedAt">,
+  ): Promise<SiteRecord>;
+  update(
+    id: string,
+    patch: Partial<Omit<SiteRecord, "id" | "customerId" | "createdAt" | "updatedAt">>,
+  ): Promise<SiteRecord | null>;
   isLinkedToMember(siteId: string, memberId: string): Promise<boolean>;
 }
 
@@ -243,21 +268,49 @@ export interface JobRepo {
   get(id: string): Promise<JobView | null>;
   getByNumber(number: number): Promise<JobView | null>;
   nextNumber(): Promise<number>;
-  create(data: Omit<JobRecord, "id" | "createdAt" | "updatedAt" | "version" | "completedAt" | "canceledAt" | "scheduledStart" | "scheduledEnd" | "status" | "holdReason">): Promise<JobRecord>;
+  create(
+    data: Omit<
+      JobRecord,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "version"
+      | "completedAt"
+      | "canceledAt"
+      | "scheduledStart"
+      | "scheduledEnd"
+      | "status"
+      | "holdReason"
+    >,
+  ): Promise<JobRecord>;
   /** Applies the patch and bumps the version. With `expectedVersion`, returns null on a version mismatch. */
-  update(id: string, patch: Partial<Omit<JobRecord, "id" | "number" | "createdAt" | "updatedAt" | "version">>, expectedVersion?: number): Promise<JobRecord | null>;
+  update(
+    id: string,
+    patch: Partial<Omit<JobRecord, "id" | "number" | "createdAt" | "updatedAt" | "version">>,
+    expectedVersion?: number,
+  ): Promise<JobRecord | null>;
   softDelete(id: string): Promise<boolean>;
   setAssignments(jobId: string, assignments: { memberId: string; isLead: boolean }[]): Promise<void>;
-  addEvent(event: Omit<JobEventRecord, "id" | "createdAt" | "actor"> & { actorUserId: string | null }): Promise<void>;
+  addEvent(
+    event: Omit<JobEventRecord, "id" | "createdAt" | "actor"> & { actorUserId: string | null },
+  ): Promise<void>;
   events(jobId: string): Promise<JobEventRecord[]>;
   /** Jobs assigned to the member that overlap the window, excluding one job. */
-  overlapping(memberId: string, start: Date, end: Date, excludeJobId: string): Promise<{ id: string; number: number }[]>;
+  overlapping(
+    memberId: string,
+    start: Date,
+    end: Date,
+    excludeJobId: string,
+  ): Promise<{ id: string; number: number }[]>;
   missingRequiredChecklistItems(jobId: string): Promise<string[]>;
 }
 
 export interface NoteRepo {
   list(jobId: string, opts?: { visibility?: NoteVisibility }): Promise<NoteRecord[]>;
-  create(jobId: string, data: { body: string; visibility: NoteVisibility; authorUserId: string }): Promise<NoteRecord>;
+  create(
+    jobId: string,
+    data: { body: string; visibility: NoteVisibility; authorUserId: string },
+  ): Promise<NoteRecord>;
 }
 
 export interface AttachmentRepo {
@@ -297,7 +350,11 @@ export interface Store {
 
 export interface FileStorage {
   /** Presigned PUT. With `sizeBytes`, the upload must be exactly that size. */
-  presignPut(key: string, contentType: string, sizeBytes?: number): Promise<{ url: string; headers: Record<string, string>; expiresIn: number }>;
+  presignPut(
+    key: string,
+    contentType: string,
+    sizeBytes?: number,
+  ): Promise<{ url: string; headers: Record<string, string>; expiresIn: number }>;
   presignGet(key: string, opts?: { downloadName?: string }): Promise<string>;
   exists(key: string): Promise<boolean>;
   remove(keys: string[]): Promise<void>;

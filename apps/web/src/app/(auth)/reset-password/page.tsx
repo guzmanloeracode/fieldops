@@ -41,7 +41,14 @@ function ResetForm() {
     >
       <div className="space-y-2">
         <Label htmlFor="password">{t("reset.newPassword")}</Label>
-        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={10} required />
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          minLength={10}
+          required
+        />
         <p className="text-muted-foreground text-xs">{t("fields.passwordHint")}</p>
       </div>
       {error ? (

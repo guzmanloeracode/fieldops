@@ -16,12 +16,22 @@ export const getSession = cache(async () => auth.api.getSession({ headers: await
 
 export interface ResolvedActor extends Actor {
   email: string;
-  organization: { id: string; name: string; slug: string; timezone: string; currency: string; isDemo: boolean };
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    timezone: string;
+    currency: string;
+    isDemo: boolean;
+  };
   isDemoUser: boolean;
 }
 
 /** Resolves the member for a user in an organization, falling back to their first membership. */
-export async function resolveActor(userId: string, activeOrganizationId: string | null | undefined): Promise<ResolvedActor | null> {
+export async function resolveActor(
+  userId: string,
+  activeOrganizationId: string | null | undefined,
+): Promise<ResolvedActor | null> {
   const rows = await db
     .select({ m: schema.member, u: schema.user, o: schema.organization })
     .from(schema.member)
@@ -78,7 +88,15 @@ export async function runService<T>(fn: (ctx: ServiceContext) => Promise<T>, act
 
 export type ActionResult<T> =
   | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string; fields?: { path: string; message: string }[]; details?: Record<string, unknown> } };
+  | {
+      ok: false;
+      error: {
+        code: string;
+        message: string;
+        fields?: { path: string; message: string }[];
+        details?: Record<string, unknown>;
+      };
+    };
 
 /** Wraps a server action: domain errors become typed results the form can show; anything else is logged. */
 export async function action<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
@@ -97,7 +115,13 @@ export async function action<T>(fn: () => Promise<T>): Promise<ActionResult<T>> 
       };
     }
     // Next.js uses thrown errors for redirect() and notFound(); let them through.
-    if (err && typeof err === "object" && "digest" in err && String((err as { digest: unknown }).digest).startsWith("NEXT_")) throw err;
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      String((err as { digest: unknown }).digest).startsWith("NEXT_")
+    )
+      throw err;
     logger.error({ err }, "server action failed");
     return { ok: false, error: { code: "internal", message: "Something went wrong. Please try again." } };
   }

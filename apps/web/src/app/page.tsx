@@ -1,4 +1,13 @@
-import { ArrowRight, BookOpen, Building2, CheckCircle2, Database, GitBranch, ShieldCheck, Workflow } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Building2,
+  CheckCircle2,
+  Database,
+  GitBranch,
+  ShieldCheck,
+  Workflow,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -43,7 +52,9 @@ export default async function LandingPage() {
             </a>
           </Button>
           <Button size="sm" asChild>
-            <Link href={session ? "/dashboard" : "/sign-in"}>{session ? t("nav.openApp") : t("nav.signIn")}</Link>
+            <Link href={session ? "/dashboard" : "/sign-in"}>
+              {session ? t("nav.openApp") : t("nav.signIn")}
+            </Link>
           </Button>
         </nav>
       </header>
@@ -52,9 +63,12 @@ export default async function LandingPage() {
         <section className="mx-auto grid max-w-6xl gap-10 px-4 pt-10 pb-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:pt-16">
           <div className="space-y-6">
             <p className="text-primary inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium">
-              <span className="bg-primary size-1.5 rounded-full" aria-hidden /> {t("hero.badge", { version: env.APP_VERSION })}
+              <span className="bg-primary size-1.5 rounded-full" aria-hidden />{" "}
+              {t("hero.badge", { version: env.APP_VERSION })}
             </p>
-            <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">{t("hero.title")}</h1>
+            <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+              {t("hero.title")}
+            </h1>
             <p className="text-muted-foreground max-w-xl text-lg text-pretty">{t("hero.subtitle")}</p>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" asChild>
@@ -102,9 +116,16 @@ export default async function LandingPage() {
           <p className="text-muted-foreground mt-1 mb-6 text-sm">{t("roadmap.subtitle")}</p>
           <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {RELEASES.map((r, i) => (
-              <li key={r} className={`rounded-xl border p-4 ${i === 0 ? "border-primary/50 bg-primary/5" : ""}`}>
+              <li
+                key={r}
+                className={`rounded-xl border p-4 ${i === 0 ? "border-primary/50 bg-primary/5" : ""}`}
+              >
                 <p className="flex items-center gap-2 text-sm font-medium">
-                  {i === 0 ? <CheckCircle2 className="text-primary size-4" aria-hidden /> : <span className="bg-muted-foreground/40 size-2 rounded-full" aria-hidden />}
+                  {i === 0 ? (
+                    <CheckCircle2 className="text-primary size-4" aria-hidden />
+                  ) : (
+                    <span className="bg-muted-foreground/40 size-2 rounded-full" aria-hidden />
+                  )}
                   {t(`roadmap.${r}.name`)}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">{t(`roadmap.${r}.body`)}</p>

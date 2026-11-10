@@ -1,4 +1,10 @@
-import type { MemberRepo, OrganizationRecord, OrganizationRepo, ServiceTypeRecord, ServiceTypeRepo } from "@fieldops/core";
+import type {
+  MemberRepo,
+  OrganizationRecord,
+  OrganizationRepo,
+  ServiceTypeRecord,
+  ServiceTypeRepo,
+} from "@fieldops/core";
 import type { Address, Currency, Role } from "@fieldops/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import type { Tx } from "../client";
@@ -54,12 +60,18 @@ export function memberRepo(tx: Tx, orgId: string): MemberRepo {
       })
       .from(member)
       .innerJoin(user, eq(user.id, member.userId));
-  const map = (r: Awaited<ReturnType<ReturnType<typeof select>["execute"]>>[number]) => ({ ...r, role: r.role as Role });
+  const map = (r: Awaited<ReturnType<ReturnType<typeof select>["execute"]>>[number]) => ({
+    ...r,
+    role: r.role as Role,
+  });
   return {
     async list() {
       const rows = await select()
         .where(eq(member.organizationId, orgId))
-        .orderBy(sql`case ${member.role} when 'owner' then 0 when 'admin' then 1 when 'dispatcher' then 2 else 3 end`, asc(user.name));
+        .orderBy(
+          sql`case ${member.role} when 'owner' then 0 when 'admin' then 1 when 'dispatcher' then 2 else 3 end`,
+          asc(user.name),
+        );
       return rows.map(map);
     },
     async get(memberId) {
@@ -67,7 +79,10 @@ export function memberRepo(tx: Tx, orgId: string): MemberRepo {
       return r ? map(r) : null;
     },
     async updateRole(memberId, role) {
-      await tx.update(member).set({ role }).where(and(eq(member.organizationId, orgId), eq(member.id, memberId)));
+      await tx
+        .update(member)
+        .set({ role })
+        .where(and(eq(member.organizationId, orgId), eq(member.id, memberId)));
     },
     async remove(memberId) {
       await tx.delete(member).where(and(eq(member.organizationId, orgId), eq(member.id, memberId)));
@@ -107,7 +122,10 @@ export function serviceTypeRepo(tx: Tx, orgId: string): ServiceTypeRepo {
       return rows.map(toServiceType);
     },
     async get(id) {
-      const [r] = await tx.select().from(serviceType).where(and(scope, eq(serviceType.id, id)));
+      const [r] = await tx
+        .select()
+        .from(serviceType)
+        .where(and(scope, eq(serviceType.id, id)));
       return r ? toServiceType(r) : null;
     },
     async create(data) {

@@ -19,7 +19,10 @@ import { member, organization, user } from "./auth";
 // Tenant-scoped tables. Every one carries organization_id, every index starts with it, and row-level
 // security (migration 0001) limits rows to the organization set in `app.org_id` (ADR 003).
 
-const id = () => uuid("id").primaryKey().default(sql`uuidv7()`);
+const id = () =>
+  uuid("id")
+    .primaryKey()
+    .default(sql`uuidv7()`);
 const orgId = () =>
   uuid("organization_id")
     .notNull()
@@ -53,8 +56,13 @@ export const serviceType = pgTable(
     defaultDurationMin: integer("default_duration_min").notNull().default(60),
     defaultPriceMinor: bigint("default_price_minor", { mode: "number" }).notNull().default(0),
     currency: text("currency").notNull(),
-    requiredSkills: text("required_skills").array().notNull().default(sql`'{}'::text[]`),
-    checklistTemplate: jsonb("checklist_template").notNull().default(sql`'[]'::jsonb`),
+    requiredSkills: text("required_skills")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    checklistTemplate: jsonb("checklist_template")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     color: text("color"),
     active: boolean("active").notNull().default(true),
     createdAt: createdAt(),
@@ -71,7 +79,10 @@ export const customer = pgTable(
     type: text("type").notNull().default("residential"),
     name: text("name").notNull(),
     billingAddress: jsonb("billing_address"),
-    tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     notes: text("notes"),
     source: text("source").notNull().default("manual"),
     createdAt: createdAt(),
@@ -258,7 +269,9 @@ export const jobEvent = pgTable(
     fromStatus: text("from_status"),
     toStatus: text("to_status"),
     actorUserId: uuid("actor_user_id").references(() => user.id, { onDelete: "set null" }),
-    payload: jsonb("payload").notNull().default(sql`'{}'::jsonb`),
+    payload: jsonb("payload")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     createdAt: createdAt(),
   },
   (t) => [index("job_event_org_job_idx").on(t.organizationId, t.jobId, t.createdAt)],

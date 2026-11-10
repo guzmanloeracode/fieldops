@@ -13,10 +13,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 import { addNoteAction } from "../actions";
 
-type Note = { id: string; body: string; visibility: NoteVisibility; author: string | null; createdAt: string };
+type Note = {
+  id: string;
+  body: string;
+  visibility: NoteVisibility;
+  author: string | null;
+  createdAt: string;
+};
 
 /** Internal notes stay inside the team; customer-visible notes appear in the portal and reports (JOB-07). */
-export function Notes({ jobId, notes, canAdd, timeZone }: { jobId: string; notes: Note[]; canAdd: boolean; timeZone: string }) {
+export function Notes({
+  jobId,
+  notes,
+  canAdd,
+  timeZone,
+}: {
+  jobId: string;
+  notes: Note[];
+  canAdd: boolean;
+  timeZone: string;
+}) {
   const t = useTranslations("jobs");
   const router = useRouter();
   const [body, setBody] = useState("");
@@ -38,7 +54,10 @@ export function Notes({ jobId, notes, canAdd, timeZone }: { jobId: string; notes
               e.preventDefault();
               if (!body.trim()) return;
               startTransition(async () => {
-                const r = await addNoteAction(jobId, { body, visibility: customerVisible ? "customer" : "internal" });
+                const r = await addNoteAction(jobId, {
+                  body,
+                  visibility: customerVisible ? "customer" : "internal",
+                });
                 if (!r.ok) {
                   toast.error(r.error.message);
                   return;
@@ -52,7 +71,14 @@ export function Notes({ jobId, notes, canAdd, timeZone }: { jobId: string; notes
             <Label htmlFor="note" className="sr-only">
               {t("notes.add")}
             </Label>
-            <Textarea id="note" value={body} onChange={(e) => setBody(e.target.value)} placeholder={t("notes.placeholder")} rows={3} maxLength={8000} />
+            <Textarea
+              id="note"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={t("notes.placeholder")}
+              rows={3}
+              maxLength={8000}
+            />
             <div className="flex items-center justify-between gap-2">
               <label className="flex items-center gap-2 text-sm">
                 <Switch checked={customerVisible} onCheckedChange={setCustomerVisible} />
@@ -75,7 +101,11 @@ export function Notes({ jobId, notes, canAdd, timeZone }: { jobId: string; notes
                   <span className="text-foreground font-medium">{n.author ?? t("notes.unknown")}</span>
                   <span>{formatDateTime(n.createdAt, timeZone)}</span>
                   <span className="ml-auto inline-flex items-center gap-1">
-                    {n.visibility === "customer" ? <Eye className="size-3" aria-hidden /> : <Lock className="size-3" aria-hidden />}
+                    {n.visibility === "customer" ? (
+                      <Eye className="size-3" aria-hidden />
+                    ) : (
+                      <Lock className="size-3" aria-hidden />
+                    )}
                     {n.visibility === "customer" ? t("notes.visibleToCustomer") : t("notes.internal")}
                   </span>
                 </div>

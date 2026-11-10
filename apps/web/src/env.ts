@@ -25,4 +25,6 @@ const schema = z.object({
 });
 
 export const env = schema.parse(process.env);
-export const fileStorageConfigured = Boolean(env.S3_ENDPOINT && env.S3_BUCKET && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY);
+export const fileStorageConfigured = Boolean(
+  env.S3_ENDPOINT && env.S3_BUCKET && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY,
+);

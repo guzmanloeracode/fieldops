@@ -51,13 +51,20 @@ export class ApiProblem extends Error {
     readonly status: number,
     readonly code: ProblemCode,
     detail?: string,
-    readonly extra: { errors?: ProblemBody["errors"]; headers?: Record<string, string>; members?: Record<string, unknown> } = {},
+    readonly extra: {
+      errors?: ProblemBody["errors"];
+      headers?: Record<string, string>;
+      members?: Record<string, unknown>;
+    } = {},
   ) {
     super(detail ?? TITLES[code]);
   }
 }
 
-export function problemFromError(err: unknown, instance: string): { body: ProblemBody; headers?: Record<string, string> } | null {
+export function problemFromError(
+  err: unknown,
+  instance: string,
+): { body: ProblemBody; headers?: Record<string, string> } | null {
   if (err instanceof ApiProblem) {
     return {
       body: {
@@ -73,7 +80,9 @@ export function problemFromError(err: unknown, instance: string): { body: Proble
     };
   }
   if (err instanceof DomainError) {
-    const { fields, ...rest } = (err.details ?? {}) as { fields?: { path: string; message: string }[] } & Record<string, unknown>;
+    const { fields, ...rest } = (err.details ?? {}) as {
+      fields?: { path: string; message: string }[];
+    } & Record<string, unknown>;
     return {
       body: {
         type: problemType(err.code),
@@ -108,5 +117,11 @@ function extensionMembers(details: Record<string, unknown>): Record<string, unkn
 }
 
 export function internalProblem(instance: string): ProblemBody {
-  return { type: problemType("internal"), title: TITLES.internal, status: 500, detail: "Something went wrong. The error was logged.", instance };
+  return {
+    type: problemType("internal"),
+    title: TITLES.internal,
+    status: 500,
+    detail: "Something went wrong. The error was logged.",
+    instance,
+  };
 }

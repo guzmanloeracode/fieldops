@@ -6,11 +6,16 @@ import { cn } from "@/lib/utils";
 const STATUS_STYLES: Record<JobStatus, string> = {
   new: "bg-slate-100 text-slate-700 ring-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600",
   scheduled: "bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-950 dark:text-sky-200 dark:ring-sky-800",
-  en_route: "bg-indigo-50 text-indigo-800 ring-indigo-200 dark:bg-indigo-950 dark:text-indigo-200 dark:ring-indigo-800",
-  in_progress: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-800",
-  on_hold: "bg-orange-50 text-orange-900 ring-orange-200 dark:bg-orange-950 dark:text-orange-200 dark:ring-orange-800",
-  completed: "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-800",
-  canceled: "bg-zinc-100 text-zinc-500 ring-zinc-200 line-through dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-700",
+  en_route:
+    "bg-indigo-50 text-indigo-800 ring-indigo-200 dark:bg-indigo-950 dark:text-indigo-200 dark:ring-indigo-800",
+  in_progress:
+    "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:ring-amber-800",
+  on_hold:
+    "bg-orange-50 text-orange-900 ring-orange-200 dark:bg-orange-950 dark:text-orange-200 dark:ring-orange-800",
+  completed:
+    "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-800",
+  canceled:
+    "bg-zinc-100 text-zinc-500 ring-zinc-200 line-through dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-700",
 };
 
 export function StatusBadge({ status, className }: { status: JobStatus; className?: string }) {
@@ -39,7 +44,13 @@ const PRIORITY_STYLE: Record<JobPriority, string> = {
 export function PriorityBadge({ priority, className }: { priority: JobPriority; className?: string }) {
   const Icon = PRIORITY_ICON[priority];
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs whitespace-nowrap", PRIORITY_STYLE[priority], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 text-xs whitespace-nowrap",
+        PRIORITY_STYLE[priority],
+        className,
+      )}
+    >
       <Icon aria-hidden className="size-3.5" />
       {PRIORITY_LABELS[priority]}
     </span>

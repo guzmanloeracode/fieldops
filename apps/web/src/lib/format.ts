@@ -16,7 +16,11 @@ export function formatDate(date: Date | string | null | undefined, timeZone: str
   return format(inZone(date, timeZone), "MMM d, yyyy");
 }
 
-export function formatWindow(start: Date | string | null, end: Date | string | null, timeZone: string): string {
+export function formatWindow(
+  start: Date | string | null,
+  end: Date | string | null,
+  timeZone: string,
+): string {
   if (!start || !end) return "Not scheduled";
   const s = inZone(start, timeZone);
   const e = inZone(end, timeZone);

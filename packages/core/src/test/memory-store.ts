@@ -94,7 +94,14 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     return {
       ...j,
       customer: { id: j.customerId, name: data.customers.find((c) => c.id === j.customerId)?.name ?? "" },
-      site: { id: site.id, label: site.label, address: site.address, latitude: site.latitude, longitude: site.longitude, accessNotes: site.accessNotes },
+      site: {
+        id: site.id,
+        label: site.label,
+        address: site.address,
+        latitude: site.latitude,
+        longitude: site.longitude,
+        accessNotes: site.accessNotes,
+      },
       serviceType: st ? { id: st.id, name: st.name } : null,
       assignees,
     };
@@ -155,8 +162,10 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         for (const c of data.contacts) {
           const cust = data.customers.find((x) => x.id === c.customerId && !x.deleted);
           if (!cust || cust.id === excludeCustomerId || out.has(cust.id)) continue;
-          if (c.emailNorm && emails.includes(c.emailNorm)) out.set(cust.id, { id: cust.id, name: cust.name, matchedOn: "email" });
-          else if (c.phoneNorm && phones.includes(c.phoneNorm)) out.set(cust.id, { id: cust.id, name: cust.name, matchedOn: "phone" });
+          if (c.emailNorm && emails.includes(c.emailNorm))
+            out.set(cust.id, { id: cust.id, name: cust.name, matchedOn: "email" });
+          else if (c.phoneNorm && phones.includes(c.phoneNorm))
+            out.set(cust.id, { id: cust.id, name: cust.name, matchedOn: "phone" });
         }
         return [...out.values()];
       },
@@ -271,11 +280,18 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
         return true;
       },
       async setAssignments(jobId, assignments) {
-        data.assignments = data.assignments.filter((a) => a.jobId !== jobId).concat(assignments.map((a) => ({ jobId, ...a })));
+        data.assignments = data.assignments
+          .filter((a) => a.jobId !== jobId)
+          .concat(assignments.map((a) => ({ jobId, ...a })));
       },
       async addEvent(e) {
         const name = userName(e.actorUserId);
-        data.events.push({ ...e, id: uuid(), createdAt: now(), actor: e.actorUserId && name ? { id: e.actorUserId, name } : null });
+        data.events.push({
+          ...e,
+          id: uuid(),
+          createdAt: now(),
+          actor: e.actorUserId && name ? { id: e.actorUserId, name } : null,
+        });
       },
       async events(jobId) {
         return data.events.filter((e) => e.jobId === jobId).reverse();
@@ -299,7 +315,9 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     },
     notes: {
       async list(jobId, opts) {
-        return data.notes.filter((n) => n.jobId === jobId && (!opts?.visibility || n.visibility === opts.visibility));
+        return data.notes.filter(
+          (n) => n.jobId === jobId && (!opts?.visibility || n.visibility === opts.visibility),
+        );
       },
       async create(jobId, input) {
         const name = userName(input.authorUserId);
@@ -372,14 +390,25 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
 
 export function member(role: Role, name = `${role} person`, extra: Partial<MemberRecord> = {}): MemberRecord {
   const id = uuid();
-  return { id, userId: uuid(), name, email: `${role}${id.slice(-4)}@example.com`, role, isDemo: false, createdAt: new Date(), ...extra };
+  return {
+    id,
+    userId: uuid(),
+    name,
+    email: `${role}${id.slice(-4)}@example.com`,
+    role,
+    isDemo: false,
+    createdAt: new Date(),
+    ...extra,
+  };
 }
 
 export function actorFor(m: MemberRecord, organizationId = "org-1"): Actor {
   return { userId: m.userId, memberId: m.id, organizationId, role: m.role, name: m.name };
 }
 
-export function fakeFiles(existing = new Set<string>()): FileStorage & { removed: string[]; existing: Set<string> } {
+export function fakeFiles(
+  existing = new Set<string>(),
+): FileStorage & { removed: string[]; existing: Set<string> } {
   const removed: string[] = [];
   return {
     existing,

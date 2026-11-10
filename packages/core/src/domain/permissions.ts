@@ -81,7 +81,8 @@ const RULES: Record<Action, Rule> = {
   "serviceTypes.view": ["owner", "admin", "dispatcher", "technician"],
   "serviceTypes.manage": MANAGERS,
   "expenses.approve": (role, scope) =>
-    (MANAGERS as readonly Role[]).includes(role) || (role === "dispatcher" && scope.belowDispatcherThreshold === true),
+    (MANAGERS as readonly Role[]).includes(role) ||
+    (role === "dispatcher" && scope.belowDispatcherThreshold === true),
   "billing.manage": OFFICE,
   "dashboard.operational": OFFICE,
   "dashboard.financial": MANAGERS,

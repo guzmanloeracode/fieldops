@@ -10,7 +10,14 @@ import { toast } from "sonner";
 import { FieldError } from "@/components/app/field-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,7 +29,13 @@ import { cn } from "@/lib/utils";
 import { createJobAction, customerSitesAction, searchCustomersAction } from "../actions";
 
 type CustomerOption = { id: string; name: string; type?: string; siteCount?: number };
-type SiteOption = { id: string; label: string; line1: string; city: string; equipment: { id: string; label: string }[] };
+type SiteOption = {
+  id: string;
+  label: string;
+  line1: string;
+  city: string;
+  equipment: { id: string; label: string }[];
+};
 
 interface FormValues {
   title: string;
@@ -52,7 +65,16 @@ export function NewJobForm({
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
   const { register, handleSubmit, setValue, watch } = useForm<FormValues>({
-    defaultValues: { priority: "normal", title: "", description: "", service_type_id: "", equipment_id: "", preferred_start: "", preferred_end: "", estimated_duration_min: "" },
+    defaultValues: {
+      priority: "normal",
+      title: "",
+      description: "",
+      service_type_id: "",
+      equipment_id: "",
+      preferred_start: "",
+      preferred_end: "",
+      estimated_duration_min: "",
+    },
   });
 
   useEffect(() => {
@@ -130,7 +152,11 @@ export function NewJobForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="equipment">{t("new.equipment")}</Label>
-            <Select value={watch("equipment_id") || "none"} onValueChange={(v) => setValue("equipment_id", v === "none" ? "" : v)} disabled={!site?.equipment.length}>
+            <Select
+              value={watch("equipment_id") || "none"}
+              onValueChange={(v) => setValue("equipment_id", v === "none" ? "" : v)}
+              disabled={!site?.equipment.length}
+            >
               <SelectTrigger id="equipment" className="w-full">
                 <SelectValue placeholder={t("new.noEquipment")} />
               </SelectTrigger>
@@ -160,7 +186,8 @@ export function NewJobForm({
                 const id = v === "none" ? "" : v;
                 setValue("service_type_id", id);
                 const st = serviceTypes.find((s) => s.id === id);
-                if (st && !watch("estimated_duration_min")) setValue("estimated_duration_min", String(st.duration));
+                if (st && !watch("estimated_duration_min"))
+                  setValue("estimated_duration_min", String(st.duration));
                 if (st && !watch("title")) setValue("title", st.name);
               }}
             >
@@ -179,21 +206,44 @@ export function NewJobForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="estimated_duration_min">{t("new.duration")}</Label>
-            <Input id="estimated_duration_min" type="number" min={5} max={1440} step={5} inputMode="numeric" {...register("estimated_duration_min")} />
+            <Input
+              id="estimated_duration_min"
+              type="number"
+              min={5}
+              max={1440}
+              step={5}
+              inputMode="numeric"
+              {...register("estimated_duration_min")}
+            />
             <FieldError message={serverErrors.estimated_duration_min} />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="title">{t("new.jobTitle")}</Label>
-            <Input id="title" maxLength={200} aria-invalid={Boolean(serverErrors.title)} {...register("title")} />
+            <Input
+              id="title"
+              maxLength={200}
+              aria-invalid={Boolean(serverErrors.title)}
+              {...register("title")}
+            />
             <FieldError message={serverErrors.title} />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="description">{t("new.descriptionLabel")}</Label>
-            <Textarea id="description" rows={4} maxLength={8000} placeholder={t("new.descriptionPlaceholder")} {...register("description")} />
+            <Textarea
+              id="description"
+              rows={4}
+              maxLength={8000}
+              placeholder={t("new.descriptionPlaceholder")}
+              {...register("description")}
+            />
           </div>
           <fieldset className="space-y-2 sm:col-span-2">
             <legend className="text-sm font-medium">{t("col.priority")}</legend>
-            <RadioGroup value={watch("priority")} onValueChange={(v) => setValue("priority", v as JobPriority)} className="flex flex-wrap gap-2">
+            <RadioGroup
+              value={watch("priority")}
+              onValueChange={(v) => setValue("priority", v as JobPriority)}
+              className="flex flex-wrap gap-2"
+            >
               {JOB_PRIORITIES.map((p) => (
                 <label
                   key={p}
@@ -242,7 +292,13 @@ export function NewJobForm({
   );
 }
 
-function CustomerPicker({ value, onChange }: { value: CustomerOption | null; onChange: (c: CustomerOption | null) => void }) {
+function CustomerPicker({
+  value,
+  onChange,
+}: {
+  value: CustomerOption | null;
+  onChange: (c: CustomerOption | null) => void;
+}) {
   const t = useTranslations("jobs");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -263,7 +319,14 @@ function CustomerPicker({ value, onChange }: { value: CustomerOption | null; onC
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} aria-labelledby="customer-label" className="w-full justify-between font-normal" data-testid="customer-picker">
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-labelledby="customer-label"
+          className="w-full justify-between font-normal"
+          data-testid="customer-picker"
+        >
           {value ? value.name : <span className="text-muted-foreground">{t("new.searchCustomer")}</span>}
           <ChevronsUpDown className="opacity-50" />
         </Button>
@@ -291,7 +354,9 @@ function CustomerPicker({ value, onChange }: { value: CustomerOption | null; onC
                 >
                   <Check className={cn("size-4", value?.id === c.id ? "opacity-100" : "opacity-0")} />
                   <span className="truncate">{c.name}</span>
-                  <span className="text-muted-foreground ml-auto text-xs">{c.type === "commercial" ? t("new.commercial") : t("new.residential")}</span>
+                  <span className="text-muted-foreground ml-auto text-xs">
+                    {c.type === "commercial" ? t("new.commercial") : t("new.residential")}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

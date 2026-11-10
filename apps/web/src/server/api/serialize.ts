@@ -66,7 +66,11 @@ export function toJobDto(j: JobView): JobDto {
 export function toJobDetailDto(j: JobView, transitions: TransitionRule[]): JobDetailDto {
   return {
     ...toJobDto(j),
-    allowed_transitions: transitions.map((t) => ({ to: t.to, name: t.name, requires_reason: Boolean(t.requiresReason) })),
+    allowed_transitions: transitions.map((t) => ({
+      to: t.to,
+      name: t.name,
+      requires_reason: Boolean(t.requiresReason),
+    })),
   };
 }
 
@@ -134,7 +138,13 @@ export function toEquipmentDto(e: EquipmentRecord): EquipmentDto {
 }
 
 export function toNoteDto(n: NoteRecord): z.infer<typeof noteSchema> {
-  return { id: n.id, body: n.body, visibility: n.visibility, author: n.author, created_at: n.createdAt.toISOString() };
+  return {
+    id: n.id,
+    body: n.body,
+    visibility: n.visibility,
+    author: n.author,
+    created_at: n.createdAt.toISOString(),
+  };
 }
 
 export function toJobEventDto(e: JobEventRecord): z.infer<typeof jobEventSchema> {
@@ -150,7 +160,14 @@ export function toJobEventDto(e: JobEventRecord): z.infer<typeof jobEventSchema>
 }
 
 export function toMemberDto(m: MemberRecord): z.infer<typeof memberSchema> {
-  return { id: m.id, user_id: m.userId, name: m.name, email: m.email, role: m.role, created_at: m.createdAt.toISOString() };
+  return {
+    id: m.id,
+    user_id: m.userId,
+    name: m.name,
+    email: m.email,
+    role: m.role,
+    created_at: m.createdAt.toISOString(),
+  };
 }
 
 export function toServiceTypeDto(s: ServiceTypeRecord): z.infer<typeof serviceTypeSchema> {
@@ -165,7 +182,9 @@ export function toServiceTypeDto(s: ServiceTypeRecord): z.infer<typeof serviceTy
   };
 }
 
-export function toAttachmentDto(a: AttachmentRecord & { url?: string | null; thumbUrl?: string | null }): AttachmentDto {
+export function toAttachmentDto(
+  a: AttachmentRecord & { url?: string | null; thumbUrl?: string | null },
+): AttachmentDto {
   return {
     id: a.id,
     job_id: a.jobId,

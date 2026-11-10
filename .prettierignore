@@ -2,3 +2,11 @@ pnpm-lock.yaml
 **/drizzle/meta/**
 docs/PRD.md
 infra/placeholder/
+**/coverage/
+**/.next/
+**/dist/
+**/test-results/
+**/playwright-report/
+**/.auth/
+**/next-env.d.ts
+**/*.tsbuildinfo

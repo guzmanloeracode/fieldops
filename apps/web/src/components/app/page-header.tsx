@@ -1,6 +1,16 @@
 import type { ReactNode } from "react";
 
-export function PageHeader({ title, description, actions, eyebrow }: { title: ReactNode; description?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  eyebrow,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  eyebrow?: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-3 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 space-y-1">
@@ -13,7 +23,17 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
   );
 }
 
-export function EmptyState({ icon, title, description, action }: { icon?: ReactNode; title: string; description?: string; action?: ReactNode }) {
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-14 text-center">
       {icon ? <div className="text-muted-foreground mb-1 [&_svg]:size-8">{icon}</div> : null}

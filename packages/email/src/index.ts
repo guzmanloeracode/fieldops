@@ -5,7 +5,11 @@ import { Invitation, ResetPassword, VerifyEmail } from "./templates";
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
   | { kind: "reset_password"; to: string; props: { name: string; url: string } }
-  | { kind: "invitation"; to: string; props: { inviterName: string; organizationName: string; role: string; url: string } };
+  | {
+      kind: "invitation";
+      to: string;
+      props: { inviterName: string; organizationName: string; role: string; url: string };
+    };
 
 export interface RenderedEmail {
   subject: string;

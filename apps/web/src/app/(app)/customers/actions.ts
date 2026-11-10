@@ -17,7 +17,9 @@ function prefixed(prefix: string, err: unknown): never {
 export async function createCustomerAction(input: { customer: unknown; site: unknown }) {
   const result = await action(() =>
     runService(async (ctx) => {
-      const created = await customers.createCustomer(ctx, input.customer).catch((e) => prefixed("customer", e));
+      const created = await customers
+        .createCustomer(ctx, input.customer)
+        .catch((e) => prefixed("customer", e));
       await customers.createSite(ctx, created.customer.id, input.site).catch((e) => prefixed("site", e));
       return { id: created.customer.id, duplicates: created.duplicates };
     }),
@@ -26,7 +28,11 @@ export async function createCustomerAction(input: { customer: unknown; site: unk
   return result;
 }
 
-export async function checkDuplicatesAction(input: { emails: string[]; phones: string[]; excludeCustomerId?: string }) {
+export async function checkDuplicatesAction(input: {
+  emails: string[];
+  phones: string[];
+  excludeCustomerId?: string;
+}) {
   return action(() =>
     runService((ctx) =>
       customers.findDuplicateCustomers(ctx, {
@@ -39,7 +45,9 @@ export async function checkDuplicatesAction(input: { emails: string[]; phones: s
 }
 
 export async function updateCustomerAction(id: string, input: unknown) {
-  const result = await action(() => runService((ctx) => customers.updateCustomer(ctx, id, input)).then(() => ({ id })));
+  const result = await action(() =>
+    runService((ctx) => customers.updateCustomer(ctx, id, input)).then(() => ({ id })),
+  );
   if (result.ok) {
     revalidatePath("/customers");
     revalidatePath(`/customers/${id}`);
@@ -48,7 +56,9 @@ export async function updateCustomerAction(id: string, input: unknown) {
 }
 
 export async function deleteCustomerAction(id: string) {
-  const result = await action(() => runService((ctx) => customers.deleteCustomer(ctx, id)).then(() => ({ id })));
+  const result = await action(() =>
+    runService((ctx) => customers.deleteCustomer(ctx, id)).then(() => ({ id })),
+  );
   if (result.ok) revalidatePath("/customers");
   return result;
 }

@@ -40,7 +40,14 @@ function tzOffsetMs(instant: number, timeZone: string): number {
     second: "2-digit",
   }).formatToParts(new Date(instant));
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
   return asUtc - instant;
 }
 
@@ -53,10 +60,20 @@ function zoned(y: number, m: number, d: number, minutes: number, timeZone: strin
 
 function localDate(instant: Date, timeZone: string): { y: number; m: number; d: number; dow: number } {
   const shifted = new Date(instant.getTime() + tzOffsetMs(instant.getTime(), timeZone));
-  return { y: shifted.getUTCFullYear(), m: shifted.getUTCMonth(), d: shifted.getUTCDate(), dow: shifted.getUTCDay() };
+  return {
+    y: shifted.getUTCFullYear(),
+    m: shifted.getUTCMonth(),
+    d: shifted.getUTCDate(),
+    dow: shifted.getUTCDay(),
+  };
 }
 
-async function insertBatches<T extends Record<string, unknown>>(tx: Tx, table: Parameters<Tx["insert"]>[0], rows: T[], size = 500) {
+async function insertBatches<T extends Record<string, unknown>>(
+  tx: Tx,
+  table: Parameters<Tx["insert"]>[0],
+  rows: T[],
+  size = 500,
+) {
   for (let i = 0; i < rows.length; i += size) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await tx.insert(table).values(rows.slice(i, i + size) as any);
@@ -90,7 +107,11 @@ interface Slot {
   end: Date;
 }
 
-async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: string; seed: number; days: number }) {
+async function seedOrg(
+  tx: Tx,
+  spec: OrgSpec,
+  ctx: { now: Date; passwordHash: string; seed: number; days: number },
+) {
   const f = new Faker({ locale: spec.fakerLocale === "en_US" ? [en_US, en, base] : [id_ID, en, base] });
   f.seed(ctx.seed);
   const pick = <T>(arr: readonly T[]): T => f.helpers.arrayElement(arr);
@@ -116,9 +137,9 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       postal_code: spec.key === "acme-air" ? "78701" : "12950",
       country: spec.country,
     },
-    businessHours: [1, 2, 3, 4, 5].map((day) => ({ day, open: "08:00", close: "17:00" })).concat(
-      spec.key === "acme-teknik" ? [{ day: 6, open: "08:00", close: "13:00" }] : [],
-    ),
+    businessHours: [1, 2, 3, 4, 5]
+      .map((day) => ({ day, open: "08:00", close: "17:00" }))
+      .concat(spec.key === "acme-teknik" ? [{ day: 6, open: "08:00", close: "13:00" }] : []),
     taxRates: spec.taxRates,
     isDemo: true,
     plan: "pro",
@@ -153,7 +174,10 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       userId,
       role: t.role,
       skills: t.skills ?? [],
-      phone: spec.key === "acme-air" ? `(512) 555-01${String(members.length + 10).padStart(2, "0")}` : `0812-5550-${String(members.length + 10).padStart(4, "0")}`,
+      phone:
+        spec.key === "acme-air"
+          ? `(512) 555-01${String(members.length + 10).padStart(2, "0")}`
+          : `0812-5550-${String(members.length + 10).padStart(4, "0")}`,
     });
     members.push({ id: memberId, userId, name: t.name, role: t.role, skills: t.skills ?? [] });
     if (t.demo) demoUsers.push({ email, role: t.role, org: spec.slug });
@@ -180,8 +204,11 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
   const contacts: (typeof s.contact.$inferInsert)[] = [];
   const sites: (typeof s.site.$inferInsert & { id: string; customerId: string })[] = [];
   const phone = (n: number) =>
-    spec.key === "acme-air" ? `(512) 555-${String(1000 + (n % 9000)).padStart(4, "0")}` : `0812-5550-${String(1000 + (n % 9000)).padStart(4, "0")}`;
-  const phoneNorm = (p: string) => (spec.key === "acme-air" ? "1" + p.replace(/\D/g, "") : "62" + p.replace(/\D/g, "").slice(1));
+    spec.key === "acme-air"
+      ? `(512) 555-${String(1000 + (n % 9000)).padStart(4, "0")}`
+      : `0812-5550-${String(1000 + (n % 9000)).padStart(4, "0")}`;
+  const phoneNorm = (p: string) =>
+    spec.key === "acme-air" ? "1" + p.replace(/\D/g, "") : "62" + p.replace(/\D/g, "").slice(1);
   const jitter = () => f.number.float({ min: -0.12, max: 0.12 });
 
   for (let i = 0; i < spec.customers; i++) {
@@ -194,13 +221,27 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
     const contactCount = commercial ? f.number.int({ min: 1, max: 3 }) : chance(0.2) ? 2 : 1;
     for (let c = 0; c < contactCount; c++) {
       const cf = c === 0 && !commercial ? person : { first: f.person.firstName(), last: f.person.lastName() };
-      const email = `${cf.first}.${cf.last}${i}`.toLowerCase().normalize("NFKD").replace(/[^a-z0-9.]/g, "") + "@example.com";
+      const email =
+        `${cf.first}.${cf.last}${i}`
+          .toLowerCase()
+          .normalize("NFKD")
+          .replace(/[^a-z0-9.]/g, "") + "@example.com";
       const p = phone(i * 3 + c);
       contacts.push({
         organizationId: orgId,
         customerId: id,
         name: `${cf.first} ${cf.last}`,
-        role: commercial ? pick(spec.key === "acme-air" ? ["Office manager", "Facilities", "Owner", "Accounts"] : ["Manajer kantor", "Bagian umum", "Pemilik"]) : c === 0 ? null : spec.key === "acme-air" ? "Spouse" : "Keluarga",
+        role: commercial
+          ? pick(
+              spec.key === "acme-air"
+                ? ["Office manager", "Facilities", "Owner", "Accounts"]
+                : ["Manajer kantor", "Bagian umum", "Pemilik"],
+            )
+          : c === 0
+            ? null
+            : spec.key === "acme-air"
+              ? "Spouse"
+              : "Keluarga",
         email,
         emailNorm: email,
         phone: p,
@@ -213,23 +254,62 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
   // Every customer gets one site; the extra sites go to commercial customers first.
   const extraSites = spec.sites - spec.customers;
   const commercialCustomers = customers.filter((c) => c.commercial);
-  const siteOwners = [...customers, ...Array.from({ length: extraSites }, (_, k) => commercialCustomers[k % commercialCustomers.length]!)];
+  const siteOwners = [
+    ...customers,
+    ...Array.from({ length: extraSites }, (_, k) => commercialCustomers[k % commercialCustomers.length]!),
+  ];
   for (const [k, owner] of siteOwners.entries()) {
     const first = !sites.some((x) => x.customerId === owner.id);
     sites.push({
       id: uuidv7(),
       organizationId: orgId,
       customerId: owner.id,
-      label: first ? (owner.commercial ? (spec.key === "acme-air" ? "Main office" : "Kantor pusat") : spec.key === "acme-air" ? "Home" : "Rumah") : `${spec.key === "acme-air" ? "Branch" : "Cabang"} ${k % 7 + 2}`,
-      line1: spec.key === "acme-air" ? `${f.number.int({ min: 100, max: 9999 })} ${f.location.street()}` : `Jl. ${f.location.street()} No. ${f.number.int({ min: 1, max: 200 })}`,
-      line2: owner.commercial && chance(0.4) ? (spec.key === "acme-air" ? `Suite ${f.number.int({ min: 100, max: 900 })}` : `Lantai ${f.number.int({ min: 1, max: 12 })}`) : null,
+      label: first
+        ? owner.commercial
+          ? spec.key === "acme-air"
+            ? "Main office"
+            : "Kantor pusat"
+          : spec.key === "acme-air"
+            ? "Home"
+            : "Rumah"
+        : `${spec.key === "acme-air" ? "Branch" : "Cabang"} ${(k % 7) + 2}`,
+      line1:
+        spec.key === "acme-air"
+          ? `${f.number.int({ min: 100, max: 9999 })} ${f.location.street()}`
+          : `Jl. ${f.location.street()} No. ${f.number.int({ min: 1, max: 200 })}`,
+      line2:
+        owner.commercial && chance(0.4)
+          ? spec.key === "acme-air"
+            ? `Suite ${f.number.int({ min: 100, max: 900 })}`
+            : `Lantai ${f.number.int({ min: 1, max: 12 })}`
+          : null,
       city: spec.city,
       region: spec.region,
-      postalCode: spec.key === "acme-air" ? `787${f.number.int({ min: 1, max: 59 }).toString().padStart(2, "0")}` : `1${f.number.int({ min: 1000, max: 4999 })}0`,
+      postalCode:
+        spec.key === "acme-air"
+          ? `787${f.number.int({ min: 1, max: 59 }).toString().padStart(2, "0")}`
+          : `1${f.number.int({ min: 1000, max: 4999 })}0`,
       country: spec.country,
       latitude: Number((spec.center[0] + jitter()).toFixed(5)),
       longitude: Number((spec.center[1] + jitter()).toFixed(5)),
-      accessNotes: chance(0.3) ? pick(spec.key === "acme-air" ? ["Gate code 4821", "Dog in the backyard", "Use the side entrance", "Check in at the front desk", "Parking in the rear lot"] : ["Lapor satpam di pos depan", "Parkir di basement B1", "Ada anjing di halaman", "Hubungi pengelola gedung dulu"]) : null,
+      accessNotes: chance(0.3)
+        ? pick(
+            spec.key === "acme-air"
+              ? [
+                  "Gate code 4821",
+                  "Dog in the backyard",
+                  "Use the side entrance",
+                  "Check in at the front desk",
+                  "Parking in the rear lot",
+                ]
+              : [
+                  "Lapor satpam di pos depan",
+                  "Parkir di basement B1",
+                  "Ada anjing di halaman",
+                  "Hubungi pengelola gedung dulu",
+                ],
+          )
+        : null,
       createdAt: owner.createdAt,
     });
   }
@@ -251,17 +331,21 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       warrantyEnd: new Date(installed.getTime() + 5 * 365 * DAY).toISOString().slice(0, 10),
     });
   }
-  await insertBatches(tx, s.customer, customers.map((c) => ({
-    id: c.id,
-    organizationId: orgId,
-    type: c.commercial ? "commercial" : "residential",
-    name: c.name,
-    tags: chance(0.35) ? f.helpers.arrayElements(spec.tags, { min: 1, max: 2 }) : [],
-    notes: chance(0.15) ? pick(spec.descriptions) : null,
-    billingAddress: null,
-    createdAt: c.createdAt,
-    updatedAt: c.createdAt,
-  })));
+  await insertBatches(
+    tx,
+    s.customer,
+    customers.map((c) => ({
+      id: c.id,
+      organizationId: orgId,
+      type: c.commercial ? "commercial" : "residential",
+      name: c.name,
+      tags: chance(0.35) ? f.helpers.arrayElements(spec.tags, { min: 1, max: 2 }) : [],
+      notes: chance(0.15) ? pick(spec.descriptions) : null,
+      billingAddress: null,
+      createdAt: c.createdAt,
+      updatedAt: c.createdAt,
+    })),
+  );
   await insertBatches(tx, s.contact, contacts);
   await insertBatches(tx, s.site, sites);
   await insertBatches(tx, s.equipment, equipment);
@@ -286,7 +370,12 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
   const unscheduledCount = spec.key === "acme-air" ? 14 : 6;
   const scheduledTarget = spec.jobs - unscheduledCount;
 
-  type GenJob = typeof s.job.$inferInsert & { id: string; events: (typeof s.jobEvent.$inferInsert)[]; assignees: { memberId: string; isLead: boolean }[]; notes: (typeof s.note.$inferInsert)[] };
+  type GenJob = typeof s.job.$inferInsert & {
+    id: string;
+    events: (typeof s.jobEvent.$inferInsert)[];
+    assignees: { memberId: string; isLead: boolean }[];
+    notes: (typeof s.note.$inferInsert)[];
+  };
   const jobs: GenJob[] = [];
   const busy = new Map<string, Slot[]>(); // memberId|day → slots
 
@@ -299,7 +388,8 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
     return r < 0.15 ? "low" : r < 0.75 ? "normal" : r < 0.93 ? "high" : "urgent";
   };
   const sitesByCustomer = new Map<string, typeof sites>();
-  for (const st of sites) sitesByCustomer.set(st.customerId, [...(sitesByCustomer.get(st.customerId) ?? []), st]);
+  for (const st of sites)
+    sitesByCustomer.set(st.customerId, [...(sitesByCustomer.get(st.customerId) ?? []), st]);
   const equipmentBySite = new Map<string, typeof equipment>();
   for (const e of equipment) equipmentBySite.set(e.siteId, [...(equipmentBySite.get(e.siteId) ?? []), e]);
   // Repeat customers: a third of customers produce most of the work.
@@ -330,7 +420,10 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
   }
 
   // A helper joins only when they are free for the whole visit.
-  function reserveHelper(day: { y: number; m: number; d: number }, placed: { tech: (typeof technicians)[number]; start: Date; end: Date }) {
+  function reserveHelper(
+    day: { y: number; m: number; d: number },
+    placed: { tech: (typeof technicians)[number]; start: Date; end: Date },
+  ) {
     const key = (m: string) => `${m}|${day.y}-${day.m}-${day.d}`;
     for (const t of f.helpers.shuffle(technicians)) {
       if (t.id === placed.tech.id || !t.skills.some((sk) => placed.tech.skills.includes(sk))) continue;
@@ -350,7 +443,10 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
     const day = dayDate(offset);
     for (let k = 0; k < count; k++) {
       const st = f.helpers.weightedArrayElement(
-        serviceTypes.map((x) => ({ weight: Math.max(0.2, 1 + (x.spec.seasonal - 1) * spec.monthly[day.m]!), value: x })),
+        serviceTypes.map((x) => ({
+          weight: Math.max(0.2, 1 + (x.spec.seasonal - 1) * spec.monthly[day.m]!),
+          value: x,
+        })),
       );
       const placed = placeVisit(day, st.defaultDurationMin, st.requiredSkills);
       if (!placed) continue;
@@ -359,10 +455,16 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       const eqs = equipmentBySite.get(site.id) ?? [];
       const id = uuidv7();
       const leadDays = f.number.int({ min: 0, max: offset > 0 ? Math.min(6, 6) : 9 });
-      let createdAt = new Date(placed.start.getTime() - leadDays * DAY - f.number.int({ min: 1, max: 9 }) * 3600_000);
-      if (createdAt > ctx.now) createdAt = new Date(ctx.now.getTime() - f.number.int({ min: 1, max: 48 }) * 3600_000);
+      let createdAt = new Date(
+        placed.start.getTime() - leadDays * DAY - f.number.int({ min: 1, max: 9 }) * 3600_000,
+      );
+      if (createdAt > ctx.now)
+        createdAt = new Date(ctx.now.getTime() - f.number.int({ min: 1, max: 48 }) * 3600_000);
       const helper = chance(0.12) ? reserveHelper(day, placed) : undefined;
-      const assignees = [{ memberId: placed.tech.id, isLead: true }, ...(helper ? [{ memberId: helper.id, isLead: false }] : [])];
+      const assignees = [
+        { memberId: placed.tech.id, isLead: true },
+        ...(helper ? [{ memberId: helper.id, isLead: false }] : []),
+      ];
 
       let status: string;
       if (offset < 0) {
@@ -378,9 +480,23 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
 
       const by = dispatcherUser();
       const events: GenJob["events"] = [
-        { organizationId: orgId, jobId: id, type: "created", fromStatus: null, toStatus: "new", actorUserId: by, payload: { source: "manual" }, createdAt },
+        {
+          organizationId: orgId,
+          jobId: id,
+          type: "created",
+          fromStatus: null,
+          toStatus: "new",
+          actorUserId: by,
+          payload: { source: "manual" },
+          createdAt,
+        },
       ];
-      const assignedAt = new Date(Math.min(createdAt.getTime() + f.number.int({ min: 10, max: 180 }) * 60_000, placed.start.getTime() - 3600_000));
+      const assignedAt = new Date(
+        Math.min(
+          createdAt.getTime() + f.number.int({ min: 10, max: 180 }) * 60_000,
+          placed.start.getTime() - 3600_000,
+        ),
+      );
       events.push({
         organizationId: orgId,
         jobId: id,
@@ -388,12 +504,33 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
         fromStatus: "new",
         toStatus: "scheduled",
         actorUserId: by,
-        payload: { member_ids: assignees.map((a) => a.memberId), lead_member_id: placed.tech.id, scheduled_start: placed.start.toISOString(), scheduled_end: placed.end.toISOString() },
+        payload: {
+          member_ids: assignees.map((a) => a.memberId),
+          lead_member_id: placed.tech.id,
+          scheduled_start: placed.start.toISOString(),
+          scheduled_end: placed.end.toISOString(),
+        },
         createdAt: assignedAt < createdAt ? createdAt : assignedAt,
       });
       const techUser = placed.tech.userId;
-      const ev = (from: string, to: string, at: Date, transition: string, payload: Record<string, unknown> = {}, actor = techUser) =>
-        events.push({ organizationId: orgId, jobId: id, type: "status_changed", fromStatus: from, toStatus: to, actorUserId: actor, payload: { transition, ...payload }, createdAt: at });
+      const ev = (
+        from: string,
+        to: string,
+        at: Date,
+        transition: string,
+        payload: Record<string, unknown> = {},
+        actor = techUser,
+      ) =>
+        events.push({
+          organizationId: orgId,
+          jobId: id,
+          type: "status_changed",
+          fromStatus: from,
+          toStatus: to,
+          actorUserId: actor,
+          payload: { transition, ...payload },
+          createdAt: at,
+        });
       const departAt = new Date(placed.start.getTime() - 25 * 60_000);
       let completedAt: Date | null = null;
       let canceledAt: Date | null = null;
@@ -402,21 +539,54 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       if (status === "canceled") {
         canceledAt = new Date(placed.start.getTime() - f.number.int({ min: 2, max: 30 }) * 3600_000);
         if (canceledAt < createdAt) canceledAt = new Date(createdAt.getTime() + 3600_000);
-        ev("scheduled", "canceled", canceledAt, "cancel", { reason: spec.key === "acme-air" ? pick(["Customer canceled", "Duplicate request", "Customer fixed it themselves"]) : pick(["Dibatalkan pelanggan", "Permintaan ganda"]) }, by);
+        ev(
+          "scheduled",
+          "canceled",
+          canceledAt,
+          "cancel",
+          {
+            reason:
+              spec.key === "acme-air"
+                ? pick(["Customer canceled", "Duplicate request", "Customer fixed it themselves"])
+                : pick(["Dibatalkan pelanggan", "Permintaan ganda"]),
+          },
+          by,
+        );
       }
-      if (["en_route", "in_progress", "on_hold", "completed"].includes(status)) ev("scheduled", "en_route", departAt, "depart");
-      if (["in_progress", "on_hold", "completed"].includes(status)) ev("en_route", "in_progress", placed.start, "start");
+      if (["en_route", "in_progress", "on_hold", "completed"].includes(status))
+        ev("scheduled", "en_route", departAt, "depart");
+      if (["in_progress", "on_hold", "completed"].includes(status))
+        ev("en_route", "in_progress", placed.start, "start");
       if (status === "on_hold") {
         holdReason = pick(["parts", "customer", "access"]);
-        ev("in_progress", "on_hold", new Date(placed.start.getTime() + 40 * 60_000), "hold", { reason: pick(spec.holdNotes), hold_reason: holdReason });
+        ev("in_progress", "on_hold", new Date(placed.start.getTime() + 40 * 60_000), "hold", {
+          reason: pick(spec.holdNotes),
+          hold_reason: holdReason,
+        });
       }
       if (status === "completed") {
         completedAt = new Date(placed.end.getTime() + f.number.int({ min: -20, max: 25 }) * 60_000);
         ev("in_progress", "completed", completedAt, "complete");
         if (chance(0.38)) {
           const visibility = chance(0.25) ? "customer" : "internal";
-          notes.push({ organizationId: orgId, jobId: id, authorUserId: techUser, body: pick(spec.notes), visibility, createdAt: completedAt });
-          events.push({ organizationId: orgId, jobId: id, type: "note_added", fromStatus: null, toStatus: null, actorUserId: techUser, payload: { visibility }, createdAt: completedAt });
+          notes.push({
+            organizationId: orgId,
+            jobId: id,
+            authorUserId: techUser,
+            body: pick(spec.notes),
+            visibility,
+            createdAt: completedAt,
+          });
+          events.push({
+            organizationId: orgId,
+            jobId: id,
+            type: "note_added",
+            fromStatus: null,
+            toStatus: null,
+            actorUserId: techUser,
+            payload: { visibility },
+            createdAt: completedAt,
+          });
         }
       }
 
@@ -478,7 +648,18 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
       createdAt,
       updatedAt: createdAt,
       version: 1,
-      events: [{ organizationId: orgId, jobId: id, type: "created", fromStatus: null, toStatus: "new", actorUserId: portal ? null : by, payload: { source: portal ? "portal" : "manual" }, createdAt }],
+      events: [
+        {
+          organizationId: orgId,
+          jobId: id,
+          type: "created",
+          fromStatus: null,
+          toStatus: "new",
+          actorUserId: portal ? null : by,
+          payload: { source: portal ? "portal" : "manual" },
+          createdAt,
+        },
+      ],
       assignees: [],
       notes: [],
     });
@@ -486,10 +667,34 @@ async function seedOrg(tx: Tx, spec: OrgSpec, ctx: { now: Date; passwordHash: st
 
   jobs.sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
   jobs.forEach((j, i) => (j.number = i + 1));
-  await insertBatches(tx, s.job, jobs.map(({ events: _e, assignees: _a, notes: _n, ...row }) => row));
-  await insertBatches(tx, s.jobAssignment, jobs.flatMap((j) => j.assignees.map((a) => ({ organizationId: orgId, jobId: j.id, memberId: a.memberId, isLead: a.isLead, createdAt: j.createdAt }))));
-  await insertBatches(tx, s.jobEvent, jobs.flatMap((j) => j.events));
-  await insertBatches(tx, s.note, jobs.flatMap((j) => j.notes));
+  await insertBatches(
+    tx,
+    s.job,
+    jobs.map(({ events: _e, assignees: _a, notes: _n, ...row }) => row),
+  );
+  await insertBatches(
+    tx,
+    s.jobAssignment,
+    jobs.flatMap((j) =>
+      j.assignees.map((a) => ({
+        organizationId: orgId,
+        jobId: j.id,
+        memberId: a.memberId,
+        isLead: a.isLead,
+        createdAt: j.createdAt,
+      })),
+    ),
+  );
+  await insertBatches(
+    tx,
+    s.jobEvent,
+    jobs.flatMap((j) => j.events),
+  );
+  await insertBatches(
+    tx,
+    s.note,
+    jobs.flatMap((j) => j.notes),
+  );
   await tx.insert(s.orgCounter).values({ organizationId: orgId, name: "job", value: jobs.length });
 
   return {

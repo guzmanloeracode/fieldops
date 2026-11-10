@@ -33,7 +33,10 @@ export function decodeCursor(cursor: string, expectedSort: string): CursorPayloa
 }
 
 /** Parses "-scheduled_start,number" into [{ field, desc }]. */
-export function parseSort<F extends string>(sort: string, allowed: readonly F[]): { field: F; desc: boolean }[] {
+export function parseSort<F extends string>(
+  sort: string,
+  allowed: readonly F[],
+): { field: F; desc: boolean }[] {
   return sort
     .split(",")
     .filter(Boolean)

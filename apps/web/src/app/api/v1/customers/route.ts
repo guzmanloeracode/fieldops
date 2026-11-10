@@ -15,8 +15,15 @@ export const POST = apiRoute(async ({ body, ctx }) => {
     status: 201,
     body: {
       ...toCustomerDto(created.customer, created.contacts, 0),
-      possible_duplicates: created.duplicates.map((d) => ({ id: d.id, name: d.name, matched_on: d.matchedOn })),
+      possible_duplicates: created.duplicates.map((d) => ({
+        id: d.id,
+        name: d.name,
+        matched_on: d.matchedOn,
+      })),
     },
-    headers: { Location: `/api/v1/customers/${created.customer.id}`, ETag: weakEtag(created.customer.updatedAt) },
+    headers: {
+      Location: `/api/v1/customers/${created.customer.id}`,
+      ETag: weakEtag(created.customer.updatedAt),
+    },
   };
 });

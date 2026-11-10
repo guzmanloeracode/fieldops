@@ -10,7 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUpAction } from "../_actions/account";
 
-export function SignUpForm({ demo, defaultEmail, next }: { demo: boolean; defaultEmail: string; next?: string }) {
+export function SignUpForm({
+  demo,
+  defaultEmail,
+  next,
+}: {
+  demo: boolean;
+  defaultEmail: string;
+  next?: string;
+}) {
   const t = useTranslations("auth");
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,7 +59,12 @@ export function SignUpForm({ demo, defaultEmail, next }: { demo: boolean; defaul
             const f = new FormData(e.currentTarget);
             const email = String(f.get("email"));
             startTransition(async () => {
-              const r = await signUpAction({ name: String(f.get("name")), email, password: String(f.get("password")), next });
+              const r = await signUpAction({
+                name: String(f.get("name")),
+                email,
+                password: String(f.get("password")),
+                next,
+              });
               if (!r.ok) {
                 setErrors(r.fields ?? {});
                 setMessage(r.message);
@@ -68,12 +81,29 @@ export function SignUpForm({ demo, defaultEmail, next }: { demo: boolean; defaul
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">{t("fields.email")}</Label>
-            <Input id="email" name="email" type="email" autoComplete="email" defaultValue={defaultEmail} required aria-invalid={Boolean(errors.email)} />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              defaultValue={defaultEmail}
+              required
+              aria-invalid={Boolean(errors.email)}
+            />
             <FieldError message={errors.email} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{t("fields.password")}</Label>
-            <Input id="password" name="password" type="password" autoComplete="new-password" minLength={10} required aria-invalid={Boolean(errors.password)} aria-describedby="password-hint" />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              minLength={10}
+              required
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby="password-hint"
+            />
             <p id="password-hint" className="text-muted-foreground text-xs">
               {t("fields.passwordHint")}
             </p>

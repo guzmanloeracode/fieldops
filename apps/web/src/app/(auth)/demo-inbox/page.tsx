@@ -41,9 +41,16 @@ export default async function DemoInboxPage() {
             <details key={m.id} className="rounded-lg border" open={m === emails[0]}>
               <summary className="cursor-pointer p-3 text-sm">
                 <span className="font-medium">{m.subject}</span>
-                <span className="text-muted-foreground block text-xs">{t("inbox.to", { email: m.toEmail })}</span>
+                <span className="text-muted-foreground block text-xs">
+                  {t("inbox.to", { email: m.toEmail })}
+                </span>
               </summary>
-              <iframe title={m.subject} srcDoc={`<base target="_top">${m.html}`} sandbox="allow-popups allow-top-navigation-by-user-activation" className="h-96 w-full border-t bg-white" />
+              <iframe
+                title={m.subject}
+                srcDoc={`<base target="_top">${m.html}`}
+                sandbox="allow-popups allow-top-navigation-by-user-activation"
+                className="h-96 w-full border-t bg-white"
+              />
             </details>
           ))
         )}

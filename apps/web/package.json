@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "eslint src e2e",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {

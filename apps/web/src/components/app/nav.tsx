@@ -1,10 +1,27 @@
 "use client";
-import { BookOpen, Briefcase, Building2, CalendarDays, LayoutDashboard, Settings, Users, Wrench } from "lucide-react";
+import {
+  BookOpen,
+  Briefcase,
+  Building2,
+  CalendarDays,
+  LayoutDashboard,
+  Settings,
+  Users,
+  Wrench,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon: typeof Briefcase; soon?: string; office?: boolean; managers?: boolean; external?: boolean };
+type Item = {
+  href: string;
+  label: string;
+  icon: typeof Briefcase;
+  soon?: string;
+  office?: boolean;
+  managers?: boolean;
+  external?: boolean;
+};
 
 const ITEMS: Item[] = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -30,7 +47,10 @@ export function Nav({ role, onNavigate }: { role: string; onNavigate?: () => voi
     if (i.soon) {
       return (
         <li key={i.href}>
-          <span className="text-muted-foreground/70 flex items-center gap-3 rounded-md px-3 py-2 text-sm" aria-disabled>
+          <span
+            className="text-muted-foreground/70 flex items-center gap-3 rounded-md px-3 py-2 text-sm"
+            aria-disabled
+          >
             <Icon className="size-4" aria-hidden />
             {i.label}
             <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">{i.soon}</span>
@@ -62,7 +82,9 @@ export function Nav({ role, onNavigate }: { role: string; onNavigate?: () => voi
     <nav aria-label="Main" className="flex flex-1 flex-col gap-6">
       <ul className="space-y-0.5">{ITEMS.filter(visible).map(render)}</ul>
       <div>
-        <p className="text-muted-foreground px-3 pb-1 text-xs font-medium tracking-wide uppercase">Workspace</p>
+        <p className="text-muted-foreground px-3 pb-1 text-xs font-medium tracking-wide uppercase">
+          Workspace
+        </p>
         <ul className="space-y-0.5">{SETTINGS.filter(visible).map(render)}</ul>
       </div>
     </nav>

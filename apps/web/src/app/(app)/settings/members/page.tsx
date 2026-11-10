@@ -24,11 +24,19 @@ export default async function MembersPage() {
     db
       .select()
       .from(schema.invitation)
-      .where(and(eq(schema.invitation.organizationId, actor.organizationId), eq(schema.invitation.status, "pending")))
+      .where(
+        and(
+          eq(schema.invitation.organizationId, actor.organizationId),
+          eq(schema.invitation.status, "pending"),
+        ),
+      )
       .orderBy(desc(schema.invitation.createdAt)),
   ]);
   const now = Date.now();
-  const roleLabels = Object.fromEntries(ROLES.map((r) => [r, t(`roles.${r}`)])) as Record<(typeof ROLES)[number], string>;
+  const roleLabels = Object.fromEntries(ROLES.map((r) => [r, t(`roles.${r}`)])) as Record<
+    (typeof ROLES)[number],
+    string
+  >;
 
   return (
     <div className="space-y-6">
@@ -89,9 +97,13 @@ export default async function MembersPage() {
                         disabled={locked}
                       />
                     </TableCell>
-                    <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">{formatDate(m.createdAt, tz)}</TableCell>
+                    <TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
+                      {formatDate(m.createdAt, tz)}
+                    </TableCell>
                     <TableCell className="text-right">
-                      {!self && !(env.DEMO_MODE && m.isDemo) && (m.role !== "owner" || actor.role === "owner") ? (
+                      {!self &&
+                      !(env.DEMO_MODE && m.isDemo) &&
+                      (m.role !== "owner" || actor.role === "owner") ? (
                         <RemoveButton memberId={m.id} name={m.name} />
                       ) : null}
                     </TableCell>
@@ -115,7 +127,10 @@ export default async function MembersPage() {
               {invitations.map((inv) => {
                 const expired = inv.expiresAt ? inv.expiresAt.getTime() < now : false;
                 return (
-                  <li key={inv.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={inv.id}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{inv.email}</p>
                       <p className="text-muted-foreground text-xs">

@@ -1,13 +1,30 @@
 "use client";
 import type { JobStatus } from "@fieldops/shared";
 import { HOLD_REASONS, type HoldReason } from "@fieldops/shared";
-import { CheckCircle2, Loader2, Pause, Play, RotateCcw, Truck, Undo2, XCircle, CalendarClock } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  Pause,
+  Play,
+  RotateCcw,
+  Truck,
+  Undo2,
+  XCircle,
+  CalendarClock,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +47,15 @@ const ICONS: Record<string, typeof Play> = {
 const PRIMARY = new Set(["depart", "start", "resume", "complete"]);
 
 /** Status actions allowed for this user (from core `availableTransitions`), with large touch targets (TEC-02). */
-export function TransitionButtons({ jobId, version, actions }: { jobId: string; version: number; actions: Action[] }) {
+export function TransitionButtons({
+  jobId,
+  version,
+  actions,
+}: {
+  jobId: string;
+  version: number;
+  actions: Action[];
+}) {
   const t = useTranslations("jobs");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -43,10 +68,16 @@ export function TransitionButtons({ jobId, version, actions }: { jobId: string; 
 
   const run = (a: Action, input: { reason?: string; hold_reason?: HoldReason }) =>
     startTransition(async () => {
-      const result = await transitionJobAction(jobId, { to: a.to, reason: input.reason ?? null, hold_reason: input.hold_reason ?? null }, version);
+      const result = await transitionJobAction(
+        jobId,
+        { to: a.to, reason: input.reason ?? null, hold_reason: input.hold_reason ?? null },
+        version,
+      );
       if (!result.ok) {
         const missing = (result.error.details?.missing as string[] | undefined) ?? [];
-        const message = missing.length ? `${result.error.message}: ${missing.join(", ")}` : result.error.message;
+        const message = missing.length
+          ? `${result.error.message}: ${missing.join(", ")}`
+          : result.error.message;
         setError(message);
         toast.error(message);
         return;
@@ -81,21 +112,31 @@ export function TransitionButtons({ jobId, version, actions }: { jobId: string; 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{dialog ? t(`transition.${dialog.name}`) : ""}</DialogTitle>
-            <DialogDescription>{dialog?.name === "hold" ? t("transition.holdHint") : t("transition.reasonHint")}</DialogDescription>
+            <DialogDescription>
+              {dialog?.name === "hold" ? t("transition.holdHint") : t("transition.reasonHint")}
+            </DialogDescription>
           </DialogHeader>
           <form
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              if (dialog) run(dialog, { reason, ...(dialog.name === "hold" ? { hold_reason: holdReason } : {}) });
+              if (dialog)
+                run(dialog, { reason, ...(dialog.name === "hold" ? { hold_reason: holdReason } : {}) });
             }}
           >
             {dialog?.name === "hold" ? (
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">{t("transition.waitingFor")}</legend>
-                <RadioGroup value={holdReason} onValueChange={(v) => setHoldReason(v as HoldReason)} className="grid grid-cols-2 gap-2">
+                <RadioGroup
+                  value={holdReason}
+                  onValueChange={(v) => setHoldReason(v as HoldReason)}
+                  className="grid grid-cols-2 gap-2"
+                >
                   {HOLD_REASONS.map((r) => (
-                    <label key={r} className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                    <label
+                      key={r}
+                      className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                    >
                       <RadioGroupItem value={r} /> {t(`holdReason.${r}`)}
                     </label>
                   ))}
@@ -104,7 +145,14 @@ export function TransitionButtons({ jobId, version, actions }: { jobId: string; 
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="reason">{t("transition.reason")}</Label>
-              <Textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} required={dialog?.requiresReason} rows={3} maxLength={1000} />
+              <Textarea
+                id="reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required={dialog?.requiresReason}
+                rows={3}
+                maxLength={1000}
+              />
             </div>
             {error ? (
               <p role="alert" className="text-destructive text-sm">

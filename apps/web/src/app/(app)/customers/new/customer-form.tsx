@@ -86,7 +86,11 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
   const onSubmit = form.handleSubmit((values) => {
     const { tags_text, ...customer } = values.customer;
     const payload = {
-      customer: { ...customer, tags: splitTags(tags_text), billing_address: billingSame ? values.site.address : customer.billing_address },
+      customer: {
+        ...customer,
+        tags: splitTags(tags_text),
+        billing_address: billingSame ? values.site.address : customer.billing_address,
+      },
       site: values.site,
     };
     startTransition(async () => {
@@ -132,12 +136,16 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
           <div className="space-y-1.5">
             <Label htmlFor="customer-name">
               {t("name")}
-              <span aria-hidden className="text-destructive">*</span>
+              <span aria-hidden className="text-destructive">
+                *
+              </span>
             </Label>
             <Input
               id="customer-name"
               autoFocus
-              placeholder={type === "commercial" ? t("namePlaceholderCommercial") : t("namePlaceholderResidential")}
+              placeholder={
+                type === "commercial" ? t("namePlaceholderCommercial") : t("namePlaceholderResidential")
+              }
               aria-invalid={Boolean(errors.customer?.name)}
               {...form.register("customer.name")}
             />
@@ -146,7 +154,11 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="customer-tags">{t("tags")}</Label>
-              <Input id="customer-tags" aria-describedby="customer-tags-hint" {...form.register("customer.tags_text")} />
+              <Input
+                id="customer-tags"
+                aria-describedby="customer-tags-hint"
+                {...form.register("customer.tags_text")}
+              />
               <p id="customer-tags-hint" className="text-muted-foreground text-xs">
                 {t("tagsHint")}
               </p>
@@ -192,14 +204,24 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
                   <div className="space-y-1.5">
                     <Label htmlFor={`contact-${i}-name`}>
                       {t("contactName")}
-                      <span aria-hidden className="text-destructive">*</span>
+                      <span aria-hidden className="text-destructive">
+                        *
+                      </span>
                     </Label>
-                    <Input id={`contact-${i}-name`} aria-invalid={Boolean(e?.name)} {...form.register(`customer.contacts.${i}.name`)} />
+                    <Input
+                      id={`contact-${i}-name`}
+                      aria-invalid={Boolean(e?.name)}
+                      {...form.register(`customer.contacts.${i}.name`)}
+                    />
                     <FieldError message={e?.name?.message} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor={`contact-${i}-role`}>{t("contactRole")}</Label>
-                    <Input id={`contact-${i}-role`} placeholder={t("contactRolePlaceholder")} {...form.register(`customer.contacts.${i}.role`)} />
+                    <Input
+                      id={`contact-${i}-role`}
+                      placeholder={t("contactRolePlaceholder")}
+                      {...form.register(`customer.contacts.${i}.role`)}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor={`contact-${i}-email`}>{t("email")}</Label>
@@ -208,7 +230,9 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
                       type="email"
                       autoComplete="off"
                       aria-invalid={Boolean(e?.email)}
-                      {...form.register(`customer.contacts.${i}.email`, { onBlur: () => void checkDuplicates() })}
+                      {...form.register(`customer.contacts.${i}.email`, {
+                        onBlur: () => void checkDuplicates(),
+                      })}
                     />
                     <FieldError message={e?.email?.message} />
                   </div>
@@ -218,13 +242,19 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
                       id={`contact-${i}-phone`}
                       type="tel"
                       autoComplete="off"
-                      {...form.register(`customer.contacts.${i}.phone`, { onBlur: () => void checkDuplicates() })}
+                      {...form.register(`customer.contacts.${i}.phone`, {
+                        onBlur: () => void checkDuplicates(),
+                      })}
                     />
                     <FieldError message={e?.phone?.message} />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Checkbox id={`contact-${i}-primary`} checked={Boolean(isPrimary)} onCheckedChange={(v) => v && setPrimary(i)} />
+                  <Checkbox
+                    id={`contact-${i}-primary`}
+                    checked={Boolean(isPrimary)}
+                    onCheckedChange={(v) => v && setPrimary(i)}
+                  />
                   <Label htmlFor={`contact-${i}-primary`} className="font-normal">
                     {t("primary")}
                   </Label>
@@ -244,7 +274,11 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
                       <Link href={`/customers/${d.id}`} target="_blank" className="font-medium underline">
                         {d.name}
                       </Link>{" "}
-                      ({t("duplicateMatch", { field: d.matchedOn === "email" ? t("fieldEmail") : t("fieldPhone") })})
+                      (
+                      {t("duplicateMatch", {
+                        field: d.matchedOn === "email" ? t("fieldEmail") : t("fieldPhone"),
+                      })}
+                      )
                     </li>
                   ))}
                 </ul>
@@ -293,7 +327,9 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
               {t("billingSame")}
             </Label>
           </div>
-          {!billingSame ? <AddressFields form={form} prefix="customer.billing_address" idPrefix="billing" /> : null}
+          {!billingSame ? (
+            <AddressFields form={form} prefix="customer.billing_address" idPrefix="billing" />
+          ) : null}
         </CardContent>
       </Card>
 

@@ -29,7 +29,10 @@ export async function inviteMemberAction(input: unknown) {
     assertCan(actor, "members.invite");
     const { email, role } = parseInput(inviteSchema, input);
     await viaAuth(async () =>
-      auth.api.createInvitation({ body: { email, role, organizationId: actor.organizationId }, headers: await headers() }),
+      auth.api.createInvitation({
+        body: { email, role, organizationId: actor.organizationId },
+        headers: await headers(),
+      }),
     );
     return { email };
   });
@@ -69,7 +72,9 @@ export async function revokeInvitationAction(invitationId: string) {
     const actor = await requireActor();
     assertCan(actor, "members.invite");
     await findInvitation(actor.organizationId, invitationId);
-    await viaAuth(async () => auth.api.cancelInvitation({ body: { invitationId }, headers: await headers() }));
+    await viaAuth(async () =>
+      auth.api.cancelInvitation({ body: { invitationId }, headers: await headers() }),
+    );
     return { id: invitationId };
   });
   if (result.ok) revalidatePath(PATH);
@@ -78,14 +83,18 @@ export async function revokeInvitationAction(invitationId: string) {
 
 export async function changeRoleAction(memberId: string, role: string) {
   const result = await action(() =>
-    runService((ctx) => organization.changeMemberRole(ctx, memberId, parseRole(role, true))).then(() => ({ memberId })),
+    runService((ctx) => organization.changeMemberRole(ctx, memberId, parseRole(role, true))).then(() => ({
+      memberId,
+    })),
   );
   if (result.ok) revalidatePath(PATH);
   return result;
 }
 
 export async function removeMemberAction(memberId: string) {
-  const result = await action(() => runService((ctx) => organization.removeMember(ctx, memberId)).then(() => ({ memberId })));
+  const result = await action(() =>
+    runService((ctx) => organization.removeMember(ctx, memberId)).then(() => ({ memberId })),
+  );
   if (result.ok) revalidatePath(PATH);
   return result;
 }

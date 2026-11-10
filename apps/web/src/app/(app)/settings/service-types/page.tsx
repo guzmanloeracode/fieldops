@@ -13,10 +13,13 @@ export const metadata: Metadata = { title: "Service types" };
 export default async function ServiceTypesPage() {
   const actor = await requireActor();
   const t = await getTranslations("settings.serviceTypes");
-  const { types, org } = await runService(async (ctx) => ({
-    types: await organization.listServiceTypes(ctx, { includeInactive: true }),
-    org: await organization.getOrganization(ctx),
-  }), actor);
+  const { types, org } = await runService(
+    async (ctx) => ({
+      types: await organization.listServiceTypes(ctx, { includeInactive: true }),
+      org: await organization.getOrganization(ctx),
+    }),
+    actor,
+  );
 
   return (
     <Card>
@@ -48,12 +51,20 @@ export default async function ServiceTypesPage() {
                 <TableRow key={st.id} className={st.active ? undefined : "text-muted-foreground"}>
                   <TableCell className="max-w-72">
                     <span className="flex items-center gap-2 font-medium">
-                      <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: st.color ?? "var(--muted-foreground)" }} />
+                      <span
+                        aria-hidden
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: st.color ?? "var(--muted-foreground)" }}
+                      />
                       <span className="truncate">{st.name}</span>
                     </span>
-                    {st.description ? <span className="text-muted-foreground block truncate text-xs">{st.description}</span> : null}
+                    {st.description ? (
+                      <span className="text-muted-foreground block truncate text-xs">{st.description}</span>
+                    ) : null}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{t("minutes", { count: st.defaultDurationMin })}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {t("minutes", { count: st.defaultDurationMin })}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatMoney({ amountMinor: st.defaultPriceMinor, currency: st.currency })}
                   </TableCell>

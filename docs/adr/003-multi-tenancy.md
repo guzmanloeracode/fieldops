@@ -6,6 +6,7 @@
 enough to leak it.
 
 **Decision.**
+
 1. Every tenant table has `organization_id`, and every index on it starts with that column.
 2. Repositories in `packages/db` are created per organization and add the filter to every query.
 3. PostgreSQL row-level security on every tenant table: `organization_id = app_current_org()`, where the setting

@@ -52,7 +52,17 @@ const SORTABLE: Record<string, string> = {
 };
 const STORAGE_KEY = "fieldops.jobs.columns";
 
-export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; sort: string; timeZone: string; sortable: boolean }) {
+export function JobsTable({
+  rows,
+  sort,
+  timeZone,
+  sortable,
+}: {
+  rows: JobRow[];
+  sort: string;
+  timeZone: string;
+  sortable: boolean;
+}) {
   const t = useTranslations("jobs");
   const router = useRouter();
   const pathname = usePathname();
@@ -84,7 +94,10 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
         id: "number",
         header: t("col.number"),
         cell: ({ row }) => (
-          <Link href={`/jobs/${row.original.number}`} className="text-primary font-mono text-xs font-medium hover:underline">
+          <Link
+            href={`/jobs/${row.original.number}`}
+            className="text-primary font-mono text-xs font-medium hover:underline"
+          >
             {row.original.number}
           </Link>
         ),
@@ -112,8 +125,16 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
         ),
         enableHiding: false,
       },
-      { id: "status", header: t("col.status"), cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-      { id: "priority", header: t("col.priority"), cell: ({ row }) => <PriorityBadge priority={row.original.priority} /> },
+      {
+        id: "status",
+        header: t("col.status"),
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: "priority",
+        header: t("col.priority"),
+        cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
+      },
       {
         id: "scheduled",
         header: t("col.scheduled"),
@@ -134,7 +155,9 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
           row.original.assignees.length ? (
             <span className="text-sm whitespace-nowrap">
               {row.original.assignees[0]}
-              {row.original.assignees.length > 1 ? <span className="text-muted-foreground"> +{row.original.assignees.length - 1}</span> : null}
+              {row.original.assignees.length > 1 ? (
+                <span className="text-muted-foreground"> +{row.original.assignees.length - 1}</span>
+              ) : null}
             </span>
           ) : (
             <span className="text-muted-foreground text-sm">—</span>
@@ -143,12 +166,18 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
       {
         id: "serviceType",
         header: t("col.serviceType"),
-        cell: ({ row }) => <span className="text-sm whitespace-nowrap">{row.original.serviceType ?? "—"}</span>,
+        cell: ({ row }) => (
+          <span className="text-sm whitespace-nowrap">{row.original.serviceType ?? "—"}</span>
+        ),
       },
       {
         id: "createdAt",
         header: t("col.created"),
-        cell: ({ row }) => <span className="text-muted-foreground text-sm whitespace-nowrap">{formatDate(row.original.createdAt, timeZone)}</span>,
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm whitespace-nowrap">
+            {formatDate(row.original.createdAt, timeZone)}
+          </span>
+        ),
       },
     ],
     [t, timeZone],
@@ -201,7 +230,11 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
               .getAllLeafColumns()
               .filter((c) => c.getCanHide())
               .map((c) => (
-                <DropdownMenuCheckboxItem key={c.id} checked={c.getIsVisible()} onCheckedChange={(v) => c.toggleVisibility(Boolean(v))}>
+                <DropdownMenuCheckboxItem
+                  key={c.id}
+                  checked={c.getIsVisible()}
+                  onCheckedChange={(v) => c.toggleVisibility(Boolean(v))}
+                >
                   {String(c.columnDef.header)}
                 </DropdownMenuCheckboxItem>
               ))}
@@ -216,9 +249,17 @@ export function JobsTable({ rows, sort, timeZone, sortable }: { rows: JobRow[]; 
                 {hg.headers.map((h) => {
                   const field = SORTABLE[h.column.id];
                   return (
-                    <TableHead key={h.id} aria-sort={sortable && field ? ariaSort(field) : undefined} className="whitespace-nowrap">
+                    <TableHead
+                      key={h.id}
+                      aria-sort={sortable && field ? ariaSort(field) : undefined}
+                      className="whitespace-nowrap"
+                    >
                       {sortable && field ? (
-                        <button type="button" onClick={() => setSort(field)} className="hover:text-foreground inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setSort(field)}
+                          className="hover:text-foreground inline-flex items-center gap-1"
+                        >
                           {flexRender(h.column.columnDef.header, h.getContext())}
                           {sortIcon(field)}
                         </button>

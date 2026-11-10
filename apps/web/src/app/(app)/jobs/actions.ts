@@ -1,6 +1,12 @@
 "use server";
 import { customers, formatJobNumber, jobs, organization } from "@fieldops/core";
-import type { AttachmentUploadInput, JobAssignmentInput, JobCreateInput, JobTransitionInput, NoteCreate } from "@fieldops/shared";
+import type {
+  AttachmentUploadInput,
+  JobAssignmentInput,
+  JobCreateInput,
+  JobTransitionInput,
+  NoteCreate,
+} from "@fieldops/shared";
 import { revalidatePath } from "next/cache";
 import { action, runService } from "@/server/context";
 
@@ -8,7 +14,13 @@ export async function searchCustomersAction(q: string) {
   return action(() =>
     runService(async (ctx) => {
       const page = await customers.listCustomers(ctx, { q: q || undefined, sort: "name", limit: 12 });
-      return page.rows.map((c) => ({ id: c.id, name: c.name, type: c.type, city: c.billingAddress?.city ?? null, siteCount: c.siteCount }));
+      return page.rows.map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        city: c.billingAddress?.city ?? null,
+        siteCount: c.siteCount,
+      }));
     }),
   );
 }
@@ -74,7 +86,12 @@ export async function requestUploadAction(jobId: string, input: AttachmentUpload
   return action(() =>
     runService(async (ctx) => {
       const r = await jobs.requestAttachmentUpload(ctx, jobId, input);
-      return { attachmentId: r.attachment.id, uploadUrl: r.uploadUrl, thumbnailUploadUrl: r.thumbnailUploadUrl, headers: r.headers };
+      return {
+        attachmentId: r.attachment.id,
+        uploadUrl: r.uploadUrl,
+        thumbnailUploadUrl: r.thumbnailUploadUrl,
+        headers: r.headers,
+      };
     }),
   );
 }
@@ -99,6 +116,8 @@ export async function deleteJobAction(id: string) {
 
 export async function assignableMembersAction() {
   return action(() =>
-    runService(async (ctx) => (await organization.listAssignableMembers(ctx)).map((m) => ({ id: m.id, name: m.name, role: m.role }))),
+    runService(async (ctx) =>
+      (await organization.listAssignableMembers(ctx)).map((m) => ({ id: m.id, name: m.name, role: m.role })),
+    ),
   );
 }

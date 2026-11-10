@@ -25,23 +25,65 @@ export default async function DashboardPage() {
   const data = await runService(async (ctx) => {
     const base = { limit: 8, sort: "scheduled_start" } as const;
     const [todayJobs, unscheduled, inProgress, onHold, review, completedToday] = await Promise.all([
-      jobs.listJobs(ctx, { ...base, from: today, to: today, page: 1, status: ["scheduled", "en_route", "in_progress", "on_hold", "completed"] }),
+      jobs.listJobs(ctx, {
+        ...base,
+        from: today,
+        to: today,
+        page: 1,
+        status: ["scheduled", "en_route", "in_progress", "on_hold", "completed"],
+      }),
       jobs.listJobs(ctx, { limit: 8, sort: "-priority,created_at", status: ["new"], page: 1 }),
       jobs.listJobs(ctx, { limit: 1, sort: "-created_at", status: ["in_progress", "en_route"], page: 1 }),
       jobs.listJobs(ctx, { limit: 1, sort: "-created_at", status: ["on_hold"], page: 1 }),
       // Portal requests waiting for a dispatcher to confirm (needs_review).
-      jobs.listJobs(ctx, { limit: 100, sort: "-created_at", status: ["new"] }).then((p) => p.rows.filter((j) => j.needsReview).length),
-      jobs.listJobs(ctx, { limit: 1, sort: "-created_at", status: ["completed"], from: today, to: today, page: 1 }),
+      jobs
+        .listJobs(ctx, { limit: 100, sort: "-created_at", status: ["new"] })
+        .then((p) => p.rows.filter((j) => j.needsReview).length),
+      jobs.listJobs(ctx, {
+        limit: 1,
+        sort: "-created_at",
+        status: ["completed"],
+        from: today,
+        to: today,
+        page: 1,
+      }),
     ]);
-    return { todayJobs, unscheduled, inProgress: inProgress.total ?? 0, onHold: onHold.total ?? 0, review, completedToday: completedToday.total ?? 0 };
+    return {
+      todayJobs,
+      unscheduled,
+      inProgress: inProgress.total ?? 0,
+      onHold: onHold.total ?? 0,
+      review,
+      completedToday: completedToday.total ?? 0,
+    };
   });
 
   const tiles = [
-    { label: t("dashboard.today"), value: data.todayJobs.total ?? 0, icon: CalendarCheck, href: `/jobs?from=${today}&to=${today}&sort=scheduled_start` },
-    { label: t("dashboard.unscheduled"), value: data.unscheduled.total ?? 0, icon: Inbox, href: "/jobs?status=new&sort=-priority" },
-    { label: t("dashboard.inProgress"), value: data.inProgress, icon: Clock, href: "/jobs?status=in_progress,en_route" },
+    {
+      label: t("dashboard.today"),
+      value: data.todayJobs.total ?? 0,
+      icon: CalendarCheck,
+      href: `/jobs?from=${today}&to=${today}&sort=scheduled_start`,
+    },
+    {
+      label: t("dashboard.unscheduled"),
+      value: data.unscheduled.total ?? 0,
+      icon: Inbox,
+      href: "/jobs?status=new&sort=-priority",
+    },
+    {
+      label: t("dashboard.inProgress"),
+      value: data.inProgress,
+      icon: Clock,
+      href: "/jobs?status=in_progress,en_route",
+    },
     { label: t("dashboard.onHold"), value: data.onHold, icon: PauseCircle, href: "/jobs?status=on_hold" },
-    { label: t("dashboard.completedToday"), value: data.completedToday, icon: CheckCircle2, href: `/jobs?status=completed&from=${today}&to=${today}` },
+    {
+      label: t("dashboard.completedToday"),
+      value: data.completedToday,
+      icon: CheckCircle2,
+      href: `/jobs?status=completed&from=${today}&to=${today}`,
+    },
   ];
 
   return (
@@ -59,7 +101,11 @@ export default async function DashboardPage() {
       />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {tiles.map(({ label, value, icon: Icon, href }) => (
-          <Link key={label} href={href} className="bg-card hover:border-primary/40 rounded-xl border p-4 transition-colors">
+          <Link
+            key={label}
+            href={href}
+            className="bg-card hover:border-primary/40 rounded-xl border p-4 transition-colors"
+          >
             <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
               <Icon className="size-4" aria-hidden /> {label}
             </div>
@@ -72,14 +118,18 @@ export default async function DashboardPage() {
           href="/jobs?status=new&sort=-created_at"
           className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
         >
-          <AlertTriangle className="size-4" aria-hidden /> {t("dashboard.reviewBanner", { count: data.review })}
+          <AlertTriangle className="size-4" aria-hidden />{" "}
+          {t("dashboard.reviewBanner", { count: data.review })}
         </Link>
       ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">{t("dashboard.todaysVisits")}</CardTitle>
-            <Link href={`/jobs?from=${today}&to=${today}&sort=scheduled_start`} className="text-primary text-sm hover:underline">
+            <Link
+              href={`/jobs?from=${today}&to=${today}&sort=scheduled_start`}
+              className="text-primary text-sm hover:underline"
+            >
               {t("dashboard.viewAll")}
             </Link>
           </CardHeader>
@@ -91,11 +141,15 @@ export default async function DashboardPage() {
                 {data.todayJobs.rows.map((j) => (
                   <li key={j.id} className="flex items-center gap-3 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <Link href={`/jobs/${formatJobNumber(j.number)}`} className="block truncate text-sm font-medium hover:underline">
+                      <Link
+                        href={`/jobs/${formatJobNumber(j.number)}`}
+                        className="block truncate text-sm font-medium hover:underline"
+                      >
                         {j.title}
                       </Link>
                       <p className="text-muted-foreground truncate text-xs">
-                        {formatWindow(j.scheduledStart, j.scheduledEnd, tz).split(" · ")[1]} · {j.assignees[0]?.name ?? "—"} · {j.customer.name}
+                        {formatWindow(j.scheduledStart, j.scheduledEnd, tz).split(" · ")[1]} ·{" "}
+                        {j.assignees[0]?.name ?? "—"} · {j.customer.name}
                       </p>
                     </div>
                     <StatusBadge status={j.status} />
@@ -120,7 +174,10 @@ export default async function DashboardPage() {
                 {data.unscheduled.rows.map((j) => (
                   <li key={j.id} className="flex items-center gap-3 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <Link href={`/jobs/${formatJobNumber(j.number)}`} className="block truncate text-sm font-medium hover:underline">
+                      <Link
+                        href={`/jobs/${formatJobNumber(j.number)}`}
+                        className="block truncate text-sm font-medium hover:underline"
+                      >
                         {j.title}
                       </Link>
                       <p className="text-muted-foreground truncate text-xs">

@@ -43,22 +43,36 @@ function respond(status: number, body: unknown, headers: Record<string, string>,
   return new Response(null, { status, headers: h });
 }
 
-export function problemResponse(body: ProblemBody, requestId: string, headers: Record<string, string> = {}): Response {
+export function problemResponse(
+  body: ProblemBody,
+  requestId: string,
+  headers: Record<string, string> = {},
+): Response {
   return respond(body.status, body, { ...headers, "X-Request-Id": requestId }, true);
 }
 
 async function authenticate(req: Request): Promise<ResolvedActor> {
   const authorization = req.headers.get("authorization");
   if (authorization?.toLowerCase().startsWith("bearer fo_")) {
-    throw new ApiProblem(401, "unauthorized", "API keys are not available yet. They arrive in release 0.5; use a session token for now.", {
-      headers: { "WWW-Authenticate": 'Bearer realm="fieldops", error="invalid_token"' },
-    });
+    throw new ApiProblem(
+      401,
+      "unauthorized",
+      "API keys are not available yet. They arrive in release 0.5; use a session token for now.",
+      {
+        headers: { "WWW-Authenticate": 'Bearer realm="fieldops", error="invalid_token"' },
+      },
+    );
   }
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session) {
-    throw new ApiProblem(401, "unauthorized", "Sign in, or send a session token as `Authorization: Bearer <token>`.", {
-      headers: { "WWW-Authenticate": 'Bearer realm="fieldops"' },
-    });
+    throw new ApiProblem(
+      401,
+      "unauthorized",
+      "Sign in, or send a session token as `Authorization: Bearer <token>`.",
+      {
+        headers: { "WWW-Authenticate": 'Bearer realm="fieldops"' },
+      },
+    );
   }
   const actor = await resolveActor(session.user.id, session.session.activeOrganizationId);
   if (!actor) throw new ApiProblem(403, "forbidden", "You don't belong to an organization yet");
@@ -94,17 +108,31 @@ export function apiRoute<P extends Record<string, string> = Record<string, never
     try {
       const actor = await authenticate(req);
       const params = (await route.params) ?? ({} as P);
-      const { text, json } = BODY_METHODS.has(req.method) ? await readBody(req) : { text: "", json: undefined };
+      const { text, json } = BODY_METHODS.has(req.method)
+        ? await readBody(req)
+        : { text: "", json: undefined };
       const key = req.method === "POST" ? readIdempotencyKey(req) : null;
       const requestHash = key ? await hashBody(text) : "";
 
       const result = await withStore(db, actor.organizationId, async (store, tx) => {
         const scope = key
-          ? { organizationId: actor.organizationId, userId: actor.userId, key, method: req.method, path: url.pathname, requestHash }
+          ? {
+              organizationId: actor.organizationId,
+              userId: actor.userId,
+              key,
+              method: req.method,
+              path: url.pathname,
+              requestHash,
+            }
           : null;
         if (scope) {
           const replay = await claimIdempotencyKey(tx, scope);
-          if (replay) return { status: replay.status, body: replay.body ?? undefined, headers: { "Idempotent-Replayed": "true" } };
+          if (replay)
+            return {
+              status: replay.status,
+              body: replay.body ?? undefined,
+              headers: { "Idempotent-Replayed": "true" },
+            };
         }
         const ctx: ServiceContext = { actor, store, now: new Date(), demo: env.DEMO_MODE, files };
         const out = await handler({ req, url, params, body: json, ctx, actor, tx, requestId });
@@ -142,7 +170,8 @@ export function ifMatchVersion(req: Request): number | undefined {
   const header = req.headers.get("if-match");
   if (header === null) return undefined;
   const m = /^(?:W\/)?"v(\d+)"$/.exec(header.trim());
-  if (!m) throw new ApiProblem(412, "precondition_failed", 'If-Match must be an ETag from this API, such as "v3"');
+  if (!m)
+    throw new ApiProblem(412, "precondition_failed", 'If-Match must be an ETag from this API, such as "v3"');
   return Number(m[1]);
 }
 

@@ -9,7 +9,11 @@ import { log } from "./log";
 const command = process.argv[2] ?? "run";
 
 async function migrate() {
-  await runMigrations({ url: env.databaseUrl, migrationsFolder: env.migrationsFolder, appPassword: env.appDbPassword });
+  await runMigrations({
+    url: env.databaseUrl,
+    migrationsFolder: env.migrationsFolder,
+    appPassword: env.appDbPassword,
+  });
   log.info("migrations applied");
 }
 
@@ -26,7 +30,11 @@ async function run() {
   }
 
   // pg-boss keeps scheduled jobs durable in Postgres (ADR 007).
-  const boss = new PgBoss({ connectionString: env.databaseUrl, schema: "pgboss", application_name: "fieldops-boss" });
+  const boss = new PgBoss({
+    connectionString: env.databaseUrl,
+    schema: "pgboss",
+    application_name: "fieldops-boss",
+  });
   boss.on("error", (err) => log.error({ err }, "pg-boss error"));
   await boss.start();
 

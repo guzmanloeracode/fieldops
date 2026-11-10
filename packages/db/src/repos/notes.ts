@@ -31,7 +31,13 @@ export function noteRepo(tx: Tx, orgId: string): NoteRepo {
     async create(jobId, data) {
       const [n] = await tx
         .insert(note)
-        .values({ organizationId: orgId, jobId, body: data.body, visibility: data.visibility, authorUserId: data.authorUserId })
+        .values({
+          organizationId: orgId,
+          jobId,
+          body: data.body,
+          visibility: data.visibility,
+          authorUserId: data.authorUserId,
+        })
         .returning();
       const [u] = await tx.select({ name: user.name }).from(user).where(eq(user.id, data.authorUserId));
       return {
@@ -75,7 +81,10 @@ export function attachmentRepo(tx: Tx, orgId: string): AttachmentRepo {
       return rows.map(toAttachment);
     },
     async get(id) {
-      const [r] = await tx.select().from(attachment).where(and(scope, eq(attachment.id, id)));
+      const [r] = await tx
+        .select()
+        .from(attachment)
+        .where(and(scope, eq(attachment.id, id)));
       return r ? toAttachment(r) : null;
     },
     async create(data) {
@@ -94,7 +103,10 @@ export function attachmentRepo(tx: Tx, orgId: string): AttachmentRepo {
       return r ? toAttachment(r) : null;
     },
     async remove(id) {
-      const r = await tx.delete(attachment).where(and(scope, eq(attachment.id, id))).returning({ id: attachment.id });
+      const r = await tx
+        .delete(attachment)
+        .where(and(scope, eq(attachment.id, id)))
+        .returning({ id: attachment.id });
       return r.length > 0;
     },
   };

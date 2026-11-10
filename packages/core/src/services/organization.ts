@@ -1,4 +1,9 @@
-import { organizationUpdateSchema, serviceTypeInputSchema, serviceTypeUpdateSchema, type Role } from "@fieldops/shared";
+import {
+  organizationUpdateSchema,
+  serviceTypeInputSchema,
+  serviceTypeUpdateSchema,
+  type Role,
+} from "@fieldops/shared";
 import { ConflictError, DemoRestrictedError, NotFoundError } from "../domain/errors";
 import { assertCan, canChangeRole } from "../domain/permissions";
 import { ForbiddenError } from "../domain/errors";
@@ -34,7 +39,9 @@ export async function listMembers(ctx: ServiceContext) {
 /** Technicians and office staff who can be assigned to jobs. Open to everyone who can assign. */
 export async function listAssignableMembers(ctx: ServiceContext) {
   assertCan(ctx.actor, "jobs.assign");
-  return (await ctx.store.members.list()).filter((m) => m.role === "technician" || m.role === "dispatcher" || m.role === "owner" || m.role === "admin");
+  return (await ctx.store.members.list()).filter(
+    (m) => m.role === "technician" || m.role === "dispatcher" || m.role === "owner" || m.role === "admin",
+  );
 }
 
 export async function changeMemberRole(ctx: ServiceContext, memberId: string, role: Role) {

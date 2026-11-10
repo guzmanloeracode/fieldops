@@ -13,7 +13,10 @@ export const GET = apiRoute<Params>(async ({ req, params, ctx }) => {
 
 export const PATCH = apiRoute<Params>(async ({ req, params, body, ctx }) => {
   const job = await jobs.updateJob(ctx, params.id, body ?? {}, ifMatchVersion(req));
-  return { body: toJobDetailDto(job, await jobs.getJobActions(ctx, job)), headers: { ETag: jobEtag(job.version) } };
+  return {
+    body: toJobDetailDto(job, await jobs.getJobActions(ctx, job)),
+    headers: { ETag: jobEtag(job.version) },
+  };
 });
 
 export const DELETE = apiRoute<Params>(async ({ params, ctx }) => {

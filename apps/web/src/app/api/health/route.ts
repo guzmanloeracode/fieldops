@@ -14,6 +14,9 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
-    return Response.json({ status: "error", version: env.APP_VERSION }, { status: 503, headers: { "Cache-Control": "no-store" } });
+    return Response.json(
+      { status: "error", version: env.APP_VERSION },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 }

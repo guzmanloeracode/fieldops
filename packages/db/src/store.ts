@@ -23,6 +23,10 @@ export function createStore(tx: Tx, organizationId: string): Store {
 }
 
 /** Opens a tenant transaction (RLS scoped) and hands the repositories to `fn`. */
-export function withStore<T>(db: Database, organizationId: string, fn: (store: Store, tx: Tx) => Promise<T>): Promise<T> {
+export function withStore<T>(
+  db: Database,
+  organizationId: string,
+  fn: (store: Store, tx: Tx) => Promise<T>,
+): Promise<T> {
   return withTenant(db, organizationId, (tx) => fn(createStore(tx, organizationId), tx));
 }

@@ -71,7 +71,9 @@ const problem = (description: string) => ({
   content: { "application/problem+json": { schema: problemSchema } },
 });
 
-const errors = (...codes: (400 | 401 | 403 | 404 | 409 | 412 | 415 | 422 | 503)[]): ZodOpenApiResponsesObject => {
+const errors = (
+  ...codes: (400 | 401 | 403 | 404 | 409 | 412 | 415 | 422 | 503)[]
+): ZodOpenApiResponsesObject => {
   const text: Record<number, string> = {
     400: "Malformed request (invalid JSON or header)",
     401: "Not signed in, or the token is invalid",
@@ -93,28 +95,41 @@ const json = <T extends z.ZodType>(schema: T, description: string, headers?: z.Z
   ...(headers ? { headers } : {}),
 });
 
-const body = <T extends z.ZodType>(schema: T) => ({ required: true, content: { "application/json": { schema } } });
+const body = <T extends z.ZodType>(schema: T) => ({
+  required: true,
+  content: { "application/json": { schema } },
+});
 
-const etagHeader = z.object({ ETag: z.string().meta({ description: 'Current version, e.g. "v3"', example: '"v3"' }) });
+const etagHeader = z.object({
+  ETag: z.string().meta({ description: 'Current version, e.g. "v3"', example: '"v3"' }),
+});
 const idempotencyHeader = z.object({
-  "Idempotency-Key": z
-    .string()
-    .max(255)
-    .optional()
-    .meta({ description: "Makes the POST safe to retry for 24 hours", example: "3f1c9a6e-5d4b-4b5e-9b7a-1c2d3e4f5a6b" }),
+  "Idempotency-Key": z.string().max(255).optional().meta({
+    description: "Makes the POST safe to retry for 24 hours",
+    example: "3f1c9a6e-5d4b-4b5e-9b7a-1c2d3e4f5a6b",
+  }),
 });
 const ifMatchHeader = z.object({
-  "If-Match": z.string().optional().meta({ description: "ETag from a previous read; the change fails with 412 if it is stale", example: '"v3"' }),
+  "If-Match": z.string().optional().meta({
+    description: "ETag from a previous read; the change fails with 412 if it is stale",
+    example: '"v3"',
+  }),
 });
 
-const jobId = z.object({ id: z.string().meta({ description: "Job UUID or number such as JOB-000123", example: "JOB-000123" }) });
+const jobId = z.object({
+  id: z.string().meta({ description: "Job UUID or number such as JOB-000123", example: "JOB-000123" }),
+});
 const uuidParam = (what: string) => z.object({ id: z.uuid().meta({ description: `${what} ID` }) });
 
 const jobPage = pageOf(jobSchema, "JobPage");
 const customerPage = pageOf(customerSummarySchema, "CustomerPage");
 const list = <T extends z.ZodType>(item: T, id: string) => pageOf(item, id);
 
-function op(tag: string, summary: string, rest: Omit<ZodOpenApiOperationObject, "tags" | "summary">): ZodOpenApiOperationObject {
+function op(
+  tag: string,
+  summary: string,
+  rest: Omit<ZodOpenApiOperationObject, "tags" | "summary">,
+): ZodOpenApiOperationObject {
   return { tags: [tag], summary, ...rest };
 }
 
@@ -130,7 +145,12 @@ export function openApiDocument() {
       description: DESCRIPTION,
       license: { name: "MIT", identifier: "MIT" },
     },
-    servers: [{ url: `${env.APP_URL}/api/v1`, description: env.DEMO_MODE ? "Public demo (fictional data, resets daily)" : "This server" }],
+    servers: [
+      {
+        url: `${env.APP_URL}/api/v1`,
+        description: env.DEMO_MODE ? "Public demo (fictional data, resets daily)" : "This server",
+      },
+    ],
     security: [{ bearerAuth: [] }, { cookieAuth: [] }],
     tags: [
       { name: "Jobs", description: "Work orders and their lifecycle" },
@@ -139,8 +159,17 @@ export function openApiDocument() {
     ],
     components: {
       securitySchemes: {
-        bearerAuth: { type: "http", scheme: "bearer", description: "Session token from POST /api/auth/sign-in/email" },
-        cookieAuth: { type: "apiKey", in: "cookie", name: "fieldops.session_token", description: "Web session cookie (prefixed with __Secure- over HTTPS)" },
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          description: "Session token from POST /api/auth/sign-in/email",
+        },
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "fieldops.session_token",
+          description: "Web session cookie (prefixed with __Secure- over HTTPS)",
+        },
       },
     },
     paths: {
@@ -162,14 +191,21 @@ export function openApiDocument() {
         get: op("Jobs", "Get a job", {
           operationId: "getJob",
           requestParams: { path: jobId },
-          responses: { "200": json(jobDetailSchema, "The job and the status changes you may make", etagHeader), "304": { description: "Not modified (If-None-Match)" }, ...errors(404) },
+          responses: {
+            "200": json(jobDetailSchema, "The job and the status changes you may make", etagHeader),
+            "304": { description: "Not modified (If-None-Match)" },
+            ...errors(404),
+          },
         }),
         patch: op("Jobs", "Update a job", {
           operationId: "updateJob",
           description: "Status, assignments and schedule have their own endpoints.",
           requestParams: { path: jobId, header: ifMatchHeader },
           requestBody: body(jobUpdateSchema),
-          responses: { "200": json(jobDetailSchema, "The updated job", etagHeader), ...errors(404, 412, 415, 422) },
+          responses: {
+            "200": json(jobDetailSchema, "The updated job", etagHeader),
+            ...errors(404, 412, 415, 422),
+          },
         }),
         delete: op("Jobs", "Delete a job", {
           operationId: "deleteJob",
@@ -185,7 +221,10 @@ export function openApiDocument() {
             "Moves the job along its lifecycle: new → scheduled → en_route → in_progress → completed, with on_hold and canceled. Cancel, hold and reopen need a `reason`; hold also needs `hold_reason`.",
           requestParams: { path: jobId, header: idempotencyHeader.extend(ifMatchHeader.shape) },
           requestBody: body(jobTransitionSchema),
-          responses: { "200": json(jobDetailSchema, "The job after the change", etagHeader), ...errors(404, 409, 412, 415, 422) },
+          responses: {
+            "200": json(jobDetailSchema, "The job after the change", etagHeader),
+            ...errors(404, 409, 412, 415, 422),
+          },
         }),
       },
       "/jobs/{id}/assignments": {
@@ -195,7 +234,10 @@ export function openApiDocument() {
             "Replaces the assignees and visit window. A new job with both becomes scheduled. Overlapping visits return 409 with `conflicts` unless `override_reason` is set.",
           requestParams: { path: jobId },
           requestBody: body(jobAssignmentSchema),
-          responses: { "200": json(jobDetailSchema, "The job after assignment", etagHeader), ...errors(404, 409, 415, 422) },
+          responses: {
+            "200": json(jobDetailSchema, "The job after assignment", etagHeader),
+            ...errors(404, 409, 415, 422),
+          },
         }),
       },
       "/jobs/{id}/notes": {
@@ -215,14 +257,20 @@ export function openApiDocument() {
         get: op("Jobs", "Job timeline", {
           operationId: "listJobEvents",
           requestParams: { path: jobId },
-          responses: { "200": json(list(jobEventSchema, "JobEventPage"), "Events, newest first"), ...errors(404) },
+          responses: {
+            "200": json(list(jobEventSchema, "JobEventPage"), "Events, newest first"),
+            ...errors(404),
+          },
         }),
       },
       "/jobs/{id}/attachments": {
         get: op("Jobs", "List attachments", {
           operationId: "listAttachments",
           requestParams: { path: jobId },
-          responses: { "200": json(list(attachmentSchema, "AttachmentPage"), "Uploaded attachments with signed URLs"), ...errors(404, 503) },
+          responses: {
+            "200": json(list(attachmentSchema, "AttachmentPage"), "Uploaded attachments with signed URLs"),
+            ...errors(404, 503),
+          },
         }),
         post: op("Jobs", "Start an attachment upload", {
           operationId: "requestAttachmentUpload",
@@ -230,7 +278,10 @@ export function openApiDocument() {
             "Returns a presigned URL. PUT the file to `upload_url` with the returned headers, then call `POST /attachments/{id}/confirm`.",
           requestParams: { path: jobId, header: idempotencyHeader },
           requestBody: body(attachmentUploadSchema),
-          responses: { "201": json(attachmentUploadResponseSchema, "Upload instructions"), ...errors(404, 415, 422, 503) },
+          responses: {
+            "201": json(attachmentUploadResponseSchema, "Upload instructions"),
+            ...errors(404, 415, 422, 503),
+          },
         }),
       },
       "/attachments/{id}/confirm": {
@@ -248,7 +299,8 @@ export function openApiDocument() {
         }),
         post: op("Customers", "Create a customer", {
           operationId: "createCustomer",
-          description: "Contacts are created with the customer. Possible duplicates (same email or phone) are reported, not blocked.",
+          description:
+            "Contacts are created with the customer. Possible duplicates (same email or phone) are reported, not blocked.",
           requestParams: { header: idempotencyHeader },
           requestBody: body(customerCreateSchema),
           responses: { "201": json(customerCreatedSchema, "The new customer"), ...errors(400, 415, 422) },
@@ -258,13 +310,20 @@ export function openApiDocument() {
         get: op("Customers", "Get a customer", {
           operationId: "getCustomer",
           requestParams: { path: uuidParam("Customer") },
-          responses: { "200": json(customerSchema, "The customer", etagHeader), "304": { description: "Not modified (If-None-Match)" }, ...errors(404) },
+          responses: {
+            "200": json(customerSchema, "The customer", etagHeader),
+            "304": { description: "Not modified (If-None-Match)" },
+            ...errors(404),
+          },
         }),
         patch: op("Customers", "Update a customer", {
           operationId: "updateCustomer",
           requestParams: { path: uuidParam("Customer"), header: ifMatchHeader },
           requestBody: body(customerUpdateSchema),
-          responses: { "200": json(customerSchema, "The updated customer", etagHeader), ...errors(404, 412, 415, 422) },
+          responses: {
+            "200": json(customerSchema, "The updated customer", etagHeader),
+            ...errors(404, 412, 415, 422),
+          },
         }),
         delete: op("Customers", "Delete a customer", {
           operationId: "deleteCustomer",
@@ -316,14 +375,20 @@ export function openApiDocument() {
         get: op("Organization", "List members", {
           operationId: "listMembers",
           description: "Owners, admins and dispatchers.",
-          responses: { "200": json(list(memberSchema, "MemberPage"), "Members of the organization"), ...errors() },
+          responses: {
+            "200": json(list(memberSchema, "MemberPage"), "Members of the organization"),
+            ...errors(),
+          },
         }),
       },
       "/service-types": {
         get: op("Organization", "List service types", {
           operationId: "listServiceTypes",
           requestParams: { query: z.object({ include_inactive: z.enum(["true", "false"]).optional() }) },
-          responses: { "200": json(list(serviceTypeSchema, "ServiceTypePage"), "Service types"), ...errors() },
+          responses: {
+            "200": json(list(serviceTypeSchema, "ServiceTypePage"), "Service types"),
+            ...errors(),
+          },
         }),
       },
     },

@@ -4,7 +4,9 @@
   "description": "Field service management SaaS for small service businesses",
   "license": "MIT",
   "packageManager": "pnpm@10.34.9",
-  "engines": { "node": ">=22.12" },
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",

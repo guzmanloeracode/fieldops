@@ -83,7 +83,11 @@ export function Attachments({
         continue;
       }
       if (thumb && req.data.thumbnailUploadUrl) {
-        await fetch(req.data.thumbnailUploadUrl, { method: "PUT", body: thumb, headers: { "Content-Type": "image/webp" } });
+        await fetch(req.data.thumbnailUploadUrl, {
+          method: "PUT",
+          body: thumb,
+          headers: { "Content-Type": "image/webp" },
+        });
       }
       const confirmed = await confirmUploadAction(req.data.attachmentId);
       if (confirmed.ok) done++;
@@ -133,14 +137,21 @@ export function Attachments({
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{storageReady ? t("attachments.empty") : t("attachments.storageOff")}</p>
+          <p className="text-muted-foreground text-sm">
+            {storageReady ? t("attachments.empty") : t("attachments.storageOff")}
+          </p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {items.map((a) => (
               <li key={a.id} className="group relative overflow-hidden rounded-lg border">
                 <a href={a.url ?? "#"} target="_blank" rel="noreferrer" className="block">
                   {a.mimeType.startsWith("image/") && (a.thumbUrl ?? a.url) ? (
-                    <img src={a.thumbUrl ?? a.url ?? ""} alt={a.fileName} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                    <img
+                      src={a.thumbUrl ?? a.url ?? ""}
+                      alt={a.fileName}
+                      className="aspect-[4/3] w-full object-cover"
+                      loading="lazy"
+                    />
                   ) : (
                     <div className="bg-muted flex aspect-[4/3] items-center justify-center">
                       <FileText className="text-muted-foreground size-8" aria-hidden />
@@ -148,7 +159,11 @@ export function Attachments({
                   )}
                   <div className="flex items-center justify-between gap-1 p-2 text-xs">
                     <span className="truncate">{a.fileName}</span>
-                    {a.tag ? <span className="bg-secondary rounded px-1.5 py-0.5 font-medium capitalize">{t(`attachments.${a.tag}`)}</span> : null}
+                    {a.tag ? (
+                      <span className="bg-secondary rounded px-1.5 py-0.5 font-medium capitalize">
+                        {t(`attachments.${a.tag}`)}
+                      </span>
+                    ) : null}
                   </div>
                 </a>
                 {canRemoveAny || a.uploadedBy === actorUserId ? (
