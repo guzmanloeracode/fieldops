@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.4 · release 0.2.1 live, repository public |
+| **Status** | Draft 1.5 · release 0.2.1 live, repository public |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 10 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -19,11 +19,12 @@
 | 1.2 | 10 Nov 2026 | Repository published at github.com/guzmanloeracode/fieldops. **No hosted CI** (owner's decision): GitHub Actions is disabled and the checks run on the server as release gates — `pnpm verify` before the build, `infra/deploy/e2e.sh` on the new images before they go live (§15.4, §18.2, ADR 014). |
 | 1.3 | 10 Nov 2026 | Release 0.2 built and live. Recorded the decisions made while building it in *As built (0.2)* notes: overridable conflict kinds and working-hours rules (§8.4), clocks driven by status changes and the signature setting (§8.5), approval thresholds and pre-ordered parts (§8.6), saved views, bulk actions and export (§8.3), provisional SLA targets until SLA-01 ships in 0.3 (§8.10), local file storage until R2 is enabled (§14.5, §15.5, ADR 015), new tables and fields (§16.3), new endpoints (§17.2) and the 0.2 seed (§19). |
 | 1.4 | 10 Nov 2026 | Release 0.2.1: route-level loading skeletons for every page that loads data (§13 *As built (0.2.1)*). |
+| 1.5 | 10 Nov 2026 | Summary, market (§2), delivery goals (§4.2) and documentation and launch (§21) rewritten around the product and its customers. |
 
 ## Contents
 
 1. [Summary](#1-summary)
-2. [Why this project](#2-why-this-project)
+2. [Market and opportunity](#2-market-and-opportunity)
 3. [Problem](#3-problem)
 4. [Goals, non-goals and success metrics](#4-goals-non-goals-and-success-metrics)
 5. [Users, roles and permissions](#5-users-roles-and-permissions)
@@ -42,7 +43,7 @@
 18. [Quality engineering](#18-quality-engineering)
 19. [Demo environment and seed data](#19-demo-environment-and-seed-data)
 20. [Release plan](#20-release-plan)
-21. [Portfolio packaging](#21-portfolio-packaging)
+21. [Documentation and launch](#21-documentation-and-launch)
 22. [Risks and mitigations](#22-risks-and-mitigations)
 23. [Open questions](#23-open-questions)
 24. [Glossary and sources](#24-glossary-and-sources)
@@ -55,51 +56,46 @@ Priority labels follow MoSCoW: **M** = must, **S** = should, **C** = could. The 
 
 FieldOps is a multi-tenant SaaS for small service businesses: air-conditioning and HVAC, cleaning, plumbing, electrical and property maintenance companies with 5–50 staff. It covers the whole service loop. A request comes in, a dispatcher schedules a technician, the technician does the work on site with a checklist and photos, the customer gets a report, and the business gets paid. It replaces the chat threads, spreadsheets and paper job sheets most of these businesses still run on.
 
-FieldOps is also a portfolio project. The author's production work lives in private repositories, so FieldOps gives prospective clients something they can open, click through, and read the code of. The goal is to show, in one coherent product, the skills clients hire for most: full-stack web development, AI integration, SaaS fundamentals (multi-tenancy, roles, billing), APIs and integrations, backend services, DevOps, front-end craft and mobile apps. Every part is built to production standards. It is open source, documented and tested, and it runs as a live demo on a self-managed server.
+FieldOps is open source and runs as a live demo with two fictional companies, so a prospective customer can try every role, from owner to technician, before signing up. It is built to production standards: database-enforced tenant isolation, typed contracts from the database to the API, tests at every layer, and automated release gates for a self-managed server.
 
 FieldOps ships as four deliverables:
 
-| # | Deliverable | Location | What it proves |
+| # | Deliverable | Location | What it is |
 |---|---|---|---|
-| 1 | **FieldOps Web** | `fieldops/apps/web` | Full-stack SaaS: Next.js, PostgreSQL, auth and roles, AI, payments, self-hosted deployment |
-| 2 | **Relay** | `relay` (own repo) | Backend engineering in Go: queues, retries, webhooks, push, observability, Docker |
-| 3 | **FieldOps Site** | `fieldops-site` (own repo) | Front-end craft: GSAP motion, SEO, accessibility, Core Web Vitals |
+| 1 | **FieldOps Web** | `fieldops/apps/web` | The product: the office web app, the technician workspace, the customer portal, the REST API, AI features and payments |
+| 2 | **Relay** | `relay` (own repo) | Event delivery service in Go: queues, retries, signed webhooks, push notifications, observability |
+| 3 | **FieldOps Site** | `fieldops-site` (own repo) | Marketing site: product pages, pricing, use cases, blog and demo booking |
 | 4 | **FieldOps Mobile** | `fieldops/apps/mobile` | Expo app for technicians: offline mode, camera, location, push notifications |
 
-**Original work.** All code, designs, copy and data are created for this project. No code, schema, data or UI from any employer or client is reused. All demo data is synthetic.
+**Demo data.** All demo data is synthetic: every person, company and address in the demo is fictional.
 
 ---
 
-## 2. Why this project
+## 2. Market and opportunity
 
-### 2.1 Market evidence
+### 2.1 Market
 
 | Signal | Evidence |
 |---|---|
-| Full-stack development remains a core skill clients hire for | Upwork's *In-Demand Skills 2026* report lists full-stack development among the leading Coding & Web Development skills, with demand staying strong year over year. [1] |
-| AI work is where demand is growing fastest | In the same report, demand for skills that explicitly reference AI grew **109%** year over year, against **23%** for other skills. [1] |
-| AI integration specifically | **AI integration** grew **178%** and **AI chatbot development** grew **71%**, the fastest-growing Coding & Web Development skills. [1] |
-| The trend continued in 2026 | Upwork's June 2026 hiring insights name AI Apps & Integration as the strongest-growing category: **+34%** month over month and **+33%** year over year. [2] |
-| Field service software is a real, growing market | IBISWorld sizes the US field service management software industry at **$3.1bn in 2026**, growing 7.5% that year. [3] Verdantix puts the global market at **$5.9bn in 2025**. [4] |
+| Field service software is a real, growing market | IBISWorld sizes the US field service management software industry at **$3.1bn in 2026**, growing 7.5% that year. [1] Verdantix puts the global market at **$5.9bn in 2025**. [2] |
+| Small teams are underserved | Established suites are built for mid-size and enterprise field teams, with long setups and per-seat prices to match. Owner-run businesses with 2–30 technicians still run on chat, spreadsheets and paper ([§3](#3-problem)). |
+| AI removes the most repetitive office work | Requests arrive as free text in chats and emails, and reports are written by hand after each visit. Both are tasks where AI drafts and a person confirms ([§9](#9-ai-features)). |
 
-A real, growing vertical means the demo looks like software clients already understand and ask for: booking, scheduling, dispatch, approvals, invoicing and dashboards.
+### 2.2 What service businesses ask for, and where FieldOps answers
 
-### 2.2 Typical client requests and where FieldOps shows them
-
-| Typical client request | Where FieldOps shows it |
+| What the business says | Where FieldOps answers |
 |---|---|
-| "Build our SaaS MVP with Next.js and PostgreSQL" | FieldOps Web, end to end |
-| "Multi-tenant app with roles and permissions" | Organizations, invitations, role-based access, tenant-isolation tests, PostgreSQL row-level security |
-| "Integrate AI into our app" / "AI chatbot over our data" | AI job intake, the *Ask FieldOps* assistant with tool use, AI service reports, an MCP server |
-| "Admin dashboard with charts and data tables" | KPI dashboard, server-side filtered tables, CSV export |
-| "Stripe payments and subscriptions" | Invoice payments, SaaS plans, Stripe webhooks |
-| "Booking or scheduling system with a calendar" | Drag-and-drop dispatch board, customer portal requests |
-| "REST API with docs", "webhooks", "integrations" | `/api/v1`, OpenAPI 3.1, API keys, signed webhooks |
-| "Background jobs, queues, a scalable backend" | Worker with a Postgres job queue; Relay in Go |
-| "Deploy to my VPS with Docker and CI/CD" | Docker Compose production stack, GitHub Actions deploys, backups, monitoring |
-| "Fast, animated, SEO-friendly landing page" | FieldOps Site |
-| "React Native app with offline mode, camera and push" | FieldOps Mobile |
-| "Clean, tested, maintainable code" | Monorepo, typed contracts, unit/integration/E2E tests, CI, ADRs |
+| "Requests come in by chat and email, and someone retypes them" | AI job intake, customer portal requests |
+| "We double-book technicians" | Drag-and-drop dispatch board with conflict checks |
+| "We hear about late jobs when the customer complains" | SLA policies, at-risk alerts and notifications |
+| "There's no proof of what was done on site" | Checklists, photos, customer signatures, audit log |
+| "Invoices go out days after the job" | Invoices from completed jobs, online payment |
+| "The owner can't see what's going on" | KPI dashboard, the dispatcher's *Today* view, CSV export |
+| "Technicians work from their phones, often with bad signal" | Phone-first technician workspace; offline mobile app |
+| "Customers keep calling to ask when someone is coming" | Customer portal with job status and the visit window |
+| "Our other tools need the data" | REST API with OpenAPI docs, API keys, signed webhooks |
+| "We run more than one company or branch" | Several organizations per user, roles per organization |
+| "Our data has to stay ours" | Tenant isolation enforced by the database, self-hosting with Docker, full data export |
 
 ---
 
@@ -139,14 +135,14 @@ A real, growing vertical means the demo looks like software clients already unde
 | G5 | Shorten the time from job completion to invoice sent to under 1 hour. |
 | G6 | Give the owner a live view of jobs, SLA compliance and revenue. |
 
-### 4.2 Portfolio goals
+### 4.2 Delivery goals
 
 | ID | Goal |
 |---|---|
-| P1 | Every deliverable is public, live, documented and runnable locally in under 10 minutes. |
-| P2 | The code reads like a professional team's codebase: clear layering, typed contracts, tests, CI, ADRs. |
-| P3 | Each deliverable stands alone as a portfolio piece for one service: full stack, backend, front end and mobile. |
-| P4 | A reviewer can understand the product in 2 minutes from the README, GIFs and demo video. |
+| E1 | Every deliverable is public, live, documented and runnable locally in under 10 minutes. |
+| E2 | The code reads like a professional team's codebase: clear layering, typed contracts, tests, release gates, ADRs. |
+| E3 | Each deliverable (web app, Relay, site, mobile app) builds, deploys and is documented on its own. |
+| E4 | A new visitor understands the product in 2 minutes from the README, GIFs and demo video. |
 
 ### 4.3 Non-goals
 
@@ -170,7 +166,7 @@ A real, growing vertical means the demo looks like software clients already unde
 | Security | Open high or critical vulnerabilities older than 7 days | 0 |
 | Operations | Demo uptime per month | ≥ 99.5% |
 | Operations | Restore from backup, tested quarterly | < 30 min |
-| Portfolio | Reviewer time from clone to running app (documented) | < 10 min |
+| Developer experience | Time from clone to running app (documented) | < 10 min |
 
 ---
 
@@ -643,7 +639,7 @@ An Expo app for technicians, released as FieldOps 1.0. It uses the same `/api/v1
 **Distribution**
 - EAS Build for Android (APK and internal testing track) and iOS (TestFlight, if an Apple Developer account is available).
 - Over-the-air updates through EAS Update.
-- A QR code for reviewers, and a demo video in the README.
+- A QR code to install the test build, and a demo video in the README.
 
 **Stack:** Expo (latest SDK) with Expo Router, TypeScript, TanStack Query with a persisted cache, NativeWind, and the Expo camera, image picker, location, notifications and secure-store modules.
 
@@ -723,7 +719,7 @@ sequenceDiagram
 | SITE-10 | Privacy-friendly analytics with no cookie banner needed. | S |
 | SITE-11 | Headless CMS (for example Sanity) for blog and use-case content. | C |
 
-**Honesty rule:** no invented testimonials, customer logos or metrics. The site uses real product screenshots and sample scenarios that are labeled as such, and the footer says FieldOps is a portfolio project with fictional demo data.
+**Honesty rule:** no invented testimonials, customer logos or metrics. The site uses real product screenshots and sample scenarios that are labeled as such, and the footer says the demo data is fictional.
 
 **Stack:** Next.js (static output), Tailwind CSS, GSAP with `@gsap/react`, MDX and next-intl. It is served from the same server (domain to be decided; see [§23](#23-open-questions)).
 
@@ -824,9 +820,9 @@ Server actions and API routes call the same services, so the web app, mobile app
 | Background jobs | pg-boss (PostgreSQL job queue with cron schedules) in a `worker` container | Durable, transactional, no extra infrastructure |
 | Cache and rate limits | Redis | Rate limiting, short-lived caches, pub/sub for live updates |
 | Live updates | Server-sent events from Next.js route handlers, fed by Redis pub/sub | Simple, works through Cloudflare, no WebSocket server needed |
-| Files | Cloudflare R2 (S3 API) with presigned uploads | Cheap storage with no egress fees; standard S3 skills |
+| Files | Cloudflare R2 (S3 API) with presigned uploads | Cheap storage with no egress fees; standard S3 API |
 | Email | Resend with React Email templates (Mailpit locally) | Good deliverability, templates as components |
-| Payments | Stripe Checkout, Billing and webhooks (test mode) | The payment platform clients ask for most |
+| Payments | Stripe Checkout, Billing and webhooks (test mode) | Widely used, hosted checkout, a full test mode |
 | AI | Claude API through `@anthropic-ai/sdk` | Structured outputs, tool use, streaming |
 | Maps | MapLibre GL; OpenFreeMap style by default (no key), MapTiler optional through `NEXT_PUBLIC_MAP_STYLE_URL` | Open-source renderer, no lock-in, no key needed for the demo |
 | PDF | `@react-pdf/renderer` | PDFs built from React components |
@@ -896,7 +892,7 @@ FieldOps runs on a self-managed Linux server, not on a serverless platform:
 
 - **No platform limits.** The SLA monitor needs to run every 5 minutes, the worker runs continuously, and live updates keep connections open. All of these are easy on a server and awkward or paid extras on free serverless tiers.
 - **Predictable cost.** A single server hosts FieldOps, Relay and the marketing site.
-- **It is part of the showcase.** "Deploy to my VPS with Docker and CI/CD" is a common client request, and this deployment demonstrates it.
+- **It is part of the product.** Service businesses and resellers can run FieldOps on their own server with Docker Compose, and this deployment is the reference setup.
 - **Trade-off.** We own patching, backups and uptime. The runbook and monitoring below cover that.
 
 ### 15.2 Domains
@@ -1186,7 +1182,7 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 
 ## 20. Release plan
 
-The plan follows the agreed order: **full stack first, then backend, then front end, then mobile.** Durations are targets at about 15–20 hours a week alongside a full-time job.
+The plan builds the web product first, then the event delivery service (Relay), the marketing site and the mobile app. Durations are targets.
 
 | Release | Theme | Scope | Target |
 |---|---|---|---|
@@ -1194,10 +1190,10 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 | **0.2** Dispatch ✅ live 10 Nov 2026 | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
 | **0.3** Automate | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes) | 2 weeks |
 | **0.4** Get paid | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
-| | **Full-stack showcase complete** | | |
-| **Relay 1.0** | Backend | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
+| | **Core product complete** | | |
+| **Relay 1.0** | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
 | **0.5** Platform | Integrations | PLT-02–05, BIL-01–04, CUS-06, SCH-07, AI-04, AI-05, AUTH-07/08, SET-06; FieldOps events flow through Relay | 2 weeks |
-| **Site 1.0** | Front end | SITE-01–10 | 2 weeks |
+| **Site 1.0** | Marketing site | SITE-01–10 | 2 weeks |
 | **1.0** Mobile | Mobile | MOB-01–10, NOT-06 | 4 weeks |
 
 **Definition of done for every release**
@@ -1210,16 +1206,16 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 ---
 
-## 21. Portfolio packaging
+## 21. Documentation and launch
 
 | Asset | Content |
 |---|---|
-| README | A one-line pitch, a hero GIF, a **Live demo** button with role logins, features, architecture diagram, stack, engineering highlights (tenant isolation, outbox, SLA engine, AI guardrails, self-hosted CI/CD), local setup, tests and CI badges, roadmap |
+| README | A one-line pitch, a hero GIF, a **Live demo** link with role logins, features, architecture diagram, stack, engineering highlights (tenant isolation, outbox, SLA engine, AI guardrails, self-hosted release pipeline), local setup, tests and roadmap |
+| API reference | The OpenAPI 3.1 document and the interactive reference at `/docs/api` |
 | Demo video | 2–3 minutes: journeys J1–J3 plus the dashboard and assistant |
-| Case study | Problem, approach, architecture, trade-offs and results, on the author's portfolio site |
-| GitHub | Repository description, topics, website link, social preview image; FieldOps, Relay and Site pinned on the profile |
-| Upwork portfolio items | One per service: **Full stack** (FieldOps Web), **Backend** (Relay), **Front end** (FieldOps Site), **Mobile** (FieldOps Mobile). Each has its own screenshots, role description and skill tags. |
-| Release posts | A short LinkedIn post per release with a GIF and one lesson learned |
+| Release notes | A GitHub Release per version with a short GIF, and the changelog |
+| GitHub | Repository description, topics, website link and social preview image |
+| Operations docs | `docs/RUNBOOK.md`, `docs/ARCHITECTURE.md` and the ADRs |
 
 ---
 
@@ -1227,13 +1223,12 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 | Risk | Impact | Likelihood | Mitigation |
 |---|---|---|---|
-| Scope is too large for part-time work | High | High | Strict release slicing. Release 0.1 is public in 2 weeks. Could and Should items are cut before dates slip. |
+| Scope is too large for the team's capacity | High | High | Strict release slicing. Release 0.1 is public in 2 weeks. Could and Should items are cut before dates slip. |
 | AI cost abuse on the public demo | Medium | Medium | Per-visitor limits, a global daily budget switch, and a spend limit in the Anthropic Console |
 | Stripe account availability for an Indonesia-based owner | Medium | Medium | Test mode is enough for the demo. Confirm at sign-up; fall back to Xendit or Midtrans sandbox if needed. |
 | The shared server is also used by other services | High | Medium | Container memory limits. Only the proxy is exposed. FieldOps changes are limited to its own site config and containers, and the proxy config is tested before every reload. |
 | Single server failure or data loss | Medium | Low | Nightly off-site backups to R2, tested restores, and a runbook to rebuild on a new server |
 | Leaking secrets in a public repository | High | Low | gitleaks in CI, `.env` files never committed, `.env.example` only, credentials rotated if exposed |
-| Reuse of employer intellectual property | High | Low | Everything is written from scratch with fictional data. A review before the repository goes public. |
 | Demo vandalism | Low | Medium | Nightly reset, disabled destructive actions, input length limits |
 | Product name conflicts with an existing trademark | Low | Medium | Check the name before the public launch. The subdomain can be renamed easily. |
 
@@ -1251,7 +1246,7 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 | 6 | License: MIT, or AGPL to discourage closed forks? | MIT |
 | 7 | WhatsApp Business integration, which is valuable in the Indonesian market? | Backlog |
 | 8 | Enable Cloudflare R2 on the account (dashboard only; it asks for a payment method even on the free tier). Needed for attachments and backups. | Uploads are off in the demo until enabled; the bucket `fieldops-demo` and its CORS rules are scripted and ready. |
-| 9 | GitHub account and visibility for the public repositories (P1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops. |
+| 9 | GitHub account and visibility for the public repositories (E1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops. |
 | 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | **Decided 10 Nov 2026: no hosted CI or Actions deploy.** Release gates run on the server (§15.4). |
 | 11 | Real email for non-demo sign-ups: Resend account and a sending domain (SPF/DKIM)? | Demo mode captures every email, so none is needed for the demo |
 
@@ -1273,7 +1268,5 @@ The plan follows the agreed order: **full stack first, then backend, then front 
 
 ### Sources
 
-1. Upwork, *In-Demand Skills 2026* (February 2026): <https://www.upwork.com/research/in-demand-skills-2026>; press release: <https://investors.upwork.com/news-releases/news-release-details/upworks-demand-skills-2026-demand-top-ai-skills-more-doubles-ai>
-2. Upwork, *Monthly Hiring Insights: June 2026*: <https://www.upwork.com/research/upwork-monthly-hiring-report-june-2026>
-3. IBISWorld, *Field Service Management Software in the US*: <https://www.ibisworld.com/united-states/industry/field-service-management-software/5393/>
-4. Verdantix, *Market Size And Forecast: Field Service Management Software 2025–2031 (Global)*: <https://www.verdantix.com/venture/report/market-size-and-forecast--field-service-management-software-2025-2031-global>
+1. IBISWorld, *Field Service Management Software in the US*: <https://www.ibisworld.com/united-states/industry/field-service-management-software/5393/>
+2. Verdantix, *Market Size And Forecast: Field Service Management Software 2025–2031 (Global)*: <https://www.verdantix.com/venture/report/market-size-and-forecast--field-service-management-software-2025-2031-global>
