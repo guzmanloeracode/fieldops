@@ -3,8 +3,10 @@ import { createElement } from "react";
 import { NotificationEmail, notificationCopy, type NotificationEmailProps } from "./notification";
 import { Invitation, ResetPassword, VerifyEmail } from "./templates";
 import { PortalSignIn } from "./portal";
+import { DailyDigestEmail, digestSubject, type DailyDigestProps } from "./digest";
 
 export { notificationCopy, type NotificationEmailEvent, type NotificationEmailProps } from "./notification";
+export { digestDay, digestSubject, type DailyDigestProps } from "./digest";
 
 export type EmailMessage =
   | { kind: "verify_email"; to: string; props: { name: string; url: string } }
@@ -19,7 +21,8 @@ export type EmailMessage =
       to: string;
       props: { name: string; organizationName: string; url: string; minutes: number };
     }
-  | { kind: "notification"; to: string; props: NotificationEmailProps };
+  | { kind: "notification"; to: string; props: NotificationEmailProps }
+  | { kind: "daily_digest"; to: string; props: DailyDigestProps };
 
 export interface RenderedEmail {
   subject: string;
@@ -50,6 +53,10 @@ export async function renderEmail(message: EmailMessage): Promise<RenderedEmail>
     case "notification":
       subject = notificationCopy(message.props).subject;
       element = createElement(NotificationEmail, message.props);
+      break;
+    case "daily_digest":
+      subject = digestSubject(message.props);
+      element = createElement(DailyDigestEmail, message.props);
       break;
   }
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);

@@ -6,6 +6,7 @@ import { resetDemo } from "./demo";
 import { drainOutbox, releaseStuck } from "./email";
 import { env } from "./env";
 import { log } from "./log";
+import { scheduleOps } from "./ops";
 import { runSlaMonitor } from "./sla";
 
 const command = process.argv[2] ?? "run";
@@ -63,6 +64,9 @@ async function run() {
   await boss.createQueue("sla-monitor");
   await boss.schedule("sla-monitor", "*/5 * * * *", {}, { tz: "UTC" });
   await boss.work("sla-monitor", async () => runSlaMonitor(db));
+
+  // Maintenance plans (JOB-13) and the owner's daily digest (NOT-04), hourly.
+  await scheduleOps(boss, db);
 
   if (env.demoMode) {
     await boss.createQueue("demo-reset");
