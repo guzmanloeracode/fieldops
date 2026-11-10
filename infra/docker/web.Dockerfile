@@ -14,6 +14,8 @@ WORKDIR /repo
 COPY --from=pruner /repo/out/json/ .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ .
+# turbo prune leaves out root-level config that packages extend.
+COPY --from=pruner /repo/tsconfig.base.json ./tsconfig.base.json
 ARG APP_VERSION=dev
 ARG APP_COMMIT=local
 ARG NEXT_PUBLIC_MAP_STYLE_URL

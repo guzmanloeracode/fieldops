@@ -14,6 +14,8 @@ WORKDIR /repo
 COPY --from=pruner /repo/out/json/ .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile
 COPY --from=pruner /repo/out/full/ .
+# turbo prune leaves out root-level config that packages extend.
+COPY --from=pruner /repo/tsconfig.base.json ./tsconfig.base.json
 RUN pnpm --filter @fieldops/worker build
 
 FROM node:24-alpine AS runner
