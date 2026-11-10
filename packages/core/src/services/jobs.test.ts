@@ -7,6 +7,7 @@ import {
   ValidationError,
 } from "../domain/errors";
 import { InvalidTransitionError } from "../domain/job-status";
+import { formatJobNumber } from "../domain/numbering";
 import { iso, world } from "../test/fixtures";
 import { fakeFiles, uuid } from "../test/memory-store";
 import * as jobs from "./jobs";
@@ -393,8 +394,19 @@ describe("assignJob", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(ConflictError);
       expect((e as ConflictError).details).toEqual({
-        conflicts: [{ memberId: w.tom.id, jobs: [first.number] }],
+        conflicts: [
+          {
+            kind: "overlap",
+            member_id: w.tom.id,
+            member_name: "Tom Tech",
+            message: `Tom Tech has another visit at this time (${formatJobNumber(first.number)})`,
+            job_numbers: [formatJobNumber(first.number)],
+          },
+        ],
       });
+      expect((e as ConflictError).message).toBe(
+        `Tom Tech has another visit at this time (${formatJobNumber(first.number)})`,
+      );
     }
     const ok = await jobs.assignJob(w.ctx(w.dispatcher), second.id, {
       member_ids: [w.tom.id],

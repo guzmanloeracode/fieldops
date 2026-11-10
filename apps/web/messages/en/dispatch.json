@@ -1,1 +1,136 @@
-{}
+{
+  "title": "Dispatch board",
+  "description": "Drag jobs onto a technician's lane to schedule them. Every drag also works with the keyboard.",
+  "views": {
+    "day": "Day",
+    "week": "Week",
+    "label": "View"
+  },
+  "tabs": {
+    "board": "Board",
+    "map": "Map",
+    "label": "Display"
+  },
+  "nav": {
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "today": "Today",
+    "date": "Date",
+    "go": "Go"
+  },
+  "filter": {
+    "technician": "Technician",
+    "all": "All technicians"
+  },
+  "team": {
+    "link": "Team availability",
+    "title": "Team availability",
+    "description": "Working hours, skills and time off. The dispatch board and the conflict checks use them.",
+    "back": "Dispatch board",
+    "businessHours": "Business hours",
+    "custom": "Own hours",
+    "hoursLegend": "Working hours of {name}",
+    "followsBusiness": "Follows the organization's business hours ({hours}).",
+    "noBusinessHours": "No business hours are set, so every time counts as working time.",
+    "works": "Works",
+    "open": "Starts",
+    "close": "Ends",
+    "skills": "Skills",
+    "skillsHint": "Service types can require skills; assigning someone without them shows a warning.",
+    "addSkill": "Add skill",
+    "newSkill": "New skill",
+    "removeSkill": "Remove {skill}",
+    "noSkills": "No skills yet",
+    "save": "Save hours and skills",
+    "saved": "Saved availability for {name}",
+    "timeOff": "Time off",
+    "noTimeOff": "No upcoming time off",
+    "from": "From",
+    "to": "To (inclusive)",
+    "reason": "Reason (optional)",
+    "addTimeOff": "Add time off",
+    "added": "Time off added",
+    "removed": "Time off removed",
+    "remove": "Remove time off {range}",
+    "past": "past",
+    "roleTechnician": "Technician",
+    "roleDispatcher": "Dispatcher",
+    "roleAdmin": "Admin",
+    "roleOwner": "Owner"
+  },
+  "queue": {
+    "title": "Unscheduled",
+    "description": "Drag a job onto a lane to schedule it.",
+    "empty": "Every job is scheduled.",
+    "count": "{count, plural, one {# job waiting} other {# jobs waiting}}",
+    "dropToUnschedule": "Drop here to unschedule"
+  },
+  "lane": {
+    "label": "{name}'s schedule",
+    "visits": "{count, plural, =0 {No visits} one {# visit} other {# visits}}",
+    "dayOff": "Day off",
+    "off": "Off",
+    "offReason": "Off: {reason}",
+    "lead": "Lead technician",
+    "helper": "Helper",
+    "outsideHours": "Outside working hours",
+    "noLanes": "No technicians yet. Invite technicians in Settings → Members."
+  },
+  "block": {
+    "description": "{number}, {title}, {customer}, {time}, {status}",
+    "resize": "Resize {number}",
+    "hint": "Space to pick up, arrow keys to move, Shift+arrow to change the length, Enter for details."
+  },
+  "dnd": {
+    "instructions": "To pick up a job, press Space. While dragging, use the arrow keys: left and right move it by 15 minutes (a day in the week view), up and down move it to another technician. Press Space or Enter to drop it, or Escape to cancel.",
+    "start": "Picked up {job}.",
+    "over": "{job} is over {target}.",
+    "overNothing": "{job} is not over a lane.",
+    "drop": "Dropped {job} on {target}.",
+    "cancel": "Moving {job} was canceled.",
+    "queue": "the unscheduled queue"
+  },
+  "save": {
+    "scheduled": "Scheduled {job} for {name}, {time}",
+    "moved": "Moved {job} to {name}, {time}",
+    "resized": "{job} now ends at {time}",
+    "unscheduled": "{job} is back in the queue",
+    "failed": "Couldn't save the change",
+    "cantUnschedule": "Only scheduled jobs can go back to the queue",
+    "saved": "Saved {job}"
+  },
+  "preview": {
+    "checking": "Checking…",
+    "clear": "No conflicts",
+    "count": "{count, plural, one {# conflict} other {# conflicts}}"
+  },
+  "dialog": {
+    "title": "Reschedule {job}",
+    "description": "Technicians and visit window ({timeZone}).",
+    "openJob": "Open job"
+  },
+  "conflicts": {
+    "title": "Scheduling conflicts",
+    "hint": "You can still save with a reason; it is kept in the job's timeline.",
+    "overlap": "This overlaps another visit",
+    "outside_hours": "Outside working hours",
+    "time_off": "On time off",
+    "missing_skills": "Missing skills: {skills}",
+    "reason": "Reason for overriding",
+    "saveAnyway": "Save anyway",
+    "cancel": "Cancel"
+  },
+  "map": {
+    "label": "Map of the visits on {date}",
+    "list": "Visits on {date}",
+    "noLocation": "No map location",
+    "empty": "No visits on this day.",
+    "legend": "Status colors",
+    "open": "Open {number}"
+  },
+  "agenda": {
+    "unassigned": "Unassigned"
+  }
+}

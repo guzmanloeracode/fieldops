@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { CONFLICT_KINDS } from "./constants";
+import { CONFLICT_KINDS, ROLES } from "./constants";
 import { isoDateTime, optionalText, ts } from "./fields";
-import { businessHoursSchema, skillSchema } from "./schemas";
+import { businessHoursSchema, jobSchema, skillSchema } from "./schemas";
 
 // 0.2 Dispatch: availability (SCH-04), the board (SCH-01, SCH-02), conflicts (SCH-03) and the schedule API.
 
@@ -62,3 +62,42 @@ export const timeOffSchema = z
     reason: z.string().nullable(),
   })
   .meta({ id: "TimeOff" });
+
+export const scheduleTechnicianSchema = z
+  .object({
+    member: z.object({
+      id: z.uuid(),
+      name: z.string(),
+      role: z.enum(ROLES),
+      skills: z.array(z.string()),
+    }),
+    working_hours: businessHoursSchema.meta({
+      description: "The hours that apply: the member's own, or the organization's business hours",
+    }),
+    custom_hours: z.boolean().meta({ description: "True when the member has their own working hours" }),
+    time_off: z.array(timeOffSchema),
+  })
+  .meta({ id: "ScheduleTechnician" });
+
+/** `GET /schedule`: the visits in a date range and the people who can take them. */
+export const scheduleSchema = z
+  .object({
+    time_zone: z.string(),
+    from: z.iso.date(),
+    to: z.iso.date(),
+    technicians: z.array(scheduleTechnicianSchema),
+    jobs: z.array(jobSchema),
+  })
+  .meta({ id: "Schedule" });
+export type ScheduleDto = z.infer<typeof scheduleSchema>;
+
+/** `GET /me/agenda`: the caller's visits from today through the next seven days. */
+export const agendaSchema = z
+  .object({
+    time_zone: z.string(),
+    from: z.iso.date(),
+    to: z.iso.date(),
+    jobs: z.array(jobSchema),
+  })
+  .meta({ id: "Agenda" });
+export type AgendaDto = z.infer<typeof agendaSchema>;

@@ -19,6 +19,8 @@ import type {
   SiteRecord,
   Store,
 } from "../services/types";
+import type { TimeOffRecord } from "../services/dispatch-types";
+import { memoryDispatch } from "./memory-dispatch";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -44,6 +46,7 @@ export interface MemoryData {
   members: MemberRecord[];
   checklist: { jobId: string; label: string; required: boolean; done: boolean }[];
   counter: number;
+  timeOff?: TimeOffRecord[];
 }
 
 export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; data: MemoryData } {
@@ -114,8 +117,11 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
   const memberLinkedJobs = (memberId: string) =>
     liveJobs().filter((j) => data.assignments.some((a) => a.jobId === j.id && a.memberId === memberId));
 
+  const dispatch = memoryDispatch(data, async () => liveJobs().map(view));
   const store: Store = {
     organizationId: data.org.id,
+    availability: dispatch.availability,
+    schedule: dispatch.schedule,
     customers: {
       async list(f) {
         let rows = data.customers.filter((c) => !c.deleted);

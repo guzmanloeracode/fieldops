@@ -16,6 +16,7 @@ import { assertTransition, availableTransitions, findTransition } from "../domai
 import { assertCan, seesOnlyAssigned } from "../domain/permissions";
 import { parseJobNumber } from "../domain/numbering";
 import { assertValidWindow } from "../domain/schedule";
+import { conflictSummary, detectConflicts } from "./conflicts";
 import { parseInput } from "./validate";
 import type { JobRecord, JobView, ServiceContext } from "./types";
 
@@ -230,15 +231,10 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
   const end = input.scheduled_end ? new Date(input.scheduled_end) : null;
   if (start && end) assertValidWindow(start, end);
 
-  if (start && end && !input.override_reason) {
-    const conflicts: { memberId: string; jobs: number[] }[] = [];
-    for (const memberId of memberIds) {
-      const overlapping = await ctx.store.jobs.overlapping(memberId, start, end, job.id);
-      if (overlapping.length) conflicts.push({ memberId, jobs: overlapping.map((j) => j.number) });
-    }
-    if (conflicts.length) {
-      throw new ConflictError("This visit overlaps another job for the same technician", { conflicts });
-    }
+  // Overlaps, working hours, time off and skills (SCH-03): warnings that need an override reason.
+  const conflicts = await detectConflicts(ctx, job, memberIds, start, end);
+  if (conflicts.length && !input.override_reason) {
+    throw new ConflictError(conflictSummary(conflicts), { conflicts });
   }
 
   const lead = input.lead_member_id ?? memberIds[0] ?? null;
@@ -273,10 +269,25 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
       lead_member_id: lead,
       scheduled_start: start?.toISOString() ?? null,
       scheduled_end: end?.toISOString() ?? null,
-      ...(input.override_reason ? { override_reason: input.override_reason } : {}),
+      ...(input.override_reason && conflicts.length
+        ? {
+            override_reason: input.override_reason,
+            overridden: conflicts.map((c) => ({ kind: c.kind, member_id: c.member_id })),
+          }
+        : {}),
     },
   });
   return (await ctx.store.jobs.get(job.id))!;
+}
+
+/** The conflicts an assignment would raise, without saving anything (for the dispatch board). */
+export async function previewConflicts(ctx: ServiceContext, id: string, raw: unknown) {
+  assertCan(ctx.actor, "jobs.assign");
+  const input = parseInput(jobAssignmentSchema, raw);
+  const job = await getJob(ctx, id);
+  const start = input.scheduled_start ? new Date(input.scheduled_start) : null;
+  const end = input.scheduled_end ? new Date(input.scheduled_end) : null;
+  return detectConflicts(ctx, job, [...new Set(input.member_ids)], start, end);
 }
 
 export async function deleteJob(ctx: ServiceContext, id: string) {

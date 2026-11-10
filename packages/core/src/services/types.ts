@@ -16,6 +16,7 @@ import type {
   Role,
 } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
+import type { AvailabilityRepo, ScheduleRepo } from "./dispatch-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -377,6 +378,9 @@ export interface Store {
   attachments: AttachmentRepo;
   members: MemberRepo;
   organization: OrganizationRepo;
+  // 0.2 dispatch (SCH)
+  availability: AvailabilityRepo;
+  schedule: ScheduleRepo;
 }
 
 export interface FileStorage {

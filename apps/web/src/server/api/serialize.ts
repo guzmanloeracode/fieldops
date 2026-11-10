@@ -11,7 +11,9 @@ import {
   type NoteRecord,
   type ServiceTypeRecord,
   type SiteRecord,
+  type TimeOffRecord,
   type TransitionRule,
+  type schedule,
 } from "@fieldops/core";
 import type {
   AttachmentDto,
@@ -20,6 +22,7 @@ import type {
   EquipmentDto,
   JobDetailDto,
   JobDto,
+  ScheduleDto,
   SiteDto,
   attachmentUploadResponseSchema,
   contactSchema,
@@ -27,6 +30,7 @@ import type {
   memberSchema,
   noteSchema,
   serviceTypeSchema,
+  timeOffSchema,
 } from "@fieldops/shared";
 import type { z } from "zod";
 
@@ -221,5 +225,32 @@ export function toUploadDto(u: {
     thumbnail_upload_url: u.thumbnailUploadUrl,
     headers: u.headers,
     expires_in: u.expiresIn,
+  };
+}
+
+// ------------------------------------------------------------------ 0.2 dispatch (SCH)
+
+export function toTimeOffDto(t: TimeOffRecord): z.infer<typeof timeOffSchema> {
+  return {
+    id: t.id,
+    member_id: t.memberId,
+    starts_at: t.startsAt.toISOString(),
+    ends_at: t.endsAt.toISOString(),
+    reason: t.reason,
+  };
+}
+
+export function toScheduleDto(b: schedule.Board): ScheduleDto {
+  return {
+    time_zone: b.timeZone,
+    from: b.from,
+    to: b.to,
+    technicians: b.lanes.map((l) => ({
+      member: { id: l.member.id, name: l.member.name, role: l.member.role, skills: l.member.skills },
+      working_hours: l.workingHours,
+      custom_hours: l.customHours,
+      time_off: l.timeOff.map(toTimeOffDto),
+    })),
+    jobs: b.jobs.map(toJobDto),
   };
 }

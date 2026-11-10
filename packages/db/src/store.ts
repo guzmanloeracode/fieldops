@@ -4,6 +4,7 @@ import { customerRepo } from "./repos/customers";
 import { jobRepo } from "./repos/jobs";
 import { attachmentRepo, noteRepo } from "./repos/notes";
 import { memberRepo, organizationRepo, serviceTypeRepo } from "./repos/organization";
+import { availabilityRepo, scheduleRepo } from "./repos/schedule";
 import { equipmentRepo, siteRepo } from "./repos/sites";
 
 /** Builds the repositories for one organization on top of an open transaction. */
@@ -19,6 +20,8 @@ export function createStore(tx: Tx, organizationId: string): Store {
     attachments: attachmentRepo(tx, organizationId),
     members: memberRepo(tx, organizationId),
     organization: organizationRepo(tx, organizationId),
+    availability: availabilityRepo(tx, organizationId),
+    schedule: scheduleRepo(tx, organizationId),
   };
 }
 
