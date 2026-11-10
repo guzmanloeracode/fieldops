@@ -16,6 +16,7 @@ import type {
   Role,
 } from "@fieldops/shared";
 import type { Actor } from "../domain/permissions";
+import type { ExpenseRepo } from "./expense-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -377,6 +378,7 @@ export interface Store {
   attachments: AttachmentRepo;
   members: MemberRepo;
   organization: OrganizationRepo;
+  expenses: ExpenseRepo;
 }
 
 export interface FileStorage {

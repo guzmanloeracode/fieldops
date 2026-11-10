@@ -1,4 +1,5 @@
 import {
+  operationsSettingsSchema,
   organizationUpdateSchema,
   serviceTypeInputSchema,
   serviceTypeUpdateSchema,
@@ -27,6 +28,30 @@ export async function updateOrganization(ctx: ServiceContext, raw: unknown) {
     ...(input.business_hours !== undefined && { businessHours: input.business_hours }),
     ...(input.tax_rates !== undefined && { taxRates: input.tax_rates }),
   });
+}
+
+// ------------------------------------------------------------------ operations (EXP-02, JOB-10)
+
+/** Approval thresholds and the signature rule, in the organization's currency. Owners and admins. */
+export async function getOperationsSettings(ctx: ServiceContext) {
+  assertCan(ctx.actor, "settings.operations");
+  const org = await ctx.store.organization.get();
+  return { currency: org.currency, ...org.settings };
+}
+
+export async function updateOperationsSettings(ctx: ServiceContext, raw: unknown) {
+  assertCan(ctx.actor, "settings.operations");
+  const input = parseInput(operationsSettingsSchema, raw);
+  const org = await ctx.store.organization.update({
+    settings: {
+      approval: {
+        autoApproveBelowMinor: input.auto_approve_below_minor,
+        dispatcherLimitMinor: input.dispatcher_limit_minor,
+      },
+      requireSignature: input.require_signature,
+    },
+  });
+  return { currency: org.currency, ...org.settings };
 }
 
 // ------------------------------------------------------------------ members (SET-02)

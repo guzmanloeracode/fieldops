@@ -11,10 +11,12 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const actor = await requireActor();
   if (!can(actor, "org.update")) notFound();
   const t = await getTranslations("settings");
+  const te = await getTranslations("expenses.settings");
   const tabs = [
     { href: "/settings/organization", label: t("tabs.organization") },
     { href: "/settings/members", label: t("tabs.members") },
     { href: "/settings/service-types", label: t("tabs.serviceTypes") },
+    { href: "/settings/operations", label: te("tab") },
     ...(env.DEMO_MODE ? [{ href: "/settings/demo-outbox", label: t("tabs.demoOutbox") }] : []),
   ];
   return (

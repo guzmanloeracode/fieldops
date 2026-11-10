@@ -38,7 +38,16 @@ const SETTINGS: Item[] = [
   { href: "/docs/api", label: "API reference", icon: BookOpen, external: true },
 ];
 
-export function Nav({ role, onNavigate }: { role: string; onNavigate?: () => void }) {
+export function Nav({
+  role,
+  onNavigate,
+  counts = {},
+}: {
+  role: string;
+  onNavigate?: () => void;
+  /** Badges next to items, by href (e.g. pending approvals). */
+  counts?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const office = role !== "technician";
   const managers = role === "owner" || role === "admin";
@@ -76,6 +85,12 @@ export function Nav({ role, onNavigate }: { role: string; onNavigate?: () => voi
         >
           <Icon className="size-4" aria-hidden />
           {i.label}
+          {counts[i.href] ? (
+            <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-[11px] leading-none font-semibold tabular-nums">
+              {counts[i.href]}
+              <span className="sr-only"> pending</span>
+            </span>
+          ) : null}
         </Link>
       </li>
     );

@@ -126,6 +126,8 @@ export function Attachments({
               multiple
               className="sr-only"
               id="attachment-input"
+              tabIndex={-1}
+              aria-label={t("attachments.add")}
               onChange={(e) => e.target.files?.length && void upload(e.target.files)}
             />
             <Button size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
