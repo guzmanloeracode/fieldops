@@ -24,6 +24,7 @@ test.describe("the user menu", () => {
   test("switches the app to Bahasa Indonesia, with Indonesian dates (demo accounts keep it per browser)", async ({
     page,
   }) => {
+    test.slow(); // several pages, each compiled on its first visit to a development server
     await page.goto("/jobs?status=completed");
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link", { name: "Jobs" })).toBeVisible();
@@ -43,7 +44,7 @@ test.describe("the user menu", () => {
       .getByRole("link", { name: /^JOB-\d+$/ })
       .first()
       .click();
-    await expect(page).toHaveURL(/\/jobs\/JOB-\d+$/);
+    await expect(page).toHaveURL(/\/jobs\/JOB-\d+$/, { timeout: 60_000 });
     // The first visit compiles the page on a development server.
     await expect(page.getByText("Dibuat", { exact: true })).toBeVisible({ timeout: 60_000 });
     await expect(page.locator("main")).toContainText(/\d{1,2} [A-Z][a-z]{2} \d{4} · \d{2}\.\d{2}/);
@@ -62,6 +63,7 @@ test("a new account starts in the browser's language and keeps the language it p
   browser,
   baseURL,
 }) => {
+  test.slow(); // sign-up, inbox, onboarding and two app pages
   // Signed up from an Indonesian browser: the pages, the confirmation email and the starter data are Indonesian.
   const context = await browser.newContext({
     baseURL,
@@ -83,7 +85,11 @@ test("a new account starts in the browser's language and keeps the language it p
     await page.getByRole("link", { name: "Konfirmasi email" }).first().click();
 
     await expect(page).toHaveURL(/\/onboarding$/);
-    await page.getByLabel("Nama usaha").fill(`Servis Bahasa ${id}`);
+    // Typing fills in the URL once the form is interactive (a development server may still be loading it).
+    await expect(async () => {
+      await page.getByLabel("Nama usaha").fill(`Servis Bahasa ${id}`);
+      await expect(page.getByLabel("URL organisasi")).toHaveValue(`servis-bahasa-${id}`, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
     await page.getByRole("button", { name: "Buat organisasi" }).click();
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 60_000 });
     await expect(page.locator("html")).toHaveAttribute("lang", "id");
