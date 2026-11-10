@@ -22,6 +22,8 @@ import type { JobView, ServiceContext } from "./types";
 
 /** Where a notification leads in the app. Job events open the job; the rest fall back to a list. */
 export function notificationHref(type: NotificationEvent, payload: NotificationPayload): string {
+  if (type === "quote_decided" && payload.quote_number) return `/quotes/${payload.quote_number}`;
+  if (type === "payment_received" && payload.invoice_id) return `/invoices/${payload.invoice_id}`;
   if (payload.job_number !== undefined) return `/jobs/${formatJobNumber(payload.job_number)}`;
   if (type === "expense_requested" || type === "expense_decided") return "/approvals";
   return "/notifications";

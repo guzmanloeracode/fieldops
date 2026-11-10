@@ -11,6 +11,7 @@ export * from "./domain/priority";
 export * as dates from "./domain/date-range";
 export * from "./domain/sla";
 export * from "./domain/equipment";
+export * from "./domain/billing";
 export * from "./services/types";
 export * from "./services/expense-types";
 export * from "./services/insights-types";
@@ -45,3 +46,10 @@ export * as audit from "./services/audit";
 export * as ai from "./services/ai";
 export * as sla from "./services/sla";
 export * as notifications from "./services/notifications";
+// 0.4 billing (FIN-01–07, EXP-04, DSH revenue)
+export * as catalog from "./services/catalog";
+export * as quotes from "./services/quotes";
+export * as invoices from "./services/invoices";
+export * as revenue from "./services/revenue";
+export * as billingPass from "./services/billing-daily";
+export { customerLocale, dateText, moneyText, portalPath } from "./services/billing-common";

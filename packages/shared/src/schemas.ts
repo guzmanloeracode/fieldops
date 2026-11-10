@@ -312,6 +312,8 @@ export const serviceTypeInputSchema = z
     active: z.boolean().default(true),
     required_skills: z.array(skillSchema).max(10).default([]),
     checklist_template: z.array(checklistTemplateItemSchema).max(50).default([]),
+    /** One of the organization's tax rates (FIN-01); null uses the default rate. */
+    tax_rate_bps: z.number().int().min(0).max(10_000).nullable().optional(),
   })
   .meta({ id: "ServiceTypeInput" });
 export type ServiceTypeInput = z.output<typeof serviceTypeInputSchema>;
@@ -334,6 +336,7 @@ export const serviceTypeUpdateSchema = z
     active: z.boolean(),
     required_skills: z.array(skillSchema).max(10),
     checklist_template: z.array(checklistTemplateItemSchema).max(50),
+    tax_rate_bps: z.number().int().min(0).max(10_000).nullable(),
   })
   .partial()
   .meta({ id: "ServiceTypeUpdate" });
@@ -549,6 +552,8 @@ export const serviceTypeSchema = z
     active: z.boolean(),
     required_skills: z.array(z.string()),
     checklist_template: z.array(checklistTemplateItemDtoSchema),
+    /** Null uses the organization's default tax rate. */
+    tax_rate_bps: z.number().int().nullable(),
   })
   .meta({ id: "ServiceType" });
 
