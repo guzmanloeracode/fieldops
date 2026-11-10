@@ -122,6 +122,8 @@ export const member = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     phone: text("phone"),
+    /** Weekly working hours ({ day, open, close } in the organization's time zone). Null follows business hours. */
+    workingHours: jsonb("working_hours"),
     createdAt: createdAt(),
   },
   (t) => [

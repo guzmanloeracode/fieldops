@@ -90,6 +90,8 @@ export function world() {
     defaultDurationMin: 120,
     defaultPriceMinor: 18900,
     currency: "USD",
+    requiredSkills: [],
+    checklistTemplate: [],
     color: null,
     active: true,
   });

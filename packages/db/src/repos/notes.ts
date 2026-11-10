@@ -63,6 +63,7 @@ function toAttachment(r: typeof attachment.$inferSelect): AttachmentRecord {
     mimeType: r.mimeType,
     sizeBytes: r.sizeBytes,
     tag: (r.tag as AttachmentTag | null) ?? null,
+    caption: r.caption,
     status: r.status as "pending" | "ready",
     uploadedBy: r.uploadedBy,
     createdAt: r.createdAt,

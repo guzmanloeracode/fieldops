@@ -179,6 +179,13 @@ export function toServiceTypeDto(s: ServiceTypeRecord): z.infer<typeof serviceTy
     default_price_minor: s.defaultPriceMinor,
     currency: s.currency,
     active: s.active,
+    required_skills: s.requiredSkills,
+    checklist_template: s.checklistTemplate.map((i) => ({
+      label: i.label,
+      kind: i.kind,
+      unit: i.unit ?? null,
+      required: i.required,
+    })),
   };
 }
 
@@ -193,6 +200,7 @@ export function toAttachmentDto(
     mime_type: a.mimeType,
     size_bytes: a.sizeBytes,
     tag: a.tag,
+    caption: a.caption,
     status: a.status,
     url: a.url ?? null,
     thumbnail_url: a.thumbUrl ?? null,

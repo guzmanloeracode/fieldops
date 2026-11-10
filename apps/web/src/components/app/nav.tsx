@@ -1,5 +1,6 @@
 "use client";
 import {
+  BadgeCheck,
   BookOpen,
   Briefcase,
   Building2,
@@ -26,7 +27,8 @@ type Item = {
 const ITEMS: Item[] = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
-  { href: "/schedule", label: "Dispatch board", icon: CalendarDays, soon: "0.2", office: true },
+  { href: "/schedule", label: "Dispatch board", icon: CalendarDays, office: true },
+  { href: "/approvals", label: "Approvals", icon: BadgeCheck, office: true },
   { href: "/customers", label: "Customers", icon: Building2 },
 ];
 const SETTINGS: Item[] = [

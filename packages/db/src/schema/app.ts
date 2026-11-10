@@ -7,6 +7,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -197,6 +198,10 @@ export const job = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     canceledAt: timestamp("canceled_at", { withTimezone: true }),
     estimatedDurationMin: integer("estimated_duration_min"),
+    /** When the job was first scheduled with a technician: the response time for KPIs (DSH-01). */
+    firstScheduledAt: timestamp("first_scheduled_at", { withTimezone: true }),
+    /** Needed another visit (rescheduled from hold or reopened): excluded from first-visit completion. */
+    revisit: boolean("revisit").notNull().default(false),
     aiDrafted: boolean("ai_drafted").notNull().default(false),
     needsReview: boolean("needs_review").notNull().default(false),
     createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
@@ -210,6 +215,8 @@ export const job = pgTable(
     index("job_org_status_idx").on(t.organizationId, t.status),
     index("job_org_scheduled_idx").on(t.organizationId, t.scheduledStart),
     index("job_org_created_idx").on(t.organizationId, t.createdAt),
+    index("job_org_completed_idx").on(t.organizationId, t.completedAt),
+    index("job_org_service_type_idx").on(t.organizationId, t.serviceTypeId, t.createdAt),
     index("job_org_customer_idx").on(t.organizationId, t.customerId),
     index("job_org_site_idx").on(t.organizationId, t.siteId),
     index("job_title_trgm_idx").using("gin", t.title.op("gin_trgm_ops")),
@@ -309,12 +316,118 @@ export const attachment = pgTable(
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     tag: text("tag"),
+    /** Free text, e.g. the signer's name on a signature. */
+    caption: text("caption"),
     status: text("status").notNull().default("pending"),
     takenAt: timestamp("taken_at", { withTimezone: true }),
     uploadedBy: uuid("uploaded_by").references(() => user.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [index("attachment_org_job_idx").on(t.organizationId, t.jobId)],
+);
+
+/** Technician time off (SCH-04). Times are instants; the UI works in the organization's time zone. */
+export const timeOff = pgTable(
+  "time_off",
+  {
+    id: id(),
+    organizationId: orgId(),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => member.id, { onDelete: "cascade" }),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    reason: text("reason"),
+    createdBy: uuid("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("time_off_org_member_idx").on(t.organizationId, t.memberId, t.startsAt)],
+);
+
+/** Travel and work time per technician, recorded from status changes and editable with a reason (TEC-04). */
+export const timeEntry = pgTable(
+  "time_entry",
+  {
+    id: id(),
+    organizationId: orgId(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => job.id, { onDelete: "cascade" }),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => member.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    /** Null while the clock is running. */
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    source: text("source").notNull().default("status"),
+    editedReason: text("edited_reason"),
+    editedBy: uuid("edited_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("time_entry_org_job_idx").on(t.organizationId, t.jobId),
+    index("time_entry_org_member_idx").on(t.organizationId, t.memberId, t.startedAt),
+  ],
+);
+
+/** Parts and expenses requested on a job, with the approval decision (EXP-01, EXP-02). */
+export const expenseRequest = pgTable(
+  "expense_request",
+  {
+    id: id(),
+    organizationId: orgId(),
+    jobId: uuid("job_id")
+      .notNull()
+      .references(() => job.id, { onDelete: "cascade" }),
+    requesterMemberId: uuid("requester_member_id").references(() => member.id, { onDelete: "set null" }),
+    kind: text("kind").notNull().default("part"),
+    item: text("item").notNull(),
+    quantity: numeric("quantity", { precision: 10, scale: 2, mode: "number" }).notNull(),
+    unitCostMinor: bigint("unit_cost_minor", { mode: "number" }).notNull(),
+    totalMinor: bigint("total_minor", { mode: "number" }).notNull(),
+    currency: text("currency").notNull(),
+    supplier: text("supplier"),
+    reason: text("reason").notNull(),
+    receiptAttachmentId: uuid("receipt_attachment_id").references(() => attachment.id, {
+      onDelete: "set null",
+    }),
+    status: text("status").notNull().default("pending"),
+    autoApproved: boolean("auto_approved").notNull().default(false),
+    decidedByMemberId: uuid("decided_by_member_id").references(() => member.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionComment: text("decision_comment"),
+    /** When the technician recorded the part as used on the job (TEC-03). */
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    billable: boolean("billable").notNull().default(true),
+    markupBps: integer("markup_bps").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("expense_request_org_job_idx").on(t.organizationId, t.jobId),
+    index("expense_request_org_status_idx").on(t.organizationId, t.status, t.createdAt),
+  ],
+);
+
+/** Named filter sets for the jobs table (JOB-04). Shared views are visible to the whole office. */
+export const savedView = pgTable(
+  "saved_view",
+  {
+    id: id(),
+    organizationId: orgId(),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => member.id, { onDelete: "cascade" }),
+    resource: text("resource").notNull().default("jobs"),
+    name: text("name").notNull(),
+    /** URL query string of the filters, e.g. "status=new,scheduled&priority=urgent". */
+    query: text("query").notNull(),
+    shared: boolean("shared").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index("saved_view_org_resource_idx").on(t.organizationId, t.resource, t.memberId)],
 );
 
 /** Stored responses for POST requests that carried an Idempotency-Key (kept 24 hours). */
@@ -376,4 +489,8 @@ export const TENANT_TABLES = [
   "note",
   "attachment",
   "idempotency_key",
+  "time_off",
+  "time_entry",
+  "expense_request",
+  "saved_view",
 ] as const;

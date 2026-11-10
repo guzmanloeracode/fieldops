@@ -2,6 +2,7 @@ import type {
   Address,
   AttachmentKind,
   AttachmentTag,
+  ChecklistTemplateItem,
   Currency,
   CustomerListQuery,
   CustomerType,
@@ -81,6 +82,10 @@ export interface ServiceTypeRecord {
   currency: Currency;
   color: string | null;
   active: boolean;
+  /** Skills a technician needs for this work (SCH-03). */
+  requiredSkills: string[];
+  /** Copied into each new job's checklist (JOB-08). */
+  checklistTemplate: ChecklistTemplateItem[];
 }
 
 export interface JobRecord {
@@ -103,6 +108,10 @@ export interface JobRecord {
   completedAt: Date | null;
   canceledAt: Date | null;
   estimatedDurationMin: number | null;
+  /** First time the job was scheduled with a technician (response time). */
+  firstScheduledAt: Date | null;
+  /** Needed another visit: rescheduled from hold or reopened. */
+  revisit: boolean;
   aiDrafted: boolean;
   needsReview: boolean;
   createdBy: string | null;
@@ -162,9 +171,17 @@ export interface AttachmentRecord {
   mimeType: string;
   sizeBytes: number;
   tag: AttachmentTag | null;
+  caption: string | null;
   status: "pending" | "ready";
   uploadedBy: string | null;
   createdAt: Date;
+}
+
+export interface WorkingHours {
+  /** 0 = Sunday … 6 = Saturday. */
+  day: number;
+  open: string;
+  close: string;
 }
 
 export interface MemberRecord {
@@ -174,7 +191,18 @@ export interface MemberRecord {
   email: string;
   role: Role;
   isDemo: boolean;
+  skills: string[];
+  /** Null follows the organization's business hours. */
+  workingHours: WorkingHours[] | null;
+  phone: string | null;
   createdAt: Date;
+}
+
+/** Organization settings stored as JSON, with defaults filled in by the repository. */
+export interface OrganizationSettings {
+  approval: { autoApproveBelowMinor: number; dispatcherLimitMinor: number };
+  /** Completing a job needs a customer signature (JOB-10). */
+  requireSignature: boolean;
 }
 
 export interface OrganizationRecord {
@@ -187,8 +215,9 @@ export interface OrganizationRecord {
   country: string;
   brandColor: string | null;
   address: Address | null;
-  businessHours: { day: number; open: string; close: string }[];
+  businessHours: WorkingHours[];
   taxRates: { name: string; rate_bps: number; default: boolean }[];
+  settings: OrganizationSettings;
   isDemo: boolean;
 }
 
@@ -281,6 +310,8 @@ export interface JobRepo {
       | "scheduledEnd"
       | "status"
       | "holdReason"
+      | "firstScheduledAt"
+      | "revisit"
     >,
   ): Promise<JobRecord>;
   /** Applies the patch and bumps the version. With `expectedVersion`, returns null on a version mismatch. */

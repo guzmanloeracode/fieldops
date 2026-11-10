@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { csvEnum, hhmm, isoDateTime, optionalText, queryBool, trimmed, ts } from "./fields";
 import {
   ATTACHMENT_KINDS,
   ATTACHMENT_TAGS,
@@ -11,21 +12,11 @@ import {
   JOB_STATUSES,
   NOTE_VISIBILITIES,
   ROLES,
+  CHECKLIST_ITEM_KINDS,
 } from "./constants";
 
 // Inputs and API representations use snake_case, matching the public REST API (/api/v1).
 // Server actions validate with the same schemas, so web, mobile and API share one contract.
-
-const trimmed = (max: number) => z.string().trim().max(max);
-const optionalText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .transform((v) => (v === "" ? null : v))
-    .nullable()
-    .optional();
-const isoDateTime = z.iso.datetime({ offset: true });
 
 export const roleSchema = z.enum(ROLES).meta({ id: "Role" });
 export const jobStatusSchema = z.enum(JOB_STATUSES).meta({ id: "JobStatus" });
@@ -213,13 +204,13 @@ export const attachmentUploadSchema = z
     size_bytes: z.number().int().positive(),
     kind: z.enum(ATTACHMENT_KINDS).default("photo"),
     tag: z.enum(ATTACHMENT_TAGS).nullable().optional(),
+    caption: optionalText(120),
     with_thumbnail: z.boolean().default(false),
   })
   .meta({ id: "AttachmentUploadRequest" });
 export type AttachmentUploadInput = z.output<typeof attachmentUploadSchema>;
 
 // ---------------------------------------------------------------- organization
-const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM");
 export const businessHoursSchema = z
   .array(
     z.object({
@@ -271,6 +262,23 @@ export const organizationCreateSchema = z.object({
 });
 export type OrganizationCreate = z.output<typeof organizationCreateSchema>;
 
+export const skillSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9 -]{0,38}[a-z0-9]$/, "2–40 letters, numbers, spaces or hyphens");
+
+/** One line of a service type's checklist template (JOB-08). */
+export const checklistTemplateItemSchema = z
+  .object({
+    label: trimmed(200).min(1),
+    kind: z.enum(CHECKLIST_ITEM_KINDS).default("checkbox"),
+    unit: optionalText(20),
+    required: z.boolean().default(false),
+  })
+  .meta({ id: "ChecklistTemplateItem" });
+export type ChecklistTemplateItem = z.output<typeof checklistTemplateItemSchema>;
+
 export const serviceTypeInputSchema = z
   .object({
     name: trimmed(120).min(1),
@@ -288,6 +296,8 @@ export const serviceTypeInputSchema = z
       .nullable()
       .optional(),
     active: z.boolean().default(true),
+    required_skills: z.array(skillSchema).max(10).default([]),
+    checklist_template: z.array(checklistTemplateItemSchema).max(50).default([]),
   })
   .meta({ id: "ServiceTypeInput" });
 export type ServiceTypeInput = z.output<typeof serviceTypeInputSchema>;
@@ -308,6 +318,8 @@ export const serviceTypeUpdateSchema = z
       .regex(/^#[0-9a-fA-F]{6}$/)
       .nullable(),
     active: z.boolean(),
+    required_skills: z.array(skillSchema).max(10),
+    checklist_template: z.array(checklistTemplateItemSchema).max(50),
   })
   .partial()
   .meta({ id: "ServiceTypeUpdate" });
@@ -320,11 +332,6 @@ export const inviteSchema = z.object({
 export type InviteInput = z.output<typeof inviteSchema>;
 
 // ---------------------------------------------------------------- list queries
-const csvEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-  z
-    .union([z.array(z.enum(values)), z.string()])
-    .transform((v) => (Array.isArray(v) ? v : v.split(",").filter(Boolean)))
-    .pipe(z.array(z.enum(values)));
 
 export const jobListQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
@@ -335,6 +342,12 @@ export const jobListQuerySchema = z.object({
   customer: z.uuid().optional(),
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
+  /** Which date `from` and `to` apply to. "scheduled" falls back to the creation date for unscheduled jobs. */
+  date_field: z.enum(["scheduled", "created", "completed"]).optional(),
+  /** Only jobs without a technician. */
+  unassigned: queryBool.optional(),
+  /** Only jobs that needed another visit (rescheduled from hold or reopened). */
+  revisit: queryBool.optional(),
   sort: z
     .string()
     .regex(
@@ -359,7 +372,6 @@ export const customerListQuerySchema = z.object({
 export type CustomerListQuery = z.output<typeof customerListQuerySchema>;
 
 // ---------------------------------------------------------------- API outputs
-const ts = z.string().meta({ format: "date-time" });
 
 export const memberRefSchema = z
   .object({ member_id: z.uuid(), name: z.string(), is_lead: z.boolean() })
@@ -507,6 +519,8 @@ export const serviceTypeSchema = z
     default_price_minor: z.number().int(),
     currency: currencySchema,
     active: z.boolean(),
+    required_skills: z.array(z.string()),
+    checklist_template: z.array(checklistTemplateItemSchema),
   })
   .meta({ id: "ServiceType" });
 
@@ -597,6 +611,7 @@ export const attachmentSchema = z
     mime_type: z.string(),
     size_bytes: z.number().int(),
     tag: z.enum(ATTACHMENT_TAGS).nullable(),
+    caption: z.string().nullable(),
     status: z.enum(["pending", "ready"]),
     url: z.url().nullable().meta({ description: "Short-lived signed download URL (ready attachments only)" }),
     thumbnail_url: z.url().nullable(),

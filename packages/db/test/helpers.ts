@@ -171,6 +171,39 @@ export async function createOrgWithData(db: Database, label: string) {
     requestHash: "h",
     responseStatus: 201,
   });
+  // 0.2 tables: one row each so the RLS checks have something to hide.
+  await db.insert(s.timeOff).values({
+    organizationId: orgId,
+    memberId: members.tech,
+    startsAt: new Date("2026-11-20T00:00:00Z"),
+    endsAt: new Date("2026-11-21T00:00:00Z"),
+    reason: "Vacation",
+  });
+  await db.insert(s.timeEntry).values({
+    organizationId: orgId,
+    jobId: ids.job,
+    memberId: members.tech,
+    kind: "work",
+    startedAt: new Date("2026-11-11T09:00:00Z"),
+    endedAt: new Date("2026-11-11T10:00:00Z"),
+  });
+  await db.insert(s.expenseRequest).values({
+    organizationId: orgId,
+    jobId: ids.job,
+    requesterMemberId: members.tech,
+    item: "Drain pump",
+    quantity: 1,
+    unitCostMinor: 4500,
+    totalMinor: 4500,
+    currency: "USD",
+    reason: "Pump failed",
+  });
+  await db.insert(s.savedView).values({
+    organizationId: orgId,
+    memberId: members.dispatcher,
+    name: "Urgent",
+    query: "priority=urgent",
+  });
   return { orgId, users, members, ids };
 }
 

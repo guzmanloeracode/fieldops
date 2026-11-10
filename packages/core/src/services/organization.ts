@@ -87,6 +87,8 @@ export async function createServiceType(ctx: ServiceContext, raw: unknown) {
     currency: org.currency,
     color: input.color ?? null,
     active: input.active,
+    requiredSkills: [...new Set(input.required_skills)],
+    checklistTemplate: input.checklist_template,
   });
 }
 
@@ -98,6 +100,8 @@ export async function updateServiceType(ctx: ServiceContext, id: string, raw: un
     ...(input.description !== undefined && { description: input.description ?? null }),
     ...(input.default_duration_min !== undefined && { defaultDurationMin: input.default_duration_min }),
     ...(input.default_price_minor !== undefined && { defaultPriceMinor: input.default_price_minor }),
+    ...(input.required_skills !== undefined && { requiredSkills: [...new Set(input.required_skills)] }),
+    ...(input.checklist_template !== undefined && { checklistTemplate: input.checklist_template }),
     ...(input.color !== undefined && { color: input.color ?? null }),
     ...(input.active !== undefined && { active: input.active }),
   });

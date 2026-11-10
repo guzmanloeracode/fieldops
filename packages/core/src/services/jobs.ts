@@ -187,6 +187,9 @@ export async function transitionJob(ctx: ServiceContext, id: string, raw: unknow
     patch.scheduledEnd = null;
   }
   if (rule.to === "in_progress" || rule.to === "completed") patch.needsReview = false;
+  if (rule.to === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
+  // A job that needs another visit doesn't count as a first-visit completion (DSH-01).
+  if (rule.name === "reschedule" || rule.name === "reopen") patch.revisit = true;
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
@@ -251,7 +254,11 @@ export async function assignJob(ctx: ServiceContext, id: string, raw: unknown) {
   if (job.status === "scheduled" && !hasAll) toStatus = "new";
   if (job.status === "on_hold" && hasAll && findTransition("on_hold", "scheduled")) toStatus = "scheduled";
   if (toStatus !== job.status) patch.status = toStatus;
-  if (job.status === "on_hold" && toStatus === "scheduled") patch.holdReason = null;
+  if (job.status === "on_hold" && toStatus === "scheduled") {
+    patch.holdReason = null;
+    patch.revisit = true;
+  }
+  if (toStatus === "scheduled" && !job.firstScheduledAt) patch.firstScheduledAt = ctx.now;
 
   const updated = await ctx.store.jobs.update(job.id, patch, job.version);
   if (!updated) throw new PreconditionFailedError();
@@ -352,6 +359,7 @@ export async function requestAttachmentUpload(ctx: ServiceContext, jobId: string
     mimeType: input.mime_type,
     sizeBytes: input.size_bytes,
     tag: input.tag ?? null,
+    caption: input.caption ?? null,
     status: "pending",
     uploadedBy: ctx.actor.userId,
   });

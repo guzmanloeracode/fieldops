@@ -7,7 +7,6 @@ import { getTranslations } from "next-intl/server";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow } from "@/lib/format";
-import { fileStorageConfigured } from "@/env";
 import { requireActor, runService } from "@/server/context";
 import { AssignCard } from "./assign-card";
 import { Attachments } from "./attachments";
@@ -184,8 +183,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
 
           <Attachments
             jobId={job.id}
-            canUpload={canWork && fileStorageConfigured}
-            storageReady={fileStorageConfigured}
+            canUpload={canWork}
+            storageReady
             actorUserId={actor.userId}
             canRemoveAny={office}
             items={data.attachments.map((a) => ({
