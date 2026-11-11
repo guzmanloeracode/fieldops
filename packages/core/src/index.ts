@@ -63,5 +63,7 @@ export { customerLocale, dateText, moneyText, portalPath } from "./services/bill
 // 0.4 pay: online payments (FIN-05) and quotes and invoices in the customer portal (POR-04)
 export * from "./services/payments-types";
 export * from "./services/platform-types";
+export * from "./services/webhook-types";
+export * as webhooks from "./services/webhooks";
 export * as payments from "./services/payments";
 export * as portalBilling from "./services/portal-billing";

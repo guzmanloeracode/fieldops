@@ -6,3 +6,13 @@ export { runMigrations } from "./migrate";
 export { claimPendingAiDrafts, failAiDraft, releaseStuckAiDrafts } from "./ai-queue";
 export { claimPendingReports, failReportDraft, releaseStuckReports } from "./repos/reports";
 export { deleteExpiredConversations } from "./repos/assistant";
+export {
+  claimOutboxEvents,
+  deleteOldOutboxEvents,
+  markOutboxFailed,
+  markOutboxSent,
+  organizationsWithWebhooks,
+  outboxBackoffSeconds,
+  OUTBOX_MAX_ATTEMPTS,
+  type ClaimedOutboxEvent,
+} from "./outbox";

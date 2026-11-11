@@ -1,0 +1,24 @@
+{
+  "name": "@fieldops/relay",
+  "version": "0.4.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run --coverage",
+    "fake": "tsx src/fake-cli.ts"
+  },
+  "dependencies": {
+    "@fieldops/core": "workspace:*",
+    "@fieldops/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^5.1.0",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.0"
+  }
+}

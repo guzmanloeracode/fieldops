@@ -60,7 +60,7 @@ export interface ApiKeyRepr {
 export const API_RATE_LIMIT_PER_KEY = 300;
 export const API_RATE_LIMIT_PER_USER = 600;
 
-// ------------------------------------------------------------------ Webhooks (PLT-03, §17.3)
+// ------------------------------------------------------------------ Webhooks (PLT-03, §17.3, ADR 022)
 
 /**
  * Events FieldOps publishes. They are thin: `data` names the record and its key fields, and a receiver that needs
@@ -84,17 +84,23 @@ export const WEBHOOK_EVENT_TYPES = [
 ] as const;
 export type WebhookEventType = (typeof WEBHOOK_EVENT_TYPES)[number];
 
+/** The resource part of each event type, for grouping in the UI and the docs. */
+export const WEBHOOK_EVENT_GROUPS = ["job", "sla", "quote", "invoice", "expense"] as const;
+export type WebhookEventGroup = (typeof WEBHOOK_EVENT_GROUPS)[number];
+
 /** Sent by "Send test event"; only ever delivered to the endpoint it was sent to. */
 export const WEBHOOK_TEST_EVENT = "webhook.test";
 /** Endpoints per organization. */
 export const MAX_WEBHOOK_ENDPOINTS_PER_ORG = 10;
+/** Receivers should reject a `webhook-timestamp` further than this from their clock. */
+export const WEBHOOK_TOLERANCE_SECONDS = 300;
 
 const eventTypeSchema = z.enum(WEBHOOK_EVENT_TYPES).meta({ id: "WebhookEventType" });
 const eventTypesSchema = z
   .array(z.union([eventTypeSchema, z.literal("*")]))
   .min(1)
   .max(WEBHOOK_EVENT_TYPES.length + 1)
-  .transform((types) => (types.includes("*") ? (["*"] as const) : [...new Set(types)]))
+  .transform((types): (WebhookEventType | "*")[] => (types.includes("*") ? ["*"] : [...new Set(types)]))
   .meta({ description: 'Event types to receive, or ["*"] for all of them' });
 
 const webhookUrl = z
@@ -121,8 +127,31 @@ export const webhookEndpointUpdateSchema = z
   .meta({ id: "WebhookEndpointUpdate" });
 export type WebhookEndpointUpdateInput = z.infer<typeof webhookEndpointUpdateSchema>;
 
-export const WEBHOOK_DELIVERY_STATUSES = ["pending", "delivered", "failed", "dead"] as const;
+export const webhookSettingsUpdateSchema = z
+  .object({ enabled: z.boolean() })
+  .meta({ id: "WebhookSettingsUpdate" });
+export type WebhookSettingsUpdateInput = z.infer<typeof webhookSettingsUpdateSchema>;
+
+/**
+ * `pending` waits for its first attempt, `retrying` had a failed attempt and waits for the next, `delivered`
+ * succeeded, `dead` ran out of attempts (or the endpoint was turned off or gone) and can be redelivered.
+ */
+export const WEBHOOK_DELIVERY_STATUSES = ["pending", "retrying", "delivered", "dead"] as const;
 export type WebhookDeliveryStatus = (typeof WEBHOOK_DELIVERY_STATUSES)[number];
+
+export const webhookDeliveryQuerySchema = z.object({
+  status: z.enum(WEBHOOK_DELIVERY_STATUSES).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  cursor: z.string().max(500).optional(),
+});
+export type WebhookDeliveryQuery = z.infer<typeof webhookDeliveryQuerySchema>;
+
+export interface WebhookSettingsRepr {
+  /** Relay is set up for this installation; without it webhooks can't be turned on. */
+  configured: boolean;
+  enabled: boolean;
+  enabled_at: string | null;
+}
 
 export interface WebhookEndpointRepr {
   id: string;
@@ -130,31 +159,54 @@ export interface WebhookEndpointRepr {
   description: string | null;
   event_types: (WebhookEventType | "*")[];
   enabled: boolean;
-  /** Why Relay turned it off, e.g. after 24 hours of failures or a 410 Gone. */
+  /** Why the endpoint is off: turned off by a person, or by Relay after a day of failures or a 410 Gone. */
   disabled_reason: string | null;
+  disabled_at: string | null;
+  /** Failed attempts in a row, and since when; reset by a success. */
+  failure_streak: number;
+  failing_since: string | null;
   created_at: string;
 }
 
+/** The create and rotate responses: the endpoint plus its signing secret, shown once. */
+export interface WebhookEndpointWithSecret extends WebhookEndpointRepr {
+  secret: string;
+}
+
 export interface WebhookAttemptRepr {
-  attempted_at: string;
+  attempt: number;
+  started_at: string;
+  latency_ms: number;
   status_code: number | null;
-  latency_ms: number | null;
   error: string | null;
   /** The first kilobyte of the receiver's answer. */
   response_excerpt: string | null;
+  outcome: "delivered" | "retry" | "dead" | "skipped";
 }
 
 export interface WebhookDeliveryRepr {
   id: string;
   endpoint_id: string;
   event_id: string;
-  event_type: string;
+  /** Null when the event is no longer known (events are kept 7 days). */
+  event_type: string | null;
   status: WebhookDeliveryStatus;
   attempts: number;
+  max_attempts: number;
   next_attempt_at: string | null;
   last_status_code: number | null;
+  last_error: string | null;
+  /** Why it is dead: `max_attempts`, `endpoint_gone`, `endpoint_disabled` or `rejected`. */
+  dead_reason: string | null;
+  /** The dead delivery this one redelivers, and when this one was redelivered. */
+  replay_of: string | null;
+  replayed_at: string | null;
   created_at: string;
-  delivered_at: string | null;
+  completed_at: string | null;
+}
+
+export interface WebhookDeliveryDetailRepr extends WebhookDeliveryRepr {
+  attempt_log: WebhookAttemptRepr[];
 }
 
 /** The body every webhook carries (Relay's envelope; `tenant` is the organization ID). */

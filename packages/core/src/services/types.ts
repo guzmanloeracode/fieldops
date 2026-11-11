@@ -1,3 +1,4 @@
+import type { WebhookRepo } from "./webhook-types";
 import type {
   Address,
   AttachmentKind,
@@ -477,6 +478,8 @@ export interface Store {
   recurrences: RecurrenceRepo;
   digest: DigestRepo;
   assistant: AssistantRepo;
+  // 0.5 platform
+  webhooks: WebhookRepo;
 }
 
 export interface FileStorage {
