@@ -1,0 +1,28 @@
+{
+  "title": "Coba 5 hal ini",
+  "description": "Tur singkat demo sebagai {role}. Semua data direset setiap pukul 00.00 UTC.",
+  "dismiss": "Sembunyikan tur",
+  "done": "Selesai",
+  "progress": "{done} dari {total} sudah dicoba",
+  "owner": {
+    "kpis": "Klik grafik di ringkasan untuk melihat pekerjaan yang terkait",
+    "approvals": "Setujui atau tolak pengajuan suku cadang bernilai besar",
+    "audit": "Lihat siapa mengubah apa di log audit",
+    "portal": "Buka portal pelanggan sebagai pelanggan dan ajukan permintaan layanan",
+    "settings": "Ubah batas persetujuan di pengaturan operasional"
+  },
+  "dispatcher": {
+    "board": "Seret pekerjaan dari antrean ke teknisi di papan jadwal",
+    "review": "Tinjau permintaan yang masuk lewat portal pelanggan",
+    "today": "Periksa beban kerja hari ini dan pekerjaan yang berisiko di tab Hari ini",
+    "search": "Cari pekerjaan dan pelanggan dengan ⌘K atau Ctrl K",
+    "export": "Filter daftar pekerjaan, lalu ekspor sebagai CSV"
+  },
+  "technician": {
+    "myDay": "Lihat kunjungan hari ini di Jadwal saya pada layar seukuran ponsel",
+    "start": "Ketuk Berangkat, lalu Mulai pada kunjungan berikutnya",
+    "checklist": "Centang daftar periksa dan tambahkan foto",
+    "part": "Ajukan suku cadang untuk sebuah pekerjaan",
+    "complete": "Ambil tanda tangan pelanggan, lalu selesaikan pekerjaan"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "bell": {
+    "label": "Notifikasi",
+    "labelUnread": "Notifikasi, {count} belum dibaca",
+    "title": "Notifikasi",
+    "markAll": "Tandai semua sudah dibaca",
+    "empty": "Semua notifikasi sudah Anda baca.",
+    "viewAll": "Lihat semua notifikasi",
+    "settings": "Pengaturan notifikasi",
+    "loading": "Memuat notifikasi…",
+    "error": "Notifikasi gagal dimuat. Coba lagi.",
+    "arrived": "Notifikasi baru: {text}"
+  },
+  "page": {
+    "title": "Notifikasi",
+    "description": "Kabar terbaru tentang pekerjaan, persetujuan, dan SLA Anda.",
+    "filter": "Tampilkan",
+    "all": "Semua",
+    "unread": "Belum dibaca",
+    "markAll": "Tandai semua sudah dibaca",
+    "markRead": "Tandai sudah dibaca",
+    "marked": "Ditandai sudah dibaca",
+    "empty": "Belum ada notifikasi.",
+    "emptyUnread": "Tidak ada notifikasi yang belum dibaca.",
+    "settings": "Pengaturan notifikasi",
+    "unreadDot": "Belum dibaca"
+  },
+  "events": {
+    "job_assigned": "{actor} menugaskan Anda ke {job}",
+    "job_rescheduled": "{job} dijadwalkan ulang",
+    "portal_request": "Permintaan baru dari portal: {job}",
+    "sla_at_risk": "SLA berisiko: {job}",
+    "sla_breached": "SLA terlewati: {job}",
+    "expense_requested": "{actor} mengajukan {item} untuk {job}",
+    "expense_decided": "{item} untuk {job} {decision, select, approved {disetujui} other {ditolak}}",
+    "quote_decided": "{quote} {decision, select, approved {disetujui} other {ditolak}} oleh {customer}",
+    "payment_received": "{customer} membayar {amount} untuk {invoice}"
+  },
+  "detail": {
+    "starts": "Mulai {when}",
+    "due": "Tenggat {target, select, response {penjadwalan} other {penyelesaian}} {when}"
+  },
+  "fallback": {
+    "actor": "Seseorang",
+    "job": "sebuah pekerjaan",
+    "item": "Suku cadang",
+    "quote": "sebuah penawaran",
+    "invoice": "sebuah faktur",
+    "customer": "Seorang pelanggan",
+    "amount": "sebuah pembayaran"
+  },
+  "eventNames": {
+    "job_assigned": "Pekerjaan ditugaskan kepada Anda",
+    "job_rescheduled": "Kunjungan Anda dijadwalkan ulang",
+    "portal_request": "Pelanggan mengirim permintaan dari portal",
+    "sla_at_risk": "Pekerjaan berisiko melewati SLA",
+    "sla_breached": "Pekerjaan melewati SLA",
+    "expense_requested": "Suku cadang atau biaya perlu persetujuan Anda",
+    "expense_decided": "Pengajuan suku cadang atau biaya Anda sudah diputuskan",
+    "daily_digest": "Ringkasan harian pukul 07.00: angka kemarin, pekerjaan terlambat, dan persetujuan",
+    "quote_decided": "Pelanggan menyetujui atau menolak penawaran",
+    "payment_received": "Pembayaran tercatat pada faktur"
+  },
+  "preferences": {
+    "title": "Pengaturan notifikasi",
+    "description": "Pilih cara FieldOps memberi tahu Anda tentang setiap peristiwa. Email dikirim ke {email}.",
+    "event": "Peristiwa",
+    "inApp": "Di aplikasi",
+    "email": "Email",
+    "noEmail": "Tidak dikirim lewat email",
+    "toggle": "{channel}: {event}",
+    "save": "Simpan pengaturan",
+    "saved": "Pengaturan notifikasi disimpan",
+    "back": "Notifikasi"
+  }
+}

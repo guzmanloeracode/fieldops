@@ -94,7 +94,8 @@
     "created": "Created",
     "location": "Location and contact",
     "directions": "Get directions",
-    "access": "Access"
+    "access": "Access",
+    "mapOf": "Map showing {place}"
   },
   "transition": {
     "schedule": "Schedule",

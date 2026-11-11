@@ -73,7 +73,8 @@
     "empty": "No jobs in this period.",
     "noTechnicians": "No technicians yet.",
     "downloadCsv": "Download CSV",
-    "downloadCsvLabel": "Download CSV: {report}"
+    "downloadCsvLabel": "Download CSV: {report}",
+    "hourUnit": " h"
   },
   "today": {
     "scheduled": "Visits today",

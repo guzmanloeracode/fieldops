@@ -2,7 +2,8 @@
 import type { AiLimits, AiProvider, AiUsageSummary } from "@fieldops/core";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { intlLocale } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FieldError } from "@/components/app/field-error";
@@ -14,8 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { updateAiSettingsAction } from "./actions";
 
-const fmt = new Intl.NumberFormat("en-US");
-
 export function AiSettingsForm(props: {
   enabled: boolean;
   monthlyQuota: number;
@@ -26,6 +25,7 @@ export function AiSettingsForm(props: {
   limits: AiLimits;
 }) {
   const t = useTranslations("ai.settings");
+  const fmt = new Intl.NumberFormat(intlLocale(useLocale()));
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [enabled, setEnabled] = useState(props.enabled);

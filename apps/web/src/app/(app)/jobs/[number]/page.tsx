@@ -6,14 +6,13 @@ import {
   jobs,
   organization,
   signatures,
-  STATUS_LABELS,
   timeEntries,
 } from "@fieldops/core";
 import { ArrowLeft, Inbox, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PriorityBadge, StatusBadge } from "@/components/app/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow } from "@/lib/format";
@@ -49,6 +48,8 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
   const actor = await requireActor();
   const t = await getTranslations("jobs");
   const tz = actor.organization.timezone;
+  const locale = await getLocale();
+  const tStatus = await getTranslations("common.status");
   const office = can(actor, "jobs.update");
 
   const data = await runService(async (ctx) => {
@@ -225,18 +226,18 @@ export default async function JobPage({ params }: { params: Promise<{ number: st
                     : "—"}
                 </Item>
                 <Item label={t("detail.preferredWindow")}>
-                  {job.preferredStart ? formatWindow(job.preferredStart, job.preferredEnd, tz) : "—"}
+                  {job.preferredStart ? formatWindow(job.preferredStart, job.preferredEnd, tz, locale) : "—"}
                 </Item>
                 <Item label={t("detail.estimate")}>
                   {job.estimatedDurationMin ? t("detail.minutes", { n: job.estimatedDurationMin }) : "—"}
                 </Item>
                 <Item label={t("detail.source")}>{t(`source.${job.source}`)}</Item>
-                <Item label={t("detail.created")}>{formatDateTime(job.createdAt, tz)}</Item>
+                <Item label={t("detail.created")}>{formatDateTime(job.createdAt, tz, locale)}</Item>
                 {job.completedAt ? (
-                  <Item label={STATUS_LABELS.completed}>{formatDateTime(job.completedAt, tz)}</Item>
+                  <Item label={tStatus("completed")}>{formatDateTime(job.completedAt, tz, locale)}</Item>
                 ) : null}
                 {job.canceledAt ? (
-                  <Item label={STATUS_LABELS.canceled}>{formatDateTime(job.canceledAt, tz)}</Item>
+                  <Item label={tStatus("canceled")}>{formatDateTime(job.canceledAt, tz, locale)}</Item>
                 ) : null}
               </dl>
             </CardContent>

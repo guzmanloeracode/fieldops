@@ -133,9 +133,25 @@ describe("customer services", () => {
       billing_address: ADDRESS,
     });
     expect(c2).toMatchObject({ type: "commercial", name: "Cara Ltd", billingAddress: ADDRESS });
+    expect(c2.locale ?? null).toBeNull();
     await expect(
       customers.updateCustomer(w.ctx(w.dispatcher), "missing", { name: "x" }),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("keeps the customer's language, or null to follow the organization (SET-05)", async () => {
+    const w = world();
+    const { customer } = await customers.createCustomer(w.ctx(w.dispatcher), { name: "Budi", locale: "id" });
+    expect(customer.locale).toBe("id");
+    expect((await customers.createCustomer(w.ctx(w.dispatcher), { name: "Ann" })).customer.locale).toBeNull();
+    const back = await customers.updateCustomer(w.ctx(w.dispatcher), customer.id, { locale: null });
+    expect(back.locale).toBeNull();
+    expect((await customers.updateCustomer(w.ctx(w.dispatcher), customer.id, { locale: "en" })).locale).toBe(
+      "en",
+    );
+    await expect(
+      customers.updateCustomer(w.ctx(w.dispatcher), customer.id, { locale: "fr" }),
+    ).rejects.toMatchObject({ fields: [{ path: "locale" }] });
   });
 
   it("soft-deletes customers (managers only)", async () => {

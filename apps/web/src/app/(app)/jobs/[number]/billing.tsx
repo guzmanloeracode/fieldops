@@ -2,7 +2,7 @@ import { balanceOf, can, invoices, quotes } from "@fieldops/core";
 import type { JobStatus } from "@fieldops/shared";
 import { FilePlus2 } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { money } from "@/components/billing/money";
 import { InvoiceStatusBadge, QuoteStatusBadge } from "@/components/billing/status-badges";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export async function JobBilling({
   const actor = await requireActor();
   if (!can(actor, "billing.manage")) return null;
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const data = await runService(
     async (ctx) => ({
       quote: await quotes.quoteForJob(ctx, jobId),
@@ -53,7 +54,7 @@ export async function JobBilling({
               {data.quote.number}
             </Link>
             <QuoteStatusBadge status={data.quote.status} label={t(`quoteStatus.${data.quote.status}`)} />
-            <span className="tabular-nums">{money(data.quote.totalMinor, data.quote.currency)}</span>
+            <span className="tabular-nums">{money(data.quote.totalMinor, data.quote.currency, locale)}</span>
           </p>
         ) : null}
         {data.invoices.length === 0 ? (
@@ -71,10 +72,10 @@ export async function JobBilling({
                   {i.number ?? t("invoice.draftNumber")}
                 </Link>
                 <InvoiceStatusBadge status={i.status} label={t(`invoiceStatus.${i.status}`)} />
-                <span className="ml-auto tabular-nums">{money(i.totalMinor, i.currency)}</span>
+                <span className="ml-auto tabular-nums">{money(i.totalMinor, i.currency, locale)}</span>
                 {i.status === "sent" || i.status === "overdue" ? (
                   <span className="text-muted-foreground w-full text-xs sm:w-auto">
-                    {t("job.balance", { amount: money(balanceOf(i), i.currency) })}
+                    {t("job.balance", { amount: money(balanceOf(i), i.currency, locale) })}
                   </span>
                 ) : null}
               </li>

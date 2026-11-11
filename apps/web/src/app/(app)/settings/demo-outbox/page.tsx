@@ -4,7 +4,7 @@ import { Inbox } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { EmptyState } from "@/components/app/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
 import { requireActor } from "@/server/context";
 import { db } from "@/server/db";
 
-export const metadata: Metadata = { title: "Demo outbox" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("demoOutbox") };
+}
 
 const KINDS = ["verify_email", "reset_password", "invitation"] as const;
 
@@ -25,6 +28,7 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
   if (!env.DEMO_MODE) notFound();
   const actor = await requireActor();
   const t = await getTranslations("settings.demoOutbox");
+  const locale = await getLocale();
   const { id } = await searchParams;
   const selectedId = z.uuid().safeParse(id).success ? id : undefined;
 
@@ -88,7 +92,7 @@ export default async function DemoOutboxPage({ searchParams }: { searchParams: P
                         {kindLabel(e.kind)} · {e.toEmail}
                       </span>
                       <span className="text-muted-foreground block text-xs">
-                        {formatDateTime(e.createdAt, actor.organization.timezone)}
+                        {formatDateTime(e.createdAt, actor.organization.timezone, locale)}
                       </span>
                     </Link>
                   </li>

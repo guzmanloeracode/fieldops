@@ -3,7 +3,7 @@ import { INVOICE_STATUSES, invoiceListQuerySchema } from "@fieldops/shared";
 import { Plus, ReceiptText } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireActor, runService } from "@/server/context";
 
-export const metadata: Metadata = { title: "Invoices" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("invoices") };
+}
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -24,6 +27,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<SP> }) {
   const actor = await requireActor();
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const sp = await searchParams;
   const parsed = invoiceListQuerySchema.safeParse({
     q: one(sp.q) || undefined,
@@ -79,7 +83,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <div>
             <span className="text-muted-foreground text-xs font-medium">{t("invoices.outstanding")}</span>
             <span className="block text-2xl font-semibold tabular-nums">
-              {money(s.outstandingMinor, s.currency)}
+              {money(s.outstandingMinor, s.currency, locale)}
             </span>
             <span className="text-muted-foreground text-xs">
               {t("invoices.openCount", { count: s.outstandingCount })}
@@ -90,7 +94,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           <Link href="/invoices?status=overdue" className="block">
             <span className="text-muted-foreground text-xs font-medium">{t("invoices.overdue")}</span>
             <span className="block text-2xl font-semibold tabular-nums text-amber-800 dark:text-amber-300">
-              {money(s.overdueMinor, s.currency)}
+              {money(s.overdueMinor, s.currency, locale)}
             </span>
             <span className="text-muted-foreground text-xs">
               {t("invoices.openCount", { count: s.overdueCount })}
@@ -145,13 +149,15 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                     <TableCell>
                       <InvoiceStatusBadge status={i.status} label={t(`invoiceStatus.${i.status}`)} />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">{dayText(i.issueDate)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{dayText(i.dueDate)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{dayText(i.issueDate, locale)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{dayText(i.dueDate, locale)}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {money(i.totalMinor, i.currency)}
+                      {money(i.totalMinor, i.currency, locale)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {i.status === "void" || i.status === "draft" ? "—" : money(balanceOf(i), i.currency)}
+                      {i.status === "void" || i.status === "draft"
+                        ? "—"
+                        : money(balanceOf(i), i.currency, locale)}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -1,7 +1,7 @@
 import { formatJobNumber, parseJobNumber } from "@fieldops/core";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatWindow } from "@/lib/format";
 import { getPortalOrg } from "@/server/portal/session";
@@ -22,6 +22,7 @@ export default async function PortalJobPage({
   const org = (await getPortalOrg(slug))!;
   const t = await getTranslations("portal.job");
   const ts = await getTranslations("portal.job.step");
+  const locale = await getLocale();
   const d = await loadPortalJob(slug, parseJobNumber(number)!);
   const tz = org.timezone;
   const j = d.job;
@@ -55,7 +56,7 @@ export default async function PortalJobPage({
           <div>
             <p className="text-muted-foreground text-xs">{t("visit")}</p>
             <p className="text-sm font-medium">
-              {j.scheduledStart ? formatWindow(j.scheduledStart, j.scheduledEnd, tz) : t("noVisit")}
+              {j.scheduledStart ? formatWindow(j.scheduledStart, j.scheduledEnd, tz, locale) : t("noVisit")}
             </p>
           </div>
           <div>
@@ -85,7 +86,7 @@ export default async function PortalJobPage({
                 <h3 className="text-muted-foreground text-xs">{t("windows")}</h3>
                 <ul className="mt-1 space-y-0.5 text-sm">
                   {d.requestedWindows.map((w) => (
-                    <li key={w.start.toISOString()}>{formatWindow(w.start, w.end, tz)}</li>
+                    <li key={w.start.toISOString()}>{formatWindow(w.start, w.end, tz, locale)}</li>
                   ))}
                 </ul>
               </div>
@@ -125,7 +126,7 @@ export default async function PortalJobPage({
               <div key={i}>
                 <p className="text-sm whitespace-pre-line">{n.body}</p>
                 <time className="text-muted-foreground text-xs" dateTime={n.createdAt.toISOString()}>
-                  {formatDateTime(n.createdAt, tz)}
+                  {formatDateTime(n.createdAt, tz, locale)}
                 </time>
               </div>
             ))}
@@ -148,11 +149,11 @@ export default async function PortalJobPage({
                 />
                 <p className="text-sm">
                   {s.status === "scheduled" && s.window
-                    ? ts("scheduled", { window: formatWindow(s.window.start, s.window.end, tz) })
+                    ? ts("scheduled", { window: formatWindow(s.window.start, s.window.end, tz, locale) })
                     : ts(s.status)}
                 </p>
                 <time className="text-muted-foreground text-xs" dateTime={s.at.toISOString()}>
-                  {formatDateTime(s.at, tz)}
+                  {formatDateTime(s.at, tz, locale)}
                 </time>
               </li>
             ))}

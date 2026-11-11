@@ -1,7 +1,7 @@
 import type { dashboard } from "@fieldops/core";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { cn } from "@/lib/utils";
 import { formatCount, formatMinutes, formatPercent } from "./format";
 
@@ -21,14 +21,19 @@ export interface KpiTile {
   display?: (v: number | null) => string;
 }
 
-function show(v: number | null, kind: Kind, display?: (v: number | null) => string) {
+function show(v: number | null, kind: Kind, locale: string, display?: (v: number | null) => string) {
   if (display) return display(v);
-  return kind === "rate" ? formatPercent(v) : kind === "minutes" ? formatMinutes(v) : formatCount(v);
+  return kind === "rate"
+    ? formatPercent(v, locale)
+    : kind === "minutes"
+      ? formatMinutes(v, locale)
+      : formatCount(v, locale);
 }
 
 /** KPI tiles with the change against the previous period (DSH-01). Each tile opens the matching jobs. */
 export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
   const t = await getTranslations("dashboard.kpi");
+  const locale = await getLocale();
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {tiles.map((tile) => {
@@ -41,7 +46,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
             tile.kind === "rate"
               ? t("points", { value: Math.abs(Math.round(diff * 100)) })
               : previous === 0
-                ? show(Math.abs(diff), tile.kind, tile.display)
+                ? show(Math.abs(diff), tile.kind, locale, tile.display)
                 : `${Math.abs(Math.round((diff / previous) * 100))}%`;
           delta = {
             text: direction === "same" ? t("same") : t(direction, { value: amount }),
@@ -60,7 +65,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
             >
               <span className="text-muted-foreground text-xs font-medium">{tile.label}</span>
               <span className="text-2xl font-semibold tabular-nums">
-                {show(value, tile.kind, tile.display)}
+                {show(value, tile.kind, locale, tile.display)}
               </span>
               {delta ? (
                 <span
@@ -83,7 +88,7 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
                 <span className="text-muted-foreground text-xs">{t("noPrevious")}</span>
               )}
               <span className="text-muted-foreground text-xs">
-                {t("previous", { value: show(previous, tile.kind, tile.display) })}
+                {t("previous", { value: show(previous, tile.kind, locale, tile.display) })}
                 {tile.note ? <> · {tile.note}</> : null}
               </span>
             </Link>

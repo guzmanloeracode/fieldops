@@ -7,7 +7,10 @@ import { intakeModel } from "@/server/ai";
 import { requireActor, runService } from "@/server/context";
 import { NewJobForm } from "./new-job-form";
 
-export const metadata: Metadata = { title: "New job" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("newJob") };
+}
 
 export default async function NewJobPage({ searchParams }: { searchParams: Promise<{ customer?: string }> }) {
   const actor = await requireActor();

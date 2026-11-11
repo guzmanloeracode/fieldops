@@ -1,8 +1,8 @@
-import { STATUS_LABELS, type dashboard } from "@fieldops/core";
+import type { dashboard } from "@fieldops/core";
 import { JOB_STATUSES, type DashboardRange } from "@fieldops/shared";
 import { Download } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -104,6 +104,8 @@ export async function Overview({
   serviceTypes: Option[];
 }) {
   const t = await getTranslations("dashboard");
+  const tStatus = await getTranslations("common.status");
+  const locale = await getLocale();
   const { range, filters } = data;
   const base = { technician: filters.technicianId, service_type: filters.serviceTypeId };
   const period = { from: range.from, to: range.to };
@@ -134,7 +136,7 @@ export async function Overview({
     {
       key: "sla",
       label: t("kpi.sla"),
-      note: t("kpi.slaNote", { response: formatPercent(k.responseCompliance.value) }),
+      note: t("kpi.slaNote", { response: formatPercent(k.responseCompliance.value, locale) }),
       value: k.slaCompliance,
       kind: "rate",
       higherIsBetter: true,
@@ -173,7 +175,7 @@ export async function Overview({
     const from = clampFrom(s.bucket);
     const to = bucketEnd(s.bucket, range.bucket, range.to);
     return {
-      label: shortDate(from),
+      label: shortDate(from, locale),
       counts: s.counts,
       hrefs: Object.fromEntries(
         JOB_STATUSES.map((st) => [st, jobsHref({ ...base, status: st, date_field: "created", from, to })]),
@@ -184,7 +186,7 @@ export async function Overview({
   const slaPoints = data.slaTrend.map((s) => {
     const from = clampFrom(s.bucket);
     return {
-      label: shortDate(from),
+      label: shortDate(from, locale),
       rate: s.rate,
       href: jobsHref({
         ...base,
@@ -227,10 +229,10 @@ export async function Overview({
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <p className="text-muted-foreground text-sm" data-testid="dashboard-period">
             {t("filters.period", {
-              from: longDate(range.from),
-              to: longDate(range.to),
-              prevFrom: longDate(range.prevFrom),
-              prevTo: longDate(range.prevTo),
+              from: longDate(range.from, locale),
+              to: longDate(range.to, locale),
+              prevFrom: longDate(range.prevFrom, locale),
+              prevTo: longDate(range.prevTo, locale),
             })}
           </p>
           <CsvLink
@@ -269,7 +271,7 @@ export async function Overview({
                         className="mr-1 inline-block size-2 rounded-full"
                         style={{ background: STATUS_COLORS[s] }}
                       />
-                      {STATUS_LABELS[s]}
+                      {tStatus(s)}
                     </TableHead>
                   ))}
                   <TableHead scope="col" className="text-right">
@@ -337,7 +339,7 @@ export async function Overview({
                       )}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{s.withinTarget}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatPercent(s.rate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatPercent(s.rate, locale)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -387,19 +389,19 @@ export async function Overview({
                     <TableCell className="text-right">
                       {s.serviceTypeId ? (
                         <Link href={typeHref(s.serviceTypeId)!} className={cellLink}>
-                          {formatCount(s.created)}
+                          {formatCount(s.created, locale)}
                         </Link>
                       ) : (
-                        formatCount(s.created)
+                        formatCount(s.created, locale)
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       {s.serviceTypeId ? (
                         <Link href={completed({ service_type: s.serviceTypeId })} className={cellLink}>
-                          {formatCount(s.completed)}
+                          {formatCount(s.completed, locale)}
                         </Link>
                       ) : (
-                        formatCount(s.completed)
+                        formatCount(s.completed, locale)
                       )}
                     </TableCell>
                   </TableRow>
@@ -425,7 +427,7 @@ export async function Overview({
                 }))}
                 names={[t("charts.scheduledHours"), t("charts.workingHours")]}
                 colors={["#6366f1", "#cbd5e1"]}
-                unit=" h"
+                unit={t("charts.hourUnit")}
               />
             ) : (
               <p className="text-muted-foreground py-10 text-center text-sm">{t("charts.noTechnicians")}</p>
@@ -462,7 +464,9 @@ export async function Overview({
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{hours(w.scheduledMin)}</TableCell>
                     <TableCell className="text-right tabular-nums">{hours(w.availableMin)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatPercent(w.utilization)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatPercent(w.utilization, locale)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

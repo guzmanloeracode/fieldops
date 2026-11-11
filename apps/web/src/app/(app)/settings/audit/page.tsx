@@ -3,7 +3,7 @@ import { AUDIT_ENTITY_TYPES, AUDIT_OPERATIONS, type Currency } from "@fieldops/s
 import { Download, ScrollText } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { NativeSelect } from "@/components/app/native-select";
 import { EmptyState } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,10 @@ import { formatDateTime } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
 import { actorLabel, describeAction, entityHref, entityName, formatValue } from "./format";
 
-export const metadata: Metadata = { title: "Audit log" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("audit") };
+}
 
 const FILTERS = ["actor", "entity_type", "operation", "entity_id", "from", "to"] as const;
 
@@ -42,7 +45,11 @@ export default async function AuditLogPage({
     p.set("cursor", cursor);
     return `/settings/audit?${p}`;
   };
-  const fmt = { timeZone: actor.organization.timezone, currency: actor.organization.currency as Currency };
+  const fmt = {
+    timeZone: actor.organization.timezone,
+    currency: actor.organization.currency as Currency,
+    locale: await getLocale(),
+  };
   return (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -147,7 +154,15 @@ export default async function AuditLogPage({
 
 type T = Awaited<ReturnType<typeof getTranslations<"audit">>>;
 
-function Entry({ e, t, fmt }: { e: AuditEntryRecord; t: T; fmt: { timeZone: string; currency: Currency } }) {
+function Entry({
+  e,
+  t,
+  fmt,
+}: {
+  e: AuditEntryRecord;
+  t: T;
+  fmt: { timeZone: string; currency: Currency; locale: string };
+}) {
   const tt = t as unknown as (key: string, values?: Record<string, string>) => string;
   const changes = audit.auditChanges(e);
   const href = entityHref(e);
@@ -167,7 +182,7 @@ function Entry({ e, t, fmt }: { e: AuditEntryRecord; t: T; fmt: { timeZone: stri
           ) : null}
         </p>
         <time className="text-muted-foreground text-xs" dateTime={e.createdAt.toISOString()}>
-          {formatDateTime(e.createdAt, fmt.timeZone)}
+          {formatDateTime(e.createdAt, fmt.timeZone, fmt.locale)}
         </time>
       </div>
       {changes.length ? (

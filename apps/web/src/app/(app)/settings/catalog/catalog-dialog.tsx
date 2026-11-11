@@ -2,7 +2,7 @@
 import { CATALOG_ITEM_KINDS, type CatalogItemKind, type Currency } from "@fieldops/shared";
 import { Loader2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FieldError } from "@/components/app/field-error";
@@ -50,6 +50,7 @@ export function CatalogItemDialog({
   item?: CatalogItemValues;
 }) {
   const t = useTranslations("billing.catalog");
+  const locale = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -57,7 +58,7 @@ export function CatalogItemDialog({
   const [name, setName] = useState(item?.name ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [sku, setSku] = useState(item?.sku ?? "");
-  const [unit, setUnit] = useState(item?.unit ?? "each");
+  const [unit, setUnit] = useState(item?.unit ?? t("defaultUnit"));
   const [price, setPrice] = useState(item ? toInput(item.unitPriceMinor, currency) : "");
   const [cost, setCost] = useState(item?.unitCostMinor != null ? toInput(item.unitCostMinor, currency) : "");
   const [tax, setTax] = useState(item?.taxRateBps == null ? "" : String(item.taxRateBps));
@@ -229,7 +230,7 @@ export function CatalogItemDialog({
               <option value="">{t("defaultRate")}</option>
               {taxRates.map((r) => (
                 <option key={`${r.name}-${r.rate_bps}`} value={r.rate_bps}>
-                  {r.name} ({percent(r.rate_bps)})
+                  {r.name} ({percent(r.rate_bps, locale)})
                 </option>
               ))}
             </NativeSelect>,

@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { customerCreateSchema, CUSTOMER_TYPES, siteCreateSchema } from "@fieldops/shared";
+import { customerCreateSchema, CUSTOMER_TYPES, siteCreateSchema, type Locale } from "@fieldops/shared";
 import { AlertTriangle, Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { checkDuplicatesAction, createCustomerAction } from "../actions";
 import { AddressFields } from "../_components/address-fields";
+import { LocaleField, localeValue } from "../_components/locale-field";
 import { SiteFields } from "../_components/site-fields";
 import { splitTags } from "../_components/tags";
 
@@ -32,7 +33,7 @@ type FormOutput = z.output<typeof formSchema>;
 
 type Duplicate = { id: string; name: string; matchedOn: "email" | "phone" };
 
-export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
+export function CustomerForm({ defaultCountry, orgLocale }: { defaultCountry: string; orgLocale: Locale }) {
   const t = useTranslations("customers.form");
   const tType = useTranslations("customers.type");
   const router = useRouter();
@@ -48,6 +49,7 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
         name: "",
         tags_text: "",
         notes: "",
+        locale: null,
         contacts: [{ name: "", role: "", email: "", phone: "", is_primary: true }],
       },
       site: {
@@ -168,6 +170,11 @@ export function CustomerForm({ defaultCountry }: { defaultCountry: string }) {
               <Label htmlFor="customer-notes">{t("notes")}</Label>
               <Textarea id="customer-notes" rows={2} {...form.register("customer.notes")} />
             </div>
+            <LocaleField
+              id="customer-locale"
+              orgLocale={orgLocale}
+              registration={form.register("customer.locale", { setValueAs: localeValue })}
+            />
           </div>
         </CardContent>
       </Card>

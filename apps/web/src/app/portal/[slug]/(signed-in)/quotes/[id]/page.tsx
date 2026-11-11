@@ -1,7 +1,7 @@
 import { formatJobNumber, portalBilling } from "@fieldops/core";
 import { ArrowLeft, CheckCircle2, Download, XCircle } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DocumentLines } from "@/components/billing/document-view";
 import { dayText } from "@/components/billing/money";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ export default async function PortalQuotePage({ params }: { params: Promise<{ sl
   const { slug, id } = await params;
   const org = (await getPortalOrg(slug))!;
   const t = await getTranslations("pay.quotes");
+  const locale = await getLocale();
   const q = await loadPortalQuote(slug, id);
   // The first time the customer opens it (the guard layout loads it before any skeleton; prefetches stop there).
   await runPortal(slug, (ctx) => portalBilling.markPortalQuoteViewed(ctx, id));
@@ -42,9 +43,9 @@ export default async function PortalQuotePage({ params }: { params: Promise<{ sl
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">{q.title}</h1>
         <p className="text-muted-foreground text-sm">
-          {q.sentAt ? t("sentOn", { date: formatDate(q.sentAt, tz) }) : null}
+          {q.sentAt ? t("sentOn", { date: formatDate(q.sentAt, tz, locale) }) : null}
           {q.validUntil && q.status !== "approved" && q.status !== "declined"
-            ? ` · ${t("validUntil", { date: dayText(q.validUntil) })}`
+            ? ` · ${t("validUntil", { date: dayText(q.validUntil, locale) })}`
             : null}
         </p>
       </div>
@@ -57,7 +58,7 @@ export default async function PortalQuotePage({ params }: { params: Promise<{ sl
         >
           <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0" />
           <div className="space-y-1">
-            <p>{t("approved", { date: formatDate(q.decidedAt, tz) })}</p>
+            <p>{t("approved", { date: formatDate(q.decidedAt, tz, locale) })}</p>
             {job ? (
               <p>
                 {t("approvedJob", { org: org.name, job })}{" "}
@@ -76,7 +77,7 @@ export default async function PortalQuotePage({ params }: { params: Promise<{ sl
         >
           <XCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
           <div className="space-y-1">
-            <p>{t("declined", { date: formatDate(q.decidedAt, tz) })}</p>
+            <p>{t("declined", { date: formatDate(q.decidedAt, tz, locale) })}</p>
             {q.declineReason ? (
               <p className="whitespace-pre-line">{t("declinedReason", { reason: q.declineReason })}</p>
             ) : null}

@@ -1,0 +1,140 @@
+{
+  "loading": "Memuat…",
+  "dashboard": {
+    "greeting": "Halo, {name}",
+    "subtitle": "Ringkasan untuk {date}.",
+    "newJob": "Pekerjaan baru",
+    "today": "Kunjungan hari ini",
+    "unscheduled": "Belum dijadwalkan",
+    "inProgress": "Sedang dikerjakan",
+    "onHold": "Ditunda",
+    "completedToday": "Selesai hari ini",
+    "reviewBanner": "{count, plural, other {# permintaan portal perlu}} ditinjau.",
+    "todaysVisits": "Kunjungan hari ini",
+    "queue": "Antrean belum dijadwalkan",
+    "viewAll": "Lihat semua",
+    "nothingToday": "Tidak ada kunjungan terjadwal hari ini.",
+    "queueEmpty": "Tidak ada yang menunggu. Semua pekerjaan sudah memiliki teknisi dan jadwal.",
+    "requested": "diajukan {when}"
+  },
+  "sidebar": {
+    "collapse": "Ciutkan bilah samping",
+    "expand": "Perluas bilah samping"
+  },
+  "meta": {
+    "title": "FieldOps: manajemen layanan lapangan",
+    "description": "FieldOps adalah SaaS manajemen layanan lapangan sumber terbuka untuk usaha jasa kecil: permintaan, penjadwalan, pekerjaan di lokasi, laporan, dan pembayaran."
+  },
+  "status": {
+    "new": "Baru",
+    "scheduled": "Terjadwal",
+    "en_route": "Dalam perjalanan",
+    "in_progress": "Sedang dikerjakan",
+    "on_hold": "Ditunda",
+    "completed": "Selesai",
+    "canceled": "Dibatalkan"
+  },
+  "priority": {
+    "low": "Rendah",
+    "normal": "Normal",
+    "high": "Tinggi",
+    "urgent": "Mendesak"
+  },
+  "role": {
+    "owner": "Pemilik",
+    "admin": "Admin",
+    "dispatcher": "Dispatcher",
+    "technician": "Teknisi"
+  },
+  "language": {
+    "label": "Bahasa"
+  },
+  "theme": {
+    "label": "Tema",
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Ikuti sistem"
+  },
+  "signOut": "Keluar",
+  "demoBanner": "Demo publik dengan data fiktif. Data demo diatur ulang setiap hari pukul 00.00 UTC.",
+  "nav": {
+    "main": "Utama",
+    "home": "Beranda",
+    "jobs": "Pekerjaan",
+    "schedule": "Papan jadwal",
+    "approvals": "Persetujuan",
+    "customers": "Pelanggan",
+    "quotes": "Penawaran",
+    "invoices": "Faktur",
+    "workspace": "Ruang kerja",
+    "organization": "Organisasi",
+    "members": "Anggota",
+    "serviceTypes": "Jenis layanan",
+    "apiReference": "Referensi API",
+    "pending": "{count} menunggu",
+    "openMenu": "Buka menu",
+    "menu": "Menu"
+  },
+  "pagination": {
+    "label": "Navigasi halaman",
+    "range": "{from}–{to} dari {total}",
+    "page": "Halaman {page} dari {pages}",
+    "previous": "Sebelumnya",
+    "previousPage": "Halaman sebelumnya",
+    "next": "Berikutnya",
+    "nextPage": "Halaman berikutnya"
+  },
+  "errors": {
+    "generic": "Terjadi kesalahan. Coba lagi."
+  },
+  "pageTitle": {
+    "newJob": "Pekerjaan baru",
+    "jobs": "Pekerjaan",
+    "ai": "Pengaturan AI",
+    "audit": "Log audit",
+    "sla": "Kebijakan SLA",
+    "demoOutbox": "Kotak keluar demo",
+    "operations": "Pengaturan operasional",
+    "organization": "Pengaturan organisasi",
+    "serviceTypes": "Jenis layanan",
+    "members": "Anggota",
+    "equipment": "Peralatan",
+    "schedule": "Papan jadwal",
+    "team": "Ketersediaan tim",
+    "customer": "Pelanggan",
+    "newCustomer": "Pelanggan baru",
+    "customers": "Pelanggan",
+    "home": "Beranda",
+    "approvals": "Persetujuan",
+    "invitation": "Undangan",
+    "signIn": "Masuk",
+    "onboarding": "Siapkan organisasi Anda",
+    "signUp": "Buat akun",
+    "demoInbox": "Kotak masuk demo",
+    "newQuote": "Penawaran baru",
+    "quotes": "Penawaran",
+    "billingSettings": "Pengaturan penagihan",
+    "invoice": "Faktur",
+    "newInvoice": "Faktur baru",
+    "invoices": "Faktur",
+    "catalog": "Katalog"
+  },
+  "validation": {
+    "required": "Wajib diisi",
+    "number": "Masukkan angka",
+    "minLength": "Gunakan minimal {min} karakter",
+    "maxLength": "Gunakan maksimal {max} karakter",
+    "min": "Minimal {min}",
+    "above": "Harus lebih dari {min}",
+    "max": "Maksimal {max}",
+    "minItems": "Tambahkan minimal {min}",
+    "maxItems": "Maksimal {max}",
+    "email": "Masukkan email yang valid",
+    "url": "Masukkan tautan yang valid",
+    "format": "Periksa formatnya",
+    "choose": "Pilih salah satu opsi",
+    "invalid": "Nilai tidak valid"
+  },
+  "close": "Tutup",
+  "notifications": "Notifikasi"
+}

@@ -1,6 +1,6 @@
 import { FlaskConical } from "lucide-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { money } from "@/components/billing/money";
 import { Button } from "@/components/ui/button";
 import { loadTestCheckout } from "./load";
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function TestCheckoutPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const t = await getTranslations("pay.checkout");
+  const locale = await getLocale();
   const view = await loadTestCheckout(token);
   return (
     <div className="bg-muted/40 min-h-dvh px-4 py-10">
@@ -43,7 +44,7 @@ export default async function TestCheckoutPage({ params }: { params: Promise<{ t
           <div className="flex justify-between gap-4 border-t pt-2">
             <dt className="text-muted-foreground">{t("amount")}</dt>
             <dd className="text-lg font-semibold tabular-nums" data-testid="test-checkout-amount">
-              {money(view.amountMinor, view.currency)}
+              {money(view.amountMinor, view.currency, locale)}
             </dd>
           </div>
         </dl>

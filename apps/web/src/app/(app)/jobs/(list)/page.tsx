@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Briefcase, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState, PageHeader } from "@/components/app/page-header";
 import { Pagination } from "@/components/app/pagination";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,10 @@ import { MyDay } from "../my-day";
 import { SavedViews } from "../saved-views";
 import { formatJobNumber } from "@fieldops/core";
 
-export const metadata: Metadata = { title: "Jobs" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("jobs") };
+}
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -26,6 +29,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 export default async function JobsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const actor = await requireActor();
   const t = await getTranslations("jobs");
+  const locale = await getLocale();
   const sp = await searchParams;
   const tz = actor.organization.timezone;
   const myDay = one(sp.view) === "my-day";
@@ -100,14 +104,16 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     recurring: j.recurrenceId
       ? {
           href: plans ? planHref(j.customer.id, j.recurrenceId) : null,
-          title: tr("badge.title", { date: j.occurrenceDate ? formatDay(j.occurrenceDate, "long") : "—" }),
+          title: tr("badge.title", {
+            date: j.occurrenceDate ? formatDay(j.occurrenceDate, "long", locale) : "—",
+          }),
         }
       : null,
     sla: (() => {
       if (j.slaPausedAt && j.status === "on_hold") {
         return {
           state: "paused" as const,
-          title: tr("slaPause.tooltip", { when: formatDateTime(j.slaPausedAt, tz) }),
+          title: tr("slaPause.tooltip", { when: formatDateTime(j.slaPausedAt, tz, locale) }),
         };
       }
       const a = attentionSla(j);
@@ -117,7 +123,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             title: tsla("badgeTitle", {
               target: tsla(`target.${a.target}`),
               state: tsla(`state.${a.state}`).toLowerCase(),
-              due: a.dueAt ? formatDateTime(a.dueAt, tz) : "—",
+              due: a.dueAt ? formatDateTime(a.dueAt, tz, locale) : "—",
             }),
           }
         : null;

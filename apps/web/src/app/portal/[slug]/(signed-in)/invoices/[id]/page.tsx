@@ -1,7 +1,7 @@
 import { formatJobNumber, portalBilling } from "@fieldops/core";
 import { ArrowLeft, CheckCircle2, Download, Info } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DocumentLines } from "@/components/billing/document-view";
 import { dayText, money } from "@/components/billing/money";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default async function PortalInvoicePage({
   const t = await getTranslations("pay.invoices");
   const tm = await getTranslations("billing.paymentMethod");
   const tl = await getTranslations("billing.invoice");
+  const locale = await getLocale();
   const inv = await loadPortalInvoice(slug, id);
   await runPortal(slug, (ctx) => portalBilling.markPortalInvoiceViewed(ctx, id));
   const tz = org.timezone;
@@ -89,7 +90,8 @@ export default async function PortalInvoicePage({
           {t("heading", { number: inv.number })}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {t("issuedOn", { date: dayText(inv.issueDate) })} · {t("dueOn", { date: dayText(inv.dueDate) })}
+          {t("issuedOn", { date: dayText(inv.issueDate, locale) })} ·{" "}
+          {t("dueOn", { date: dayText(inv.dueDate, locale) })}
         </p>
       </div>
 
@@ -100,16 +102,18 @@ export default async function PortalInvoicePage({
           ) : inv.status === "paid" ? (
             <p className="flex items-center gap-2 text-sm font-medium" data-testid="portal-invoice-paid">
               <CheckCircle2 aria-hidden className="size-4 text-emerald-700 dark:text-emerald-400" />
-              {t("paidInFull", { date: formatDate(inv.paidAt, tz) })}
+              {t("paidInFull", { date: formatDate(inv.paidAt, tz, locale) })}
             </p>
           ) : (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">{t("balance")}</p>
                 <p className="text-3xl font-semibold tabular-nums" data-testid="portal-invoice-balance">
-                  {money(inv.balanceMinor, inv.currency)}
+                  {money(inv.balanceMinor, inv.currency, locale)}
                 </p>
-                <p className="text-muted-foreground text-sm">{t("dueOn", { date: dayText(inv.dueDate) })}</p>
+                <p className="text-muted-foreground text-sm">
+                  {t("dueOn", { date: dayText(inv.dueDate, locale) })}
+                </p>
               </div>
               {inv.canPay && online ? (
                 <div className="space-y-1.5 sm:text-right">
@@ -174,10 +178,12 @@ export default async function PortalInvoicePage({
               {inv.payments.map((p) => (
                 <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 text-sm">
                   <span>
-                    <span className="font-medium tabular-nums">{money(p.amountMinor, inv.currency)}</span>{" "}
+                    <span className="font-medium tabular-nums">
+                      {money(p.amountMinor, inv.currency, locale)}
+                    </span>{" "}
                     <span className="text-muted-foreground">· {tm(p.method)}</span>
                   </span>
-                  <span className="text-muted-foreground text-xs">{formatDate(p.paidAt, tz)}</span>
+                  <span className="text-muted-foreground text-xs">{formatDate(p.paidAt, tz, locale)}</span>
                 </li>
               ))}
             </ul>

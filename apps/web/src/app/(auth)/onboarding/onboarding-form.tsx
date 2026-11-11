@@ -1,7 +1,7 @@
 "use client";
 import { slugify } from "@fieldops/core";
 import { Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { FieldError } from "@/components/app/field-error";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createOrganizationAction } from "./actions";
+
+const COUNTRIES = ["US", "ID", "SG", "AU", "GB"] as const;
 
 const TIMEZONES = [
   "America/Chicago",
@@ -27,6 +29,8 @@ const TIMEZONES = [
 
 export function OnboardingForm({ name }: { name: string }) {
   const t = useTranslations("auth");
+  const locale = useLocale();
+  const regionNames = new Intl.DisplayNames([locale], { type: "region" });
   const [orgName, setOrgName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -135,11 +139,11 @@ export function OnboardingForm({ name }: { name: string }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="US">United States</SelectItem>
-                  <SelectItem value="ID">Indonesia</SelectItem>
-                  <SelectItem value="SG">Singapore</SelectItem>
-                  <SelectItem value="AU">Australia</SelectItem>
-                  <SelectItem value="GB">United Kingdom</SelectItem>
+                  {COUNTRIES.map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {regionNames.of(code) ?? code}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -1,17 +1,21 @@
 "use client";
 import { formatMoney } from "@fieldops/core";
+import { intlLocale } from "@/lib/format";
 import { CheckCheck, Receipt } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ExpenseRow } from "./expense-row";
 import { ExpenseStatusBadge } from "./expense-status-badge";
 
-export const formatQuantity = (q: number) => q.toLocaleString("en-US", { maximumFractionDigits: 2 });
+export const formatQuantity = (q: number, locale?: string) =>
+  q.toLocaleString(intlLocale(locale), { maximumFractionDigits: 2 });
 
 /** The facts of one request: what, how much, who and why. Shared by the job page and the inbox. */
 export function ExpenseSummary({ row, showJob = false }: { row: ExpenseRow; showJob?: boolean }) {
   const t = useTranslations("expenses");
-  const money = (minor: number) => formatMoney({ amountMinor: minor, currency: row.currency });
+  const locale = useLocale();
+  const money = (minor: number) =>
+    formatMoney({ amountMinor: minor, currency: row.currency }, intlLocale(locale));
   return (
     <div className="min-w-0 flex-1 space-y-1.5">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -32,7 +36,12 @@ export function ExpenseSummary({ row, showJob = false }: { row: ExpenseRow; show
           {money(row.totalMinor)}
         </span>{" "}
         <span className="text-muted-foreground tabular-nums">
-          ({t("qtyTimesUnit", { quantity: formatQuantity(row.quantity), unit: money(row.unitCostMinor) })})
+          (
+          {t("qtyTimesUnit", {
+            quantity: formatQuantity(row.quantity, locale),
+            unit: money(row.unitCostMinor),
+          })}
+          )
         </span>
         {row.supplier ? <span className="text-muted-foreground"> · {row.supplier}</span> : null}
       </p>

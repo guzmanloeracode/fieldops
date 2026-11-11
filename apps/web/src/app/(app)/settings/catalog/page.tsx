@@ -1,7 +1,7 @@
 import { catalog } from "@fieldops/core";
 import { Package } from "lucide-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/app/page-header";
 import { money, percent } from "@/components/billing/money";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +9,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { requireActor, runService } from "@/server/context";
 import { CatalogItemDialog, CatalogActiveSwitch } from "./catalog-dialog";
 
-export const metadata: Metadata = { title: "Catalog" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("catalog") };
+}
 
 /** Parts and fees with prices, optional cost and tax (FIN-01). Owners and admins; the layout checks. */
 export default async function CatalogSettingsPage() {
   const actor = await requireActor();
   const t = await getTranslations("billing.catalog");
+  const locale = await getLocale();
   const data = await runService(
     async (ctx) => ({
       items: await catalog.listCatalog(ctx, { include_inactive: true, limit: 100 }),
@@ -26,7 +30,7 @@ export default async function CatalogSettingsPage() {
   const rateName = (bps: number | null) =>
     bps === null
       ? t("defaultRate")
-      : `${taxRates.find((r) => r.rate_bps === bps)?.name ?? ""} (${percent(bps)})`;
+      : `${taxRates.find((r) => r.rate_bps === bps)?.name ?? ""} (${percent(bps, locale)})`;
 
   return (
     <Card>
@@ -76,10 +80,10 @@ export default async function CatalogSettingsPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs">{c.sku ?? "—"}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {money(c.unitPriceMinor, c.currency)}
+                      {money(c.unitPriceMinor, c.currency, locale)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {c.unitCostMinor === null ? "—" : money(c.unitCostMinor, c.currency)}
+                      {c.unitCostMinor === null ? "—" : money(c.unitCostMinor, c.currency, locale)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{rateName(c.taxRateBps)}</TableCell>
                     <TableCell>

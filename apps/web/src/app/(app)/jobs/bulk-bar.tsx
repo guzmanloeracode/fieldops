@@ -1,5 +1,4 @@
 "use client";
-import { STATUS_LABELS } from "@fieldops/core";
 import { HOLD_REASONS, JOB_STATUSES, type HoldReason, type JobStatus } from "@fieldops/shared";
 import { Download, Loader2, UserPlus, Workflow, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,6 +34,7 @@ export function BulkBar({
 }) {
   const t = useTranslations("insights.bulk");
   const tj = useTranslations("jobs");
+  const tStatus = useTranslations("common.status");
   const router = useRouter();
   const [dialog, setDialog] = useState<"assign" | "status" | null>(null);
   const [memberId, setMemberId] = useState("");
@@ -177,7 +177,7 @@ export function BulkBar({
                 <SelectContent>
                   {JOB_STATUSES.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {STATUS_LABELS[s]}
+                      {tStatus(s)}
                     </SelectItem>
                   ))}
                 </SelectContent>

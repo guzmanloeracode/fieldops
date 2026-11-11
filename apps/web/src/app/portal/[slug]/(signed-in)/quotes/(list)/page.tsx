@@ -1,7 +1,7 @@
 import { portalBilling } from "@fieldops/core";
 import { ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { dayText, money } from "@/components/billing/money";
 import { EmptyState } from "@/components/app/page-header";
 import { formatDate } from "@/lib/format";
@@ -13,6 +13,7 @@ export default async function PortalQuotesPage({ params }: { params: Promise<{ s
   const { slug } = await params;
   const org = (await getPortalOrg(slug))!;
   const t = await getTranslations("pay.quotes");
+  const locale = await getLocale();
   const quotes = await runPortal(slug, (ctx) => portalBilling.listPortalQuotes(ctx));
   return (
     <div className="space-y-6">
@@ -37,12 +38,12 @@ export default async function PortalQuotesPage({ params }: { params: Promise<{ s
                   <p className="font-medium">{q.title}</p>
                   <p className="text-muted-foreground text-sm">
                     <span className="text-foreground font-medium tabular-nums">
-                      {money(q.totalMinor, q.currency)}
+                      {money(q.totalMinor, q.currency, locale)}
                     </span>
                     {" · "}
                     {q.decidedAt
-                      ? t("decidedOn", { date: formatDate(q.decidedAt, org.timezone) })
-                      : t("validUntil", { date: dayText(q.validUntil) })}
+                      ? t("decidedOn", { date: formatDate(q.decidedAt, org.timezone, locale) })
+                      : t("validUntil", { date: dayText(q.validUntil, locale) })}
                   </p>
                 </div>
                 <ChevronRight aria-hidden className="text-muted-foreground mt-1 size-4 shrink-0" />

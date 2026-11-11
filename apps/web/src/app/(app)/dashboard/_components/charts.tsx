@@ -1,7 +1,7 @@
 "use client";
-import { STATUS_LABELS } from "@fieldops/core";
 import { JOB_STATUSES, type JobStatus } from "@fieldops/shared";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Bar,
   BarChart,
@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { intlLocale } from "@/lib/format";
 import { STATUS_COLORS } from "./format";
 
 // Charts for the overview (DSH-02). They are a visual layer: each sits next to a data table with the same
@@ -42,6 +43,7 @@ export interface StatusPoint {
 
 export function StatusChart({ data }: { data: StatusPoint[] }) {
   const router = useRouter();
+  const tStatus = useTranslations("common.status");
   const rows = data.map((d) => ({ label: d.label, ...d.counts }));
   const used = JOB_STATUSES.filter((s) => data.some((d) => d.counts[s] > 0));
   return (
@@ -57,7 +59,7 @@ export function StatusChart({ data }: { data: StatusPoint[] }) {
             <Bar
               key={s}
               dataKey={s}
-              name={STATUS_LABELS[s]}
+              name={tStatus(s)}
               stackId="status"
               fill={STATUS_COLORS[s]}
               cursor="pointer"
@@ -134,6 +136,7 @@ export function PairChart({
   unit?: string;
 }) {
   const router = useRouter();
+  const locale = useLocale();
   const height = Math.max(160, data.length * 44 + 48);
   return (
     <div aria-hidden style={{ height }}>
@@ -157,6 +160,7 @@ export function PairChart({
             axisLine={false}
             unit={unit}
             allowDecimals={false}
+            tickFormatter={(v: number) => v.toLocaleString(intlLocale(locale))}
           />
           <YAxis type="category" dataKey="label" tick={axis} tickLine={false} axisLine={false} width={120} />
           <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "var(--muted)" }} />

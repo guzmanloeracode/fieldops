@@ -2,7 +2,7 @@ import { balanceOf, dates, formatJobNumber, invoices } from "@fieldops/core";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LiveRefresh } from "@/components/app/live-refresh";
 import { DocumentLines } from "@/components/billing/document-view";
 import { billingFormData } from "@/components/billing/form-data";
@@ -15,13 +15,17 @@ import { onlinePayments } from "@/server/payments";
 import { InvoiceActions } from "../_components/invoice-actions";
 import { InvoiceForm } from "../_components/invoice-form";
 
-export const metadata: Metadata = { title: "Invoice" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("invoice") };
+}
 
 /** An invoice (FIN-03, FIN-05): drafts are edited in place; issued invoices take payments. */
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const actor = await requireActor();
   const t = await getTranslations("billing");
+  const locale = await getLocale();
   const tm = await getTranslations("billing.paymentMethod");
   const tp = await getTranslations("pay.staff");
   const tz = actor.organization.timezone;
@@ -166,7 +170,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                         className="flex flex-wrap items-baseline justify-between gap-2 py-2.5 text-sm"
                       >
                         <span>
-                          <span className="font-medium tabular-nums">{money(p.amountMinor, p.currency)}</span>{" "}
+                          <span className="font-medium tabular-nums">
+                            {money(p.amountMinor, p.currency, locale)}
+                          </span>{" "}
                           <span className="text-muted-foreground">
                             · {tm(p.method)}
                             {p.reference ? ` · ${p.reference}` : ""}
@@ -206,11 +212,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <Item label={t("form.site")}>
                   {invoice.site ? `${invoice.site.label}, ${invoice.site.address.city}` : "—"}
                 </Item>
-                <Item label={t("columns.issued")}>{dayText(invoice.issueDate)}</Item>
-                <Item label={t("columns.due")}>{dayText(invoice.dueDate)}</Item>
+                <Item label={t("columns.issued")}>{dayText(invoice.issueDate, locale)}</Item>
+                <Item label={t("columns.due")}>{dayText(invoice.dueDate, locale)}</Item>
                 <Item label={t("invoice.sentAt")}>{formatDateTime(invoice.sentAt, tz)}</Item>
                 {invoice.viewedAt ? (
-                  <Item label={tp("viewed")}>{formatDateTime(invoice.viewedAt, tz)}</Item>
+                  <Item label={tp("viewed")}>{formatDateTime(invoice.viewedAt, tz, locale)}</Item>
                 ) : null}
                 {invoice.paidAt ? (
                   <Item label={t("invoice.paidAt")}>{formatDateTime(invoice.paidAt, tz)}</Item>

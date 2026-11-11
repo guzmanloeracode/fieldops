@@ -1,7 +1,9 @@
 "use client";
 import { formatMoney, toMajor } from "@fieldops/core";
 import type { Currency } from "@fieldops/shared";
+import { useLocale } from "next-intl";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { intlLocale } from "@/lib/format";
 
 // The revenue trend (DSH-02): invoiced and collected per day or week. Like the other charts it is a visual layer
 // next to a data table with the same numbers (aria-hidden here).
@@ -29,7 +31,8 @@ export function RevenueChart({
     invoiced: toMajor(d.invoicedMinor, currency),
     collected: toMajor(d.collectedMinor, currency),
   }));
-  const compact = new Intl.NumberFormat(currency === "IDR" ? "id-ID" : "en-US", { notation: "compact" });
+  const locale = useLocale();
+  const compact = new Intl.NumberFormat(intlLocale(locale), { notation: "compact" });
   return (
     <div aria-hidden className="h-64">
       <ResponsiveContainer width="100%" height="100%">
@@ -46,7 +49,9 @@ export function RevenueChart({
           <Tooltip
             contentStyle={tooltipStyle}
             cursor={{ fill: "var(--muted)" }}
-            formatter={(v) => formatMoney({ amountMinor: Math.round(Number(v) * 100), currency })}
+            formatter={(v) =>
+              formatMoney({ amountMinor: Math.round(Number(v) * 100), currency }, intlLocale(locale))
+            }
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="invoiced" name={names[0]} fill="#0ea5e9" radius={[3, 3, 0, 0]} />

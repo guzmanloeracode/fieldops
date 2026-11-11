@@ -1,7 +1,7 @@
 import { portalBilling } from "@fieldops/core";
 import { ChevronRight, Receipt } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { dayText, money } from "@/components/billing/money";
 import { EmptyState } from "@/components/app/page-header";
 import { formatDate } from "@/lib/format";
@@ -13,6 +13,7 @@ export default async function PortalInvoicesPage({ params }: { params: Promise<{
   const { slug } = await params;
   const org = (await getPortalOrg(slug))!;
   const t = await getTranslations("pay.invoices");
+  const locale = await getLocale();
   const invoices = await runPortal(slug, (ctx) => portalBilling.listPortalInvoices(ctx));
   return (
     <div className="space-y-6">
@@ -36,17 +37,19 @@ export default async function PortalInvoicesPage({ params }: { params: Promise<{
                   </div>
                   <p className="text-muted-foreground text-sm">
                     {i.status === "paid"
-                      ? t("paidOn", { date: formatDate(i.paidAt, org.timezone) })
-                      : `${t("issuedOn", { date: dayText(i.issueDate) })} · ${t("dueOn", { date: dayText(i.dueDate) })}`}
+                      ? t("paidOn", { date: formatDate(i.paidAt, org.timezone, locale) })
+                      : `${t("issuedOn", { date: dayText(i.issueDate, locale) })} · ${t("dueOn", { date: dayText(i.dueDate, locale) })}`}
                   </p>
                   {i.balanceMinor > 0 ? (
                     <p className="text-sm">
                       {t("balance")}:{" "}
-                      <span className="font-medium tabular-nums">{money(i.balanceMinor, i.currency)}</span>
+                      <span className="font-medium tabular-nums">
+                        {money(i.balanceMinor, i.currency, locale)}
+                      </span>
                     </p>
                   ) : (
                     <p className="text-muted-foreground text-sm tabular-nums">
-                      {money(i.totalMinor, i.currency)}
+                      {money(i.totalMinor, i.currency, locale)}
                     </p>
                   )}
                 </div>

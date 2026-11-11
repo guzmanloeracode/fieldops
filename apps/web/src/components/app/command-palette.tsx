@@ -1,5 +1,5 @@
 "use client";
-import { formatJobNumber, STATUS_LABELS, type SearchHits } from "@fieldops/core";
+import { formatJobNumber, type SearchHits } from "@fieldops/core";
 import {
   BadgeCheck,
   Briefcase,
@@ -86,6 +86,7 @@ const EMPTY: SearchHits = { jobs: [], customers: [], sites: [] };
 /** ⌘K command palette (JOB-11): search jobs, customers and sites, or jump to a page. */
 export function CommandPalette({ role }: { role: string }) {
   const t = useTranslations("insights.palette");
+  const tStatus = useTranslations("common.status");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -194,7 +195,7 @@ export function CommandPalette({ role }: { role: string }) {
                     <span className="font-mono text-xs">{formatJobNumber(j.number)}</span>
                     <span className="min-w-0 flex-1 truncate">{j.title}</span>
                     <span className="text-muted-foreground hidden truncate text-xs sm:inline">
-                      {j.customerName} · {STATUS_LABELS[j.status]}
+                      {j.customerName} · {tStatus(j.status)}
                     </span>
                   </CommandItem>
                 ))}

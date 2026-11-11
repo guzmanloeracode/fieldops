@@ -1,13 +1,12 @@
-import { can, dashboard, jobs, organization, revenue, ROLE_LABELS } from "@fieldops/core";
-import { format } from "date-fns";
+import { can, dashboard, jobs, organization, revenue } from "@fieldops/core";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DemoTour } from "@/components/app/demo-tour";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { env } from "@/env";
-import { inZone } from "@/lib/format";
+import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requireActor, runService } from "@/server/context";
 import { OwnStats } from "./_components/own-stats";
@@ -16,7 +15,10 @@ import { Revenue } from "./_components/revenue";
 import { Today } from "./_components/today";
 import { LiveRefresh } from "@/components/app/live-refresh";
 
-export const metadata: Metadata = { title: "Home" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("home") };
+}
 
 type SP = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -35,7 +37,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title={tc("dashboard.greeting", { name: actor.name.split(" ")[0] ?? actor.name })}
-        description={tc("dashboard.subtitle", { date: format(inZone(new Date(), tz), "EEEE, MMMM d") })}
+        description={tc("dashboard.subtitle", { date: formatDay(new Date(), tz, await getLocale()) })}
         actions={
           can(actor, "jobs.create") ? (
             <Button asChild>
@@ -47,7 +49,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* "Try these 5 things" for demo visitors (DEM-06). */}
       {env.DEMO_MODE && actor.isDemoUser ? (
         <div className="pb-6">
-          <DemoTour role={actor.role} roleLabel={ROLE_LABELS[actor.role]} orgSlug={actor.organization.slug} />
+          <DemoTour
+            role={actor.role}
+            roleLabel={tc(`role.${actor.role}`)}
+            orgSlug={actor.organization.slug}
+          />
         </div>
       ) : null}
     </>

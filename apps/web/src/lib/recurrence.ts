@@ -1,11 +1,16 @@
 // Display helpers for maintenance plans (JOB-13) and the SLA pause (SLA-04). Shared by server and client
 // components.
 
+import { intlLocale } from "./format";
+
 type Translate = (key: string, values?: Record<string, string | number>) => string;
 
-/** A plain "YYYY-MM-DD" date as "Mon, Nov 30, 2026" (no time zone: it is already a local date). */
-export function formatDay(date: string, style: "short" | "long" = "short"): string {
-  return new Intl.DateTimeFormat("en-US", {
+/**
+ * A plain "YYYY-MM-DD" date as "Mon, Nov 30, 2026" or "Sen, 30 Nov 2026" (no time zone: it is already a local
+ * date), in the reader's language.
+ */
+export function formatDay(date: string, style: "short" | "long" = "short", locale?: string): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     weekday: "short",
     month: "short",
     day: "numeric",

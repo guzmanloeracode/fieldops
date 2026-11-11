@@ -3,6 +3,7 @@ import type {
   AssistantToolName,
   AssistantToolRun,
   InvoiceStatus,
+  Locale,
   Role,
 } from "@fieldops/shared";
 import type { z } from "zod";
@@ -114,6 +115,8 @@ export interface AssistantContext {
   weekday: string;
   userName: string;
   role: Role;
+  /** The user's app language (SET-05), for answers to questions whose language is unclear. */
+  locale?: Locale;
 }
 
 /** A tool bound to the signed-in member. `execute` validates the input again and never throws. */

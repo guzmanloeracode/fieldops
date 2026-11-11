@@ -7,7 +7,10 @@ import { PageHeader } from "@/components/app/page-header";
 import { requireActor, runService } from "@/server/context";
 import { CustomerForm } from "./customer-form";
 
-export const metadata: Metadata = { title: "New customer" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("newCustomer") };
+}
 
 export default async function NewCustomerPage() {
   const actor = await requireActor();
@@ -24,7 +27,7 @@ export default async function NewCustomerPage() {
         }
         title={t("new")}
       />
-      <CustomerForm defaultCountry={org.country} />
+      <CustomerForm defaultCountry={org.country} orgLocale={org.settings.locale} />
     </div>
   );
 }

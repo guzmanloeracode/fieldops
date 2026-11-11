@@ -1,7 +1,7 @@
 "use client";
 import type { Currency } from "@fieldops/shared";
 import { Copy, Link2, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { money } from "@/components/billing/money";
@@ -39,6 +39,7 @@ export function PaymentLinkButton({
   timeZone: string;
 }) {
   const t = useTranslations("pay.staff");
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [link, setLink] = useState<Link | null>(null);
 
@@ -78,8 +79,8 @@ export function PaymentLinkButton({
             <DialogDescription>
               {link
                 ? t("linkDescription", {
-                    balance: money(balanceMinor, currency),
-                    time: formatDateTime(link.expiresAt, timeZone),
+                    balance: money(balanceMinor, currency, locale),
+                    time: formatDateTime(link.expiresAt, timeZone, locale),
                   })
                 : null}
             </DialogDescription>

@@ -1,5 +1,4 @@
 "use client";
-import { PRIORITY_LABELS, STATUS_LABELS } from "@fieldops/core";
 import { JOB_PRIORITIES, JOB_STATUSES, SLA_STATES } from "@fieldops/shared";
 import { ChevronDown, Inbox, Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -30,6 +29,7 @@ export function JobFilters({
   const ti = useTranslations("insights.filters");
   const ta = useTranslations("ai.filters");
   const tsla = useTranslations("sla");
+  const tc = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -107,13 +107,13 @@ export function JobFilters({
         </div>
         <MultiSelect
           label={t("col.status")}
-          options={JOB_STATUSES.map((s) => ({ id: s, name: STATUS_LABELS[s] }))}
+          options={JOB_STATUSES.map((s) => ({ id: s, name: tc(`status.${s}`) }))}
           selected={multi("status")}
           onToggle={(v) => toggle("status", v)}
         />
         <MultiSelect
           label={t("col.priority")}
-          options={JOB_PRIORITIES.map((p) => ({ id: p, name: PRIORITY_LABELS[p] }))}
+          options={JOB_PRIORITIES.map((p) => ({ id: p, name: tc(`priority.${p}`) }))}
           selected={multi("priority")}
           onToggle={(v) => toggle("priority", v)}
         />

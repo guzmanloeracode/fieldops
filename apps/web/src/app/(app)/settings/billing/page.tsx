@@ -1,9 +1,13 @@
 import { catalog } from "@fieldops/core";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { requireActor, runService } from "@/server/context";
 import { BillingSettingsForm } from "./billing-form";
 
-export const metadata: Metadata = { title: "Billing settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common.pageTitle");
+  return { title: t("billingSettings") };
+}
 
 /** Payment terms, quote validity, labor rate, numbering, reminders and payment instructions. Owners and admins. */
 export default async function BillingSettingsPage() {

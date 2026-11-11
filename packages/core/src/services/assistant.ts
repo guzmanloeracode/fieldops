@@ -7,6 +7,7 @@ import {
   type AssistantRole,
   type AssistantStreamEvent,
   type AssistantToolRun,
+  type Locale,
 } from "@fieldops/shared";
 import { dayOfWeek, localDateOf, localMinutesOf } from "../domain/availability";
 import { NotFoundError, RateLimitedError, UnavailableError } from "../domain/errors";
@@ -86,6 +87,7 @@ export function assistantContext(
   org: Pick<OrganizationRecord, "name" | "timezone" | "currency">,
   actor: ServiceContext["actor"],
   now: Date,
+  locale?: Locale,
 ): AssistantContext {
   const today = localDateOf(now, org.timezone);
   const m = localMinutesOf(now, org.timezone);
@@ -98,6 +100,7 @@ export function assistantContext(
     weekday: WEEKDAYS[dayOfWeek(today)]!,
     userName: actor.name,
     role: actor.role,
+    ...(locale && { locale }),
   };
 }
 
@@ -134,6 +137,8 @@ export async function startAsk(
   model: Pick<AssistantModel, "provider">,
   raw: unknown,
   guard: AskGuard,
+  /** The user's app language (SET-05). */
+  locale?: Locale,
 ): Promise<AskSession> {
   return run(async (ctx) => {
     assertCan(ctx.actor, "assistant.use");
@@ -184,7 +189,7 @@ export async function startAsk(
       isNew: !input.conversation_id,
       question: input.message,
       history,
-      context: assistantContext(org, ctx.actor, ctx.now),
+      context: assistantContext(org, ctx.actor, ctx.now, locale),
       quota: { used: used + 1, limit: quota },
       rateLimit,
     };

@@ -34,6 +34,17 @@ describe("organization settings", () => {
     expect((await org.updateOrganization(w.ctx(w.owner), { brand_color: null })).brandColor).toBeNull();
   });
 
+  it("sets the customers' language without touching the other settings (SET-05)", async () => {
+    const w = world();
+    const before = await org.getOrganization(w.ctx(w.owner));
+    expect(before.settings.locale).toBe("en");
+    const updated = await org.updateOrganization(w.ctx(w.owner), { locale: "id" });
+    expect(updated.settings).toEqual({ ...before.settings, locale: "id" });
+    await expect(org.updateOrganization(w.ctx(w.owner), { locale: "fr" })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+  });
+
   it("rejects dispatchers and bad values", async () => {
     const w = world();
     await expect(org.updateOrganization(w.ctx(w.dispatcher), { name: "x" })).rejects.toBeInstanceOf(

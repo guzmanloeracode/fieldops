@@ -1,7 +1,7 @@
 import { portalBilling } from "@fieldops/core";
 import { ChevronRight, FileText, Receipt } from "lucide-react";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { dayText, money } from "@/components/billing/money";
 import { runPortal } from "@/server/portal/session";
 import { PortalInvoiceStatus, PortalQuoteStatus } from "../billing-status";
@@ -11,6 +11,7 @@ export async function PortalBillingSummary({ slug }: { slug: string }) {
   const { quotes, invoices } = await runPortal(slug, (ctx) => portalBilling.portalBillingSummary(ctx));
   if (!quotes.length && !invoices.length) return null;
   const t = await getTranslations("pay.home");
+  const locale = await getLocale();
   const row =
     "bg-card hover:bg-accent/50 focus-visible:ring-ring flex items-center gap-3 rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:outline-none";
   return (
@@ -30,7 +31,10 @@ export async function PortalBillingSummary({ slug }: { slug: string }) {
                 </div>
                 <p className="truncate text-sm">{q.title}</p>
                 <p className="text-muted-foreground text-sm">
-                  {t("quoteMeta", { total: money(q.totalMinor, q.currency), date: dayText(q.validUntil) })}
+                  {t("quoteMeta", {
+                    total: money(q.totalMinor, q.currency, locale),
+                    date: dayText(q.validUntil, locale),
+                  })}
                 </p>
               </div>
               <span className="text-primary shrink-0 text-sm font-medium">{t("review")}</span>
@@ -48,7 +52,10 @@ export async function PortalBillingSummary({ slug }: { slug: string }) {
                   <PortalInvoiceStatus status={i.status} />
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  {t("invoiceMeta", { balance: money(i.balanceMinor, i.currency), date: dayText(i.dueDate) })}
+                  {t("invoiceMeta", {
+                    balance: money(i.balanceMinor, i.currency, locale),
+                    date: dayText(i.dueDate, locale),
+                  })}
                 </p>
               </div>
               <span className="text-primary shrink-0 text-sm font-medium">{t("pay")}</span>
