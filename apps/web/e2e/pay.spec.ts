@@ -9,6 +9,8 @@ import { JAMIE } from "./report-helpers";
 // spec can run again against the same database.
 
 const PORTAL = "/portal/acme-air";
+/** Routes compile on first use under `next dev`; the first visit to each may take a while. */
+const FIRST = { timeout: 60_000 };
 
 interface Party {
   customerId: string;
@@ -18,10 +20,10 @@ interface Party {
 
 async function party(client: APIRequestContext, customerId: string, email?: string): Promise<Party | null> {
   const detail = await json<{ contacts: { id: string; email: string | null }[] }>(
-    await client.get(`/api/v1/customers/${customerId}`),
+    await client.get(`/api/v1/customers/${customerId}`, FIRST),
   );
   const sites = await json<{ data: { id: string }[] }>(
-    await client.get(`/api/v1/customers/${customerId}/sites`),
+    await client.get(`/api/v1/customers/${customerId}/sites`, FIRST),
   );
   const contact = detail.contacts.find((c) => (email ? c.email === email : c.email));
   return contact && sites.data[0] ? { customerId, siteId: sites.data[0].id, contactId: contact.id } : null;
@@ -30,7 +32,7 @@ async function party(client: APIRequestContext, customerId: string, email?: stri
 /** The demo portal customer (Jamie Rivera's customer). */
 async function jamie(client: APIRequestContext): Promise<Party> {
   const list = await json<{ data: { id: string }[] }>(
-    await client.get(`/api/v1/customers?q=${encodeURIComponent(JAMIE)}&limit=1`),
+    await client.get(`/api/v1/customers?q=${encodeURIComponent(JAMIE)}&limit=1`, FIRST),
   );
   return (await party(client, list.data[0]!.id, JAMIE))!;
 }
@@ -38,7 +40,7 @@ async function jamie(client: APIRequestContext): Promise<Party> {
 /** Another customer of the same organization, with a site and an email contact. */
 async function someoneElse(client: APIRequestContext, not: string): Promise<Party> {
   const list = await json<{ data: { id: string }[] }>(
-    await client.get("/api/v1/customers?limit=25&sort=name"),
+    await client.get("/api/v1/customers?limit=25&sort=name", FIRST),
   );
   for (const c of list.data) {
     if (c.id === not) continue;
@@ -52,6 +54,7 @@ async function sentQuote(client: APIRequestContext, title: string) {
   const p = await jamie(client);
   const created = await json<{ id: string; number: string }>(
     await client.post("/api/v1/quotes", {
+      ...FIRST,
       data: {
         customer_id: p.customerId,
         site_id: p.siteId,
@@ -77,7 +80,7 @@ async function sentQuote(client: APIRequestContext, title: string) {
       },
     }),
   );
-  await json(await client.post(`/api/v1/quotes/${created.id}/send`, { data: {} }));
+  await json(await client.post(`/api/v1/quotes/${created.id}/send`, { data: {}, ...FIRST }));
   return created;
 }
 
@@ -85,6 +88,7 @@ async function sentInvoice(client: APIRequestContext, description: string, to?: 
   const p = to ?? (await jamie(client));
   const created = await json<{ id: string }>(
     await client.post("/api/v1/invoices", {
+      ...FIRST,
       data: {
         customer_id: p.customerId,
         contact_id: p.contactId,
@@ -93,7 +97,7 @@ async function sentInvoice(client: APIRequestContext, description: string, to?: 
     }),
   );
   return json<{ id: string; number: string; total_minor: number }>(
-    await client.post(`/api/v1/invoices/${created.id}/send`, { data: {} }),
+    await client.post(`/api/v1/invoices/${created.id}/send`, { data: {}, ...FIRST }),
   );
 }
 
@@ -120,37 +124,39 @@ test.describe.serial("pay", () => {
     await demoSignIn(page);
     await expect(page.getByTestId("portal-quote-todo").filter({ hasText: quote.number })).toBeVisible();
     await page.getByTestId("portal-nav").getByRole("link", { name: "Quotes" }).click();
+    await expect(page.getByRole("heading", { name: "Quotes", level: 1 })).toBeVisible(FIRST);
     await page.getByTestId("portal-quote").filter({ hasText: quote.number }).click();
-    await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible(FIRST);
     await expect(page.getByTestId("portal-quote-status")).toHaveText("Waiting for you");
     await expect(page.getByTestId("total")).toHaveText("$505.00");
     await expect(page.getByText("Includes disposal of the old unit.")).toBeVisible();
 
-    const pdf = await page.request.get(`${PORTAL}/quotes/${quote.id}/pdf`);
+    const pdf = await page.request.get(`${PORTAL}/quotes/${quote.id}/pdf`, FIRST);
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
 
     await page.getByTestId("portal-approve-quote").click();
     await page.getByTestId("portal-approve-confirm").click();
     const outcome = page.getByTestId("portal-quote-outcome");
-    await expect(outcome).toContainText("You approved this quote on");
+    await expect(outcome).toContainText("You approved this quote on", FIRST);
     await expect(page.getByTestId("portal-quote-status")).toHaveText("Approved");
     const jobNumber = /JOB-\d+/.exec((await outcome.textContent())!)![0];
 
     // The office sees the approval by the contact, the first view, and a New job from the quote.
     const staff = await json<{ status: string; viewed_at: string | null; job: { number: string } | null }>(
-      await client.get(`/api/v1/quotes/${quote.id}`),
+      await client.get(`/api/v1/quotes/${quote.id}`, FIRST),
     );
     expect(staff.status).toBe("approved");
     expect(staff.viewed_at).not.toBeNull();
     expect(staff.job?.number).toBe(jobNumber);
     const job = await json<{ source: string; status: string; title: string }>(
-      await client.get(`/api/v1/jobs/${jobNumber}`),
+      await client.get(`/api/v1/jobs/${jobNumber}`, FIRST),
     );
     expect(job).toMatchObject({ source: "quote", status: "new", title });
 
     // The customer follows the new job from the quote.
     await page.getByRole("link", { name: `View ${jobNumber}` }).click();
+    await expect(page.getByTestId("portal-history")).toBeVisible(FIRST);
     await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
     await client.dispose();
   });
@@ -169,7 +175,7 @@ test.describe.serial("pay", () => {
       "Your reason: We'll wait until spring",
     );
     const staff = await json<{ status: string; decline_reason: string }>(
-      await client.get(`/api/v1/quotes/${quote.id}`),
+      await client.get(`/api/v1/quotes/${quote.id}`, FIRST),
     );
     expect(staff).toMatchObject({ status: "declined", decline_reason: "We'll wait until spring" });
     await client.dispose();
@@ -185,16 +191,17 @@ test.describe.serial("pay", () => {
     await demoSignIn(page);
     await expect(page.getByTestId("portal-invoice-todo").filter({ hasText: invoice.number })).toBeVisible();
     await page.getByTestId("portal-nav").getByRole("link", { name: "Invoices" }).click();
+    await expect(page.getByRole("heading", { name: "Invoices", level: 1 })).toBeVisible(FIRST);
     await page.getByTestId("portal-invoice").filter({ hasText: invoice.number }).click();
-    await expect(page.getByTestId("portal-invoice-number")).toHaveText(`Invoice ${invoice.number}`);
+    await expect(page.getByTestId("portal-invoice-number")).toHaveText(`Invoice ${invoice.number}`, FIRST);
     await expect(page.getByTestId("portal-invoice-status")).toHaveText("Due");
     await expect(page.getByTestId("portal-invoice-balance")).toHaveText("$123.45");
     await expect(page.getByText("Test mode: no real card is charged.")).toBeVisible();
 
     await page.getByTestId("portal-pay-now").click();
-    await expect(page).toHaveURL(/\/checkout\/[\w-]+\.[\w-]+$/);
+    await expect(page).toHaveURL(/\/checkout\/[\w-]+\.[\w-]+$/, FIRST);
     const checkoutUrl = page.url();
-    await expect(page.getByRole("heading", { name: "Test checkout", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Test checkout", level: 1 })).toBeVisible(FIRST);
     await expect(page.getByText("Test mode", { exact: true })).toBeVisible();
     await expect(page.getByTestId("test-checkout-amount")).toHaveText("$123.45");
     // Nothing that looks like a card form: no fields at all (the form only carries the server action).
@@ -202,7 +209,7 @@ test.describe.serial("pay", () => {
     await expect(page.locator("input:not([type=hidden]), select, textarea")).toHaveCount(0);
     await page.getByTestId("test-checkout-pay").click();
 
-    await expect(page).toHaveURL(new RegExp(`${PORTAL}/invoices/${invoice.id}\\?payment=success$`));
+    await expect(page).toHaveURL(new RegExp(`${PORTAL}/invoices/${invoice.id}\\?payment=success$`), FIRST);
     await expect(page.getByTestId("portal-payment-banner")).toHaveText(
       "Thank you! Your payment was received.",
     );
@@ -215,7 +222,7 @@ test.describe.serial("pay", () => {
     const paid = await json<{
       status: string;
       payments: { provider: string; method: string; amount_minor: number }[];
-    }>(await owner.get(`/api/v1/invoices/${invoice.id}`));
+    }>(await owner.get(`/api/v1/invoices/${invoice.id}`, FIRST));
     expect(paid.status).toBe("paid");
     expect(paid.payments).toEqual([
       expect.objectContaining({ provider: "simulated", method: "card", amount_minor: 12_345 }),
@@ -247,16 +254,18 @@ test.describe.serial("pay", () => {
     await staff.goto(`/invoices/${invoice.id}`);
     await staff.getByTestId("copy-payment-link").click();
     const field = staff.getByTestId("payment-link-url");
-    await expect(field).toHaveValue(/\/checkout\//);
+    await expect(field).toHaveValue(/\/checkout\//, FIRST);
     const link = await field.inputValue();
     await expect(staff.getByText("Test mode: the link opens the test checkout")).toBeVisible();
     await context.close();
 
     // The API hands out the same open session.
-    const again = await client.post(`/api/v1/invoices/${invoice.id}/checkout`);
+    const again = await client.post(`/api/v1/invoices/${invoice.id}/checkout`, FIRST);
     expect(again.status()).toBe(200);
     expect(await again.json()).toMatchObject({ url: link, provider: "simulated", reused: true });
-    const doc = await json<{ paths: Record<string, unknown> }>(await client.get("/api/v1/openapi.json"));
+    const doc = await json<{ paths: Record<string, unknown> }>(
+      await client.get("/api/v1/openapi.json", FIRST),
+    );
     expect(Object.keys(doc.paths)).toContain("/invoices/{id}/checkout");
 
     await demoSignIn(page);
