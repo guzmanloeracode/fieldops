@@ -207,6 +207,9 @@ importers:
       '@fieldops/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../../packages/relay
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -312,6 +315,9 @@ importers:
         specifier: ^14.0.3
         version: 14.0.3
     devDependencies:
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../relay
       '@testcontainers/postgresql':
         specifier: ^12.2.1
         version: 12.2.1(bare-buffer@3.7.1)

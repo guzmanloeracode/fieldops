@@ -13,6 +13,8 @@ export {
   markOutboxSent,
   organizationsWithWebhooks,
   outboxBackoffSeconds,
+  publishOutbox,
+  type OutboxFailure,
   OUTBOX_MAX_ATTEMPTS,
   type ClaimedOutboxEvent,
 } from "./outbox";

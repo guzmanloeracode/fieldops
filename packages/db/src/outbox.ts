@@ -1,3 +1,4 @@
+import { RelayError, type EventRelay } from "@fieldops/core";
 import { sql } from "drizzle-orm";
 import type { Database } from "./client";
 
@@ -97,4 +98,47 @@ export async function organizationsWithWebhooks(db: Database): Promise<string[]>
     sql`select id from organization where webhooks_enabled_at is not null`,
   );
   return r.rows.map((row) => row.id);
+}
+
+/** What happened to an event the publisher couldn't send. */
+export interface OutboxFailure {
+  id: string;
+  type: string;
+  attempt: number;
+  error: string;
+  outcome: "retry" | "failed";
+}
+
+/**
+ * Posts due outbox events to Relay, each outside any transaction, with its row id as the Idempotency-Key: a repeat
+ * after a crash replays Relay's first answer instead of making a second event. Returns how many were sent.
+ */
+export async function publishOutbox(
+  db: Database,
+  relay: EventRelay,
+  opts: { limit?: number; onFailure?: (f: OutboxFailure) => void } = {},
+): Promise<number> {
+  const rows = await claimOutboxEvents(db, opts.limit ?? 50);
+  let sent = 0;
+  for (const row of rows) {
+    const event = { id: row.id, organizationId: row.organizationId, type: row.type, payload: row.payload };
+    try {
+      let relayId: string;
+      try {
+        relayId = await relay.publish(event);
+      } catch (err) {
+        // The tenant may be missing (a Relay restored from an older backup): create it and try once more.
+        if (!(err instanceof RelayError) || err.status !== 404) throw err;
+        await relay.ensureTenant(row.organizationId, row.organizationName);
+        relayId = await relay.publish(event);
+      }
+      await markOutboxSent(db, row.id, relayId);
+      sent += 1;
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      const outcome = await markOutboxFailed(db, row.id, row.attempts, error);
+      opts.onFailure?.({ id: row.id, type: row.type, attempt: row.attempts, error, outcome });
+    }
+  }
+  return sent;
 }

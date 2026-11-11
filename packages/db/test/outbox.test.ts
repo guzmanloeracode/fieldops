@@ -1,6 +1,8 @@
 import { and, eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { quiet, withTenant } from "../src/client";
+import { RelayError, type EventRelay } from "@fieldops/core";
+import { createRelayClient, startFakeRelay } from "@fieldops/relay";
 import {
   claimOutboxEvents,
   deleteOldOutboxEvents,
@@ -9,6 +11,8 @@ import {
   organizationsWithWebhooks,
   OUTBOX_MAX_ATTEMPTS,
   outboxBackoffSeconds,
+  publishOutbox,
+  type OutboxFailure,
 } from "../src/outbox";
 import * as s from "../src/schema";
 import { withStore } from "../src/store";
@@ -355,5 +359,66 @@ describe("the worker's queue", () => {
     ]);
     expect(await deleteOldOutboxEvents(t.owner)).toBe(2);
     expect(await t.owner.select().from(s.outboxEvent)).toHaveLength(3);
+  });
+});
+
+describe("publishing to Relay", () => {
+  it("delivers trigger-written events through Relay once, creating a missing tenant", async () => {
+    const fake = await startFakeRelay({ apiKey: "rk_int" });
+    try {
+      const relay = createRelayClient({ url: fake.url, apiKey: "rk_int" });
+      await asApp(a, (tx) => tx.update(s.job).set({ status: "in_progress" }).where(job(a)));
+      // No tenant yet: the publisher creates it and posts again.
+      expect(await publishOutbox(t.owner, relay)).toBe(1);
+      const { endpoint } = await relay.createEndpoint(a.orgId, {
+        url: "https://hooks.example.com/fieldops",
+        description: null,
+        event_types: ["job.completed"],
+      });
+      await asApp(a, (tx) =>
+        tx.update(s.job).set({ status: "completed", completedAt: new Date() }).where(job(a)),
+      );
+      expect(await publishOutbox(t.owner, relay)).toBe(2);
+      expect(await publishOutbox(t.owner, relay)).toBe(0);
+      const deliveries = await relay.listDeliveries(a.orgId, { endpointId: endpoint.id });
+      expect(deliveries.items).toHaveLength(1);
+      const types = await withStore(t.app, a.orgId, (store) =>
+        store.webhooks.eventTypes(deliveries.items.map((d) => d.event_id)),
+      );
+      expect(Object.values(types)).toEqual(["job.completed"]);
+      expect(fake.events().map((e) => e.type)).toEqual([
+        "job.status_changed",
+        "job.status_changed",
+        "job.completed",
+      ]);
+      const rows = await t.owner.select().from(s.outboxEvent);
+      expect(rows.every((r) => r.status === "sent" && r.relayEventId?.startsWith("evt_"))).toBe(true);
+      await asApp(a, (tx) => tx.update(s.job).set({ status: "scheduled", completedAt: null }).where(job(a)));
+    } finally {
+      await fake.close();
+    }
+  });
+
+  it("keeps events Relay refused for a later try and reports them", async () => {
+    await asApp(a, (tx) => tx.update(s.job).set({ title: "Relay down" }).where(job(a)));
+    const down: EventRelay = createRelayClient({ url: "http://127.0.0.1:9", apiKey: "x", timeoutMs: 300 });
+    const failures: OutboxFailure[] = [];
+    expect(await publishOutbox(t.owner, down, { onFailure: (f) => failures.push(f) })).toBe(0);
+    expect(failures).toEqual([
+      expect.objectContaining({
+        type: "job.updated",
+        attempt: 1,
+        outcome: "retry",
+        error: "Relay can't be reached",
+      }),
+    ]);
+    const refusing = {
+      publish: async () => Promise.reject(new RelayError("nope", 422, "validation_failed")),
+    };
+    await t.owner.update(s.outboxEvent).set({ nextAttemptAt: new Date(0) });
+    await publishOutbox(t.owner, refusing as unknown as EventRelay, { onFailure: (f) => failures.push(f) });
+    expect(failures[1]).toMatchObject({ attempt: 2, error: "nope" });
+    const [row] = await t.owner.select().from(s.outboxEvent);
+    expect(row).toMatchObject({ status: "pending", attempts: 2, error: "nope" });
   });
 });

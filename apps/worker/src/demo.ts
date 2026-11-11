@@ -5,6 +5,7 @@ import type { Database } from "@fieldops/db";
 import { seedDemo, wipeAll } from "@fieldops/db/seed";
 import { env } from "./env";
 import { log } from "./log";
+import { relay, retireDemoTenants } from "./webhooks";
 
 /** Deletes local uploads (ADR 015): every organization folder and unfinished temporary files. */
 async function clearLocalUploads(dir: string): Promise<number> {
@@ -50,6 +51,8 @@ async function clearUploads(): Promise<number> {
 /** Nightly demo reset (DEM-04): wipe everything, seed again relative to now, remove uploads. */
 export async function resetDemo(db: Database) {
   const started = Date.now();
+  // Organizations come back with new IDs: retire the old ones' Relay tenants (PLT-03) first.
+  const tenantsRetired = await retireDemoTenants(db, relay);
   await wipeAll(db);
   const result = await seedDemo(db, { password: env.demoPassword });
   const files = await clearUploads().catch((err) => {
@@ -61,6 +64,7 @@ export async function resetDemo(db: Database) {
       ms: Date.now() - started,
       orgs: result.organizations.map((o) => `${o.slug}:${o.jobs}`),
       filesRemoved: files,
+      tenantsRetired,
     },
     "demo reset complete",
   );
