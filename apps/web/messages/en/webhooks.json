@@ -77,20 +77,32 @@
     "expense": "Parts and expenses"
   },
   "events": {
-    "job.created": "A job was created",
-    "job.updated": "A job's details changed (title, priority, customer, site, schedule…)",
-    "job.status_changed": "A job moved to another status",
-    "job.assigned": "A job's technicians were set",
-    "job.completed": "A job was completed",
-    "sla.at_risk": "A job used 75% of its response or resolution window",
-    "sla.breached": "A job missed its response or resolution target",
-    "quote.sent": "A quote was sent to the customer",
-    "quote.approved": "The customer approved a quote",
-    "quote.declined": "The customer declined a quote",
-    "invoice.sent": "An invoice was issued",
-    "invoice.paid": "An invoice was paid in full",
-    "expense.decided": "A part or expense request was approved or rejected",
-    "webhook.test": "A test event sent from this page"
+    "job": {
+      "created": "A job was created",
+      "updated": "A job's details changed (title, priority, customer, site, schedule…)",
+      "status_changed": "A job moved to another status",
+      "assigned": "A job's technicians were set",
+      "completed": "A job was completed"
+    },
+    "sla": {
+      "at_risk": "A job used 75% of its response or resolution window",
+      "breached": "A job missed its response or resolution target"
+    },
+    "quote": {
+      "sent": "A quote was sent to the customer",
+      "approved": "The customer approved a quote",
+      "declined": "The customer declined a quote"
+    },
+    "invoice": {
+      "sent": "An invoice was issued",
+      "paid": "An invoice was paid in full"
+    },
+    "expense": {
+      "decided": "A part or expense request was approved or rejected"
+    },
+    "webhook": {
+      "test": "A test event sent from this page"
+    }
   },
   "catalog": {
     "title": "Events",

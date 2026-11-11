@@ -1,8 +1,9 @@
-import { UnavailableError, webhooks } from "@fieldops/core";
+import { NotFoundError, UnavailableError, webhooks } from "@fieldops/core";
 import { WEBHOOK_DELIVERY_STATUSES, type WebhookDeliveryStatus } from "@fieldops/shared";
 import { AlertTriangle, ArrowLeft, Inbox } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/app/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -51,6 +52,8 @@ export default async function WebhookEndpointPage({
     const page = await webhooks.listDeliveries(deps, id, { status, cursor, limit: PAGE_SIZE });
     data = { endpoint, page };
   } catch (err) {
+    // The layout answers 404 first; the page renders next to it, so it stops quietly too.
+    if (err instanceof NotFoundError) notFound();
     if (!(err instanceof UnavailableError)) throw err;
   }
 

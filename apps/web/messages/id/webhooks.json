@@ -77,20 +77,32 @@
     "expense": "Suku cadang dan biaya"
   },
   "events": {
-    "job.created": "Pekerjaan dibuat",
-    "job.updated": "Detail pekerjaan berubah (judul, prioritas, pelanggan, lokasi, jadwal…)",
-    "job.status_changed": "Status pekerjaan berubah",
-    "job.assigned": "Teknisi pekerjaan ditetapkan",
-    "job.completed": "Pekerjaan selesai",
-    "sla.at_risk": "Pekerjaan sudah memakai 75% batas waktu respons atau penyelesaiannya",
-    "sla.breached": "Pekerjaan melewati target respons atau penyelesaiannya",
-    "quote.sent": "Penawaran dikirim ke pelanggan",
-    "quote.approved": "Pelanggan menyetujui penawaran",
-    "quote.declined": "Pelanggan menolak penawaran",
-    "invoice.sent": "Faktur diterbitkan",
-    "invoice.paid": "Faktur lunas",
-    "expense.decided": "Pengajuan suku cadang atau biaya disetujui atau ditolak",
-    "webhook.test": "Peristiwa uji yang dikirim dari halaman ini"
+    "job": {
+      "created": "Pekerjaan dibuat",
+      "updated": "Detail pekerjaan berubah (judul, prioritas, pelanggan, lokasi, jadwal…)",
+      "status_changed": "Status pekerjaan berubah",
+      "assigned": "Teknisi pekerjaan ditetapkan",
+      "completed": "Pekerjaan selesai"
+    },
+    "sla": {
+      "at_risk": "Pekerjaan sudah memakai 75% batas waktu respons atau penyelesaiannya",
+      "breached": "Pekerjaan melewati target respons atau penyelesaiannya"
+    },
+    "quote": {
+      "sent": "Penawaran dikirim ke pelanggan",
+      "approved": "Pelanggan menyetujui penawaran",
+      "declined": "Pelanggan menolak penawaran"
+    },
+    "invoice": {
+      "sent": "Faktur diterbitkan",
+      "paid": "Faktur lunas"
+    },
+    "expense": {
+      "decided": "Pengajuan suku cadang atau biaya disetujui atau ditolak"
+    },
+    "webhook": {
+      "test": "Peristiwa uji yang dikirim dari halaman ini"
+    }
   },
   "catalog": {
     "title": "Peristiwa",
