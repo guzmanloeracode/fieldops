@@ -136,7 +136,7 @@ test.describe.serial("pay", () => {
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
 
     await page.getByTestId("portal-approve-quote").click();
-    await page.getByTestId("portal-approve-confirm").click();
+    await page.getByTestId("portal-approve-confirm").click(FIRST);
     const outcome = page.getByTestId("portal-quote-outcome");
     await expect(outcome).toContainText("You approved this quote on", FIRST);
     await expect(page.getByTestId("portal-quote-status")).toHaveText("Approved");
@@ -198,7 +198,7 @@ test.describe.serial("pay", () => {
     await expect(page.getByTestId("portal-invoice-balance")).toHaveText("$123.45");
     await expect(page.getByText("Test mode: no real card is charged.")).toBeVisible();
 
-    await page.getByTestId("portal-pay-now").click();
+    await page.getByTestId("portal-pay-now").click(FIRST);
     await expect(page).toHaveURL(/\/checkout\/[\w-]+\.[\w-]+$/, FIRST);
     const checkoutUrl = page.url();
     await expect(page.getByRole("heading", { name: "Test checkout", level: 1 })).toBeVisible(FIRST);
@@ -207,7 +207,7 @@ test.describe.serial("pay", () => {
     // Nothing that looks like a card form: no fields at all (the form only carries the server action).
     await expect(page.getByRole("textbox")).toHaveCount(0);
     await expect(page.locator("input:not([type=hidden]), select, textarea")).toHaveCount(0);
-    await page.getByTestId("test-checkout-pay").click();
+    await page.getByTestId("test-checkout-pay").click(FIRST);
 
     await expect(page).toHaveURL(new RegExp(`${PORTAL}/invoices/${invoice.id}\\?payment=success$`), FIRST);
     await expect(page.getByTestId("portal-payment-banner")).toHaveText(
@@ -252,7 +252,7 @@ test.describe.serial("pay", () => {
     const staff = await context.newPage();
     await staff.route("**/api/v1/stream", (route) => route.fulfill({ status: 204 }));
     await staff.goto(`/invoices/${invoice.id}`);
-    await staff.getByTestId("copy-payment-link").click();
+    await staff.getByTestId("copy-payment-link").click(FIRST);
     const field = staff.getByTestId("payment-link-url");
     await expect(field).toHaveValue(/\/checkout\//, FIRST);
     const link = await field.inputValue();
@@ -270,7 +270,7 @@ test.describe.serial("pay", () => {
 
     await demoSignIn(page);
     await page.goto(new URL(link).pathname);
-    await page.getByTestId("test-checkout-cancel").click();
+    await page.getByTestId("test-checkout-cancel").click(FIRST);
     await expect(page).toHaveURL(new RegExp(`${PORTAL}/invoices/${invoice.id}\\?payment=canceled$`));
     await expect(page.getByTestId("portal-payment-banner")).toHaveText(
       "Payment canceled. Nothing was charged.",
