@@ -1,5 +1,5 @@
-import { RateLimitedError, reports, type RateLimitStatus } from "@fieldops/core";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { RateLimitedError, reports } from "@fieldops/core";
+import { authenticate, problemResponse, rateLimitHeaders, tighterLimit } from "@/server/api/handler";
 import { internalProblem, problemFromError } from "@/server/api/problem";
 import { reportEtag, toReportDto } from "@/server/api/serialize-reports";
 import { aiGuard, txRunner } from "@/server/ai";
@@ -11,15 +11,6 @@ import { metaFromHeaders } from "@/server/request-meta";
 // POST /api/v1/jobs/{id}/report-draft (AI-03, §17.2): drafts the job's service report with AI now and replaces its
 // text. Not wrapped in apiRoute(): a model call must not hold a database connection, so the service runs one short
 // transaction before the call and one after. Counts against the monthly quota and the AI rate limits.
-
-function rateLimitHeaders(s: RateLimitStatus | null, now = Date.now()): Record<string, string> {
-  if (!s) return {};
-  return {
-    "RateLimit-Limit": String(s.limit),
-    "RateLimit-Remaining": String(Math.max(0, s.remaining)),
-    "RateLimit-Reset": String(Math.max(0, Math.ceil((s.resetAt.getTime() - now) / 1000))),
-  };
-}
 
 export async function POST(req: Request, route: { params: Promise<{ id: string }> }): Promise<Response> {
   const incoming = req.headers.get("x-request-id");
@@ -46,7 +37,7 @@ export async function POST(req: Request, route: { params: Promise<{ id: string }
           "Cache-Control": "no-store",
           "X-Request-Id": requestId,
           ETag: reportEtag(result.report.version),
-          ...rateLimitHeaders(result.rateLimit),
+          ...rateLimitHeaders(tighterLimit(result.rateLimit, actor.rateLimit)),
         },
       },
     );

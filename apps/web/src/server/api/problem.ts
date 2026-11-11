@@ -16,6 +16,8 @@ export type ProblemCode =
   | DomainErrorCode
   | "bad_request"
   | "unauthorized"
+  | "insufficient_scope"
+  | "session_required"
   | "unsupported_media_type"
   | "method_not_allowed"
   | "idempotency_mismatch"
@@ -35,6 +37,8 @@ const TITLES: Record<ProblemCode, string> = {
   rate_limited: "Too many requests",
   bad_request: "Bad request",
   unauthorized: "Unauthorized",
+  insufficient_scope: "Insufficient scope",
+  session_required: "Session required",
   unsupported_media_type: "Unsupported media type",
   method_not_allowed: "Method not allowed",
   idempotency_mismatch: "Idempotency key reused",

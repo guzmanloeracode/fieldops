@@ -64,16 +64,28 @@ import { env } from "@/env";
 import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
 import { reportPaths } from "./openapi-reports";
 import { billingPaths, billingTags } from "./openapi-billing";
+import { API_KEYS_TAG, apiKeyPaths, apiKeySecurityScheme, withRateLimits } from "./openapi-platform";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
 domain services as the web app, so permissions and business rules are identical.
 
 ## Authentication
-Send the session cookie from the web app, or a session token as \`Authorization: Bearer <token>\`
-(returned by \`POST /api/auth/sign-in/email\`). Organization-scoped API keys (\`fo_…\`) arrive in release 0.5.
-Requests act inside the signed-in member's active organization and role. Records from other organizations
-are reported as \`404 Not found\`.
+Integrations send an API key as \`Authorization: Bearer fo_…\`. Owners and admins create keys in Settings → API
+keys. A key acts as the member who created it, within that member's role, and its scope narrows it further:
+\`read\` allows \`GET\`, \`write\` also allows \`POST\`, \`PUT\`, \`PATCH\` and \`DELETE\`. A key without the
+scope a request needs gets \`403\` with \`WWW-Authenticate: Bearer error="insufficient_scope"\`; a revoked,
+expired or unknown key gets \`401\`. The web app's session cookie and session tokens
+(\`POST /api/auth/sign-in/email\`) work too. Requests act inside the member's organization and role. Records from
+other organizations are reported as \`404 Not found\`.
+
+The same keys (scope \`read\`) connect MCP clients to the read-only tools at \`/api/mcp\` (Streamable HTTP).
+
+## Rate limits
+Every authenticated request counts against a one-minute window: per API key, or per user for sessions. Each
+response carries \`RateLimit-Limit\`, \`RateLimit-Remaining\` and \`RateLimit-Reset\` (seconds). Past the limit the
+API answers \`429\` with \`Retry-After\`. AI endpoints also have their own hourly and daily limits; their responses
+show whichever limit has fewer requests left.
 
 ## Errors
 Errors use RFC 9457 problem details (\`application/problem+json\`) with \`type\`, \`title\`, \`status\`,
@@ -194,7 +206,7 @@ export function openApiDocument() {
         description: env.DEMO_MODE ? "Public demo (fictional data, resets daily)" : "This server",
       },
     ],
-    security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+    security: [{ apiKeyAuth: [] }, { bearerAuth: [] }, { cookieAuth: [] }],
     tags: [
       { name: "Jobs", description: "Work orders and their lifecycle" },
       { name: "Customers", description: "Customers, contacts, sites and equipment" },
@@ -208,9 +220,11 @@ export function openApiDocument() {
       ...billingTags,
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
       RECURRENCES_TAG,
+      API_KEYS_TAG,
     ],
     components: {
       securitySchemes: {
+        ...apiKeySecurityScheme,
         bearerAuth: {
           type: "http",
           scheme: "bearer",
@@ -730,6 +744,7 @@ export function openApiDocument() {
         }),
       },
       ...recurrencePaths({ op, json, body, errors, uuidParam, idempotencyHeader }),
+      ...apiKeyPaths({ op, json, body, errors, uuidParam }),
       "/service-types": {
         get: op("Organization", "List service types", {
           operationId: "listServiceTypes",
@@ -753,5 +768,5 @@ export function openApiDocument() {
       }),
     },
   });
-  return cached;
+  return withRateLimits(cached);
 }

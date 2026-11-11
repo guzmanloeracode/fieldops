@@ -612,6 +612,11 @@ Details are in [§17](#17-api-and-integrations).
 
 *As built (0.3), PLT-04 for AI:* fixed-window counters in a PostgreSQL table: 20 drafts per user per hour, 15 per visitor (IP address) per day in the demo, and 300 per day across all organizations (each set by an environment variable; 0 turns it off). `POST /api/v1/ai/intake` sends `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`, answers 429 with `Retry-After` when a limit is reached and 503 when AI isn't available.
 
+*As built (0.5), PLT-02, PLT-04 and PLT-05 (ADR 023, ADR 024):*
+- **API keys:** Settings → API keys (owners and admins) creates a key with a name, a scope (`read`, or `write`, which includes read) and an optional expiry of 30, 90 or 365 days, and shows it once with a copy button and a `curl` example. Keys are `fo_` + 40 base62 characters; the database keeps their SHA-256 hash and the first seven characters. A key acts as the member who created it, within that member's current role, and is deleted with the member's membership. The list shows who each key acts as, when it was created and last used, and when it expires; revoking takes effect on the next request. At most 20 active keys per organization. `GET/POST /api-keys` and `DELETE /api-keys/{id}` need a signed-in session: a key gets `403 session_required`, so a leaked key can't create more. The request method decides the scope a key needs (GET and HEAD read, everything else write), so AI endpoints need `write`; a missing scope is `403 insufficient_scope` with `WWW-Authenticate: Bearer error="insufficient_scope"`, an unknown, revoked or expired key `401 invalid_token`. Changes made with a key show `API key fo_xxxx… · <client>` as the user agent in the audit log. The keys are deleted with the demo's nightly reset.
+- **Rate limits:** every authenticated `/api/v1` request and MCP call counts in a one-minute window: 300 per key and 600 per user for sessions (`API_KEY_RATE_LIMIT`, `API_USER_RATE_LIMIT`; 0 turns one off). Demo accounts are shared, so in the demo a session's window is per user and IP address. Every response carries `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`; past the limit, `429` with `Retry-After`. AI endpoints keep their 0.3 limits and send whichever has fewer requests left. Unauthenticated requests aren't counted. The OpenAPI document lists the headers and the `429` on every operation.
+- **MCP server:** `POST /api/mcp`, Streamable HTTP without sessions (JSON answers; `GET` and `DELETE` are `405`), authenticated with an API key that has the `read` scope; sessions aren't accepted. It offers the seven *Ask FieldOps* tools (§9.3) to the key's role with the same filtering, 50-row cap and one short transaction per call, annotated read-only. Settings → API keys shows the server URL and setup for Claude Code (`claude mcp add --transport http …`) and JSON-configured clients.
+
 ---
 
 ## 9. AI features
@@ -702,6 +707,8 @@ A narrative summary of the week's KPI changes. All numbers are computed in SQL a
 ### 9.6 AI-05 MCP server (C, 0.5)
 
 The AI-02 tools exposed through the Model Context Protocol, so an owner can query FieldOps from an MCP client such as Claude. Access uses API keys with read-only scopes.
+
+*As built (0.5, ADR 024):* `/api/mcp` serves the seven read-only tools of §9.3 over stateless Streamable HTTP with the official TypeScript SDK, to an API key with the `read` scope. The client's model does the reasoning: FieldOps runs no model for MCP calls, so they spend no AI quota and work while AI is turned off. Inputs the assistant sends as `null` may be left out. Tool results are JSON data with the tool's summary and count; a record that doesn't exist or invalid input comes back as an error result. OAuth discovery isn't offered yet: clients send the key as a header.
 
 ### 9.7 Technical design
 
@@ -1188,6 +1195,7 @@ erDiagram
 | Idempotency | `Idempotency-Key` header on POST requests, stored for 24 hours |
 | Concurrency | `ETag` and `If-Match` on PATCH to prevent lost updates |
 | Rate limits | `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset` headers |
+| *As built (0.5)* | API keys (`fo_…`, PLT-02) authenticate integrations and act as the member who created them, narrowed by scope: `read` for GET and HEAD, `write` for the rest. Key management (`/api-keys`) needs a session. Every response carries the rate-limit headers (300 requests a minute per key, 600 per user); see §8.14 |
 | Versioning | Breaking changes only in a new major path (`/api/v2`) |
 | Documentation | OpenAPI 3.1 generated from Zod. Interactive reference at `/docs/api`. |
 

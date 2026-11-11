@@ -1,3 +1,80 @@
 {
-  "title": "Kunci API"
+  "title": "Kunci API",
+  "pageTitle": "Kunci API",
+  "description": "Kunci memungkinkan sistem lain memakai API dan server MCP FieldOps untuk organisasi ini. Kunci bertindak sebagai anggota yang membuatnya, dibatasi oleh cakupannya.",
+  "demoNote": "Di demo publik, kunci dihapus saat reset malam.",
+  "new": "Kunci API baru",
+  "empty": "Belum ada kunci API",
+  "emptyHint": "Buat kunci untuk menghubungkan integrasi, skrip, atau klien MCP.",
+  "listLabel": "Kunci API",
+  "createdBy": "Bertindak sebagai {name}",
+  "createdAt": "Dibuat {date}",
+  "lastUsed": "Terakhir dipakai {date}",
+  "neverUsed": "Belum pernah dipakai",
+  "expires": "Berakhir {date}",
+  "expired": "Berakhir {date}",
+  "noExpiry": "Tidak berakhir",
+  "revokedAt": "Dicabut {date}",
+  "state": {
+    "active": "Aktif",
+    "expired": "Kedaluwarsa",
+    "revoked": "Dicabut"
+  },
+  "scope": {
+    "read": "Baca",
+    "write": "Baca dan tulis"
+  },
+  "create": {
+    "title": "Kunci API baru",
+    "description": "Kunci bertindak sebagai Anda, dalam peran Anda, dan hanya dengan cakupan yang Anda pilih.",
+    "name": "Nama",
+    "namePlaceholder": "mis. Sinkronisasi akuntansi",
+    "nameHint": "Agar kunci mudah dibedakan nanti.",
+    "scope": "Cakupan",
+    "scopeRead": "Hanya baca",
+    "scopeReadHint": "Permintaan GET dan server MCP.",
+    "scopeWrite": "Baca dan tulis",
+    "scopeWriteHint": "Juga membuat, mengubah, dan menghapus data.",
+    "expiry": "Berakhir",
+    "never": "Tidak pernah",
+    "days": "Dalam {count} hari",
+    "submit": "Buat kunci",
+    "cancel": "Batal",
+    "nameRequired": "Beri nama kunci ini"
+  },
+  "created": {
+    "title": "Salin kunci baru Anda",
+    "description": "Kunci hanya ditampilkan kali ini. Simpan di tempat aman, misalnya pengelola kata sandi atau rahasia integrasi Anda.",
+    "keyLabel": "Kunci API",
+    "copy": "Salin",
+    "copied": "Disalin ke papan klip",
+    "copyFailed": "Tidak bisa menyalin. Pilih kunci lalu salin secara manual.",
+    "tryIt": "Coba",
+    "done": "Selesai"
+  },
+  "revoke": {
+    "button": "Cabut",
+    "label": "Cabut {name}",
+    "title": "Cabut “{name}”?",
+    "description": "Permintaan dengan kunci ini langsung berhenti berfungsi. Tindakan ini tidak bisa dibatalkan; buat kunci baru jika diperlukan lagi.",
+    "confirm": "Cabut kunci",
+    "cancel": "Batal",
+    "done": "Kunci dicabut"
+  },
+  "rest": {
+    "title": "REST API",
+    "description": "Kirim kunci sebagai bearer token. Setiap endpoint dijelaskan di referensi API.",
+    "reference": "Buka referensi API",
+    "limits": "Setiap kunci dapat mengirim {perKey} permintaan per menit. Setiap respons membawa header RateLimit-Limit, RateLimit-Remaining, dan RateLimit-Reset; melewati batas, API menjawab 429 dengan Retry-After.",
+    "limitsOff": "Permintaan dengan kunci tidak dibatasi di server ini."
+  },
+  "mcp": {
+    "title": "Hubungkan klien MCP",
+    "description": "Tanyakan kepada Claude atau klien MCP lain tentang pekerjaan, risiko SLA, beban kerja teknisi, dan pelanggan Anda. Alatnya hanya-baca dan memakai kunci dengan cakupan Baca.",
+    "url": "URL server",
+    "cli": "Claude Code",
+    "json": "Klien yang dikonfigurasi dengan JSON",
+    "tools": "Alat: cari pekerjaan, lihat pekerjaan, risiko SLA, beban kerja teknisi, riwayat pelanggan, persetujuan tertunda, dan, untuk pemilik dan admin, pendapatan.",
+    "replace": "Ganti fo_… dengan kunci Anda."
+  }
 }

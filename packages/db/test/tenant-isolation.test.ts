@@ -197,9 +197,16 @@ describe("schema guard", () => {
       join pg_attribute a on a.attrelid = t.oid and a.attnum = x.indkey[0]
       where t.relnamespace = 'public'::regnamespace and not x.indisprimary`);
     const tenant = new Set<string>(TENANT_TABLES);
-    // Trigram search indexes cover one text column and can't lead with organization_id.
+    // Trigram search indexes cover one text column and can't lead with organization_id. Two 0.5 indexes serve
+    // lookups made before an organization is known: an API key by its hash, and the worker's queue of pending
+    // outbox events across organizations.
+    const global = new Set(["api_key_token_hash_uq", "outbox_event_pending_idx"]);
     const offenders = idx.rows.filter(
-      (r) => tenant.has(r.table) && r.first_col !== "organization_id" && !r.index.endsWith("_trgm_idx"),
+      (r) =>
+        tenant.has(r.table) &&
+        r.first_col !== "organization_id" &&
+        !r.index.endsWith("_trgm_idx") &&
+        !global.has(r.index),
     );
     expect(offenders).toEqual([]);
   });

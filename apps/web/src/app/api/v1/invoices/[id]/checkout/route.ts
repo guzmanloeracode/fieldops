@@ -1,6 +1,6 @@
 import type { CheckoutLink } from "@fieldops/core";
 import type { CheckoutSessionDto } from "@fieldops/shared";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { authenticate, problemResponse, rateLimitHeaders } from "@/server/api/handler";
 import { internalProblem, problemFromError } from "@/server/api/problem";
 import { logger } from "@/server/logger";
 import { staffCheckout } from "@/server/payments";
@@ -32,7 +32,11 @@ export async function POST(req: Request, route: { params: Promise<{ id: string }
     );
     return Response.json(toDto(link), {
       status: link.reused ? 200 : 201,
-      headers: { "Cache-Control": "no-store", "X-Request-Id": requestId },
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Request-Id": requestId,
+        ...rateLimitHeaders(actor.rateLimit),
+      },
     });
   } catch (err) {
     const problem = problemFromError(err, path);

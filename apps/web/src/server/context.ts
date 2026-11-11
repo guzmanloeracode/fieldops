@@ -15,7 +15,7 @@ import { db } from "./db";
 import { files } from "./files";
 import { logger } from "./logger";
 import { notificationMailer } from "./notification-mailer";
-import { auditMeta, requestMeta } from "./request-meta";
+import { auditMeta, auditMetaFor, requestMeta } from "./request-meta";
 
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
@@ -95,7 +95,7 @@ function context(actor: Actor, store: ServiceContext["store"], tx: Tx): ServiceC
 /** Runs a core service for the signed-in member in one tenant-scoped transaction. */
 export async function runService<T>(fn: (ctx: ServiceContext) => Promise<T>, actor?: Actor): Promise<T> {
   const a = actor ?? (await requireActor());
-  const meta = auditMeta(await requestMeta());
+  const meta = auditMetaFor(a, auditMeta(await requestMeta()));
   return withStore(db, a.organizationId, (store, tx) => fn(context(a, store, tx)), {
     userId: a.userId,
     ip: meta.ip,

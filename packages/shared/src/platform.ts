@@ -54,6 +54,35 @@ export interface ApiKeyRepr {
   revoked_at: string | null;
 }
 
+const iso = z.iso.datetime();
+
+/** The API representation of a key (`ApiKeyRepr`), for the OpenAPI document. */
+export const apiKeySchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    prefix: z.string().meta({ description: "The first characters of the key", example: "fo_8kq2" }),
+    scopes: z.array(z.enum(API_KEY_SCOPES)),
+    created_by: z
+      .object({ member_id: z.uuid(), name: z.string() })
+      .nullable()
+      .meta({ description: "The member the key acts as" }),
+    created_at: iso,
+    last_used_at: iso.nullable().meta({ description: "Recorded at most once a minute" }),
+    expires_at: iso.nullable(),
+    revoked_at: iso.nullable(),
+  })
+  .meta({ id: "ApiKey" });
+
+export const apiKeyCreatedSchema = apiKeySchema
+  .extend({
+    key: z.string().meta({
+      description: "The secret. Shown only in this response: store it now.",
+      example: "fo_8kq2Vd0mXz3nB7cLwP1rT5yH9sJ4eA6gU2oQkF8i",
+    }),
+  })
+  .meta({ id: "ApiKeyCreated" });
+
 // ------------------------------------------------------------------ Rate limits (PLT-04)
 
 /** Default requests per minute on /api/v1, overridable by environment variables. */

@@ -63,5 +63,9 @@ export { customerLocale, dateText, moneyText, portalPath } from "./services/bill
 // 0.4 pay: online payments (FIN-05) and quotes and invoices in the customer portal (POR-04)
 export * from "./services/payments-types";
 export * from "./services/platform-types";
+// 0.5 platform: API keys (PLT-02) and the MCP server's tools (PLT-05, AI-05)
+export * from "./services/api-key-types";
+export * as apiKeys from "./services/api-keys";
+export * as mcpTools from "./services/mcp-tools";
 export * as payments from "./services/payments";
 export * as portalBilling from "./services/portal-billing";

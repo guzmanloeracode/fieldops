@@ -26,6 +26,17 @@ export function auditMeta(meta: RequestMeta): RequestMeta {
   return env.DEMO_MODE ? { ip: null, userAgent: meta.userAgent } : meta;
 }
 
+/**
+ * Requests made with an API key (PLT-02) say so in the audit log: the user agent becomes
+ * "API key fo_xxxx · <client's user agent>", so a change made by an integration can be told from one made in the app.
+ */
+export function auditMetaFor(actor: object, meta: RequestMeta): RequestMeta {
+  const key = (actor as { apiKey?: { prefix: string } | null }).apiKey;
+  if (!key) return meta;
+  const ua = `API key ${key.prefix}…${meta.userAgent ? ` · ${meta.userAgent}` : ""}`;
+  return { ...meta, userAgent: ua.slice(0, 512) };
+}
+
 /** Outside a request (scripts, tests) there are no headers; the audit log records nothing then. */
 export async function requestMeta(): Promise<RequestMeta> {
   try {

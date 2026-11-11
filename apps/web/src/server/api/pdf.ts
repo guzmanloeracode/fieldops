@@ -4,8 +4,8 @@ import { withStore } from "@fieldops/db";
 import { env } from "@/env";
 import { db } from "@/server/db";
 import { logger } from "@/server/logger";
-import { auditMeta, metaFromHeaders } from "@/server/request-meta";
-import { authenticate, problemResponse } from "./handler";
+import { auditMeta, auditMetaFor, metaFromHeaders } from "@/server/request-meta";
+import { authenticate, problemResponse, rateLimitHeaders } from "./handler";
 import { internalProblem, problemFromError } from "./problem";
 
 type RouteContext<P> = { params: Promise<P> };
@@ -30,7 +30,7 @@ export function apiPdfRoute<P extends Record<string, string>>(
         db,
         actor.organizationId,
         (store) => load({ params, ctx: { actor, store, now: new Date(), demo: env.DEMO_MODE } }),
-        { userId: actor.userId, ...auditMeta(metaFromHeaders(req.headers)) },
+        { userId: actor.userId, ...auditMetaFor(actor, auditMeta(metaFromHeaders(req.headers))) },
       );
       const pdf = await render();
       return new Response(new Blob([pdf.bytes as BlobPart], { type: "application/pdf" }), {
@@ -39,6 +39,7 @@ export function apiPdfRoute<P extends Record<string, string>>(
           "Content-Disposition": `attachment; filename="${pdf.fileName}"`,
           "Cache-Control": "private, no-store",
           "X-Request-Id": requestId,
+          ...rateLimitHeaders(actor.rateLimit),
         },
       });
     } catch (err) {
