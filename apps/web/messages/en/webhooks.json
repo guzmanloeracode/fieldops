@@ -100,7 +100,7 @@
   "verify": {
     "title": "Verifying requests",
     "description": "Requests follow the Standard Webhooks format. Check the signature, reject timestamps more than 5 minutes off, answer 2xx within 10 seconds, and skip event IDs you've already processed: delivery is at least once.",
-    "headers": "Headers: webhook-id (the event ID), webhook-timestamp (Unix seconds) and webhook-signature (v1,<base64 HMAC-SHA256 of id.timestamp.body>).",
+    "headers": "Headers: webhook-id (the event ID), webhook-timestamp (Unix seconds) and webhook-signature (v1, a comma and the base64 HMAC-SHA256 of id.timestamp.body).",
     "example": "Verification in Node.js"
   },
   "detail": {

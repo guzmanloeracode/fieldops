@@ -30,14 +30,14 @@
       "status": "Status"
     },
     "allEvents": "Semua peristiwa",
-    "eventCount": "{count} peristiwa",
+    "eventCount": "{count, plural, other {# peristiwa}}",
     "open": "Buka {url}"
   },
   "status": {
     "active": "Aktif",
     "off": "Mati",
     "failing": "Gagal",
-    "failingSince": "{count} percobaan gagal berturut-turut sejak {date}",
+    "failingSince": "{count, plural, other {# percobaan gagal}} berturut-turut sejak {date}",
     "offByYou": "Dimatikan oleh seseorang di organisasi Anda",
     "offByRelay": "Dimatikan oleh Relay: {reason}"
   },
@@ -100,7 +100,7 @@
   "verify": {
     "title": "Memverifikasi permintaan",
     "description": "Permintaan mengikuti format Standard Webhooks. Periksa tanda tangannya, tolak stempel waktu yang selisihnya lebih dari 5 menit, jawab 2xx dalam 10 detik, dan lewati ID peristiwa yang sudah diproses: pengiriman bisa terjadi lebih dari sekali.",
-    "headers": "Header: webhook-id (ID peristiwa), webhook-timestamp (detik Unix) dan webhook-signature (v1,<HMAC-SHA256 base64 dari id.timestamp.body>).",
+    "headers": "Header: webhook-id (ID peristiwa), webhook-timestamp (detik Unix) dan webhook-signature (v1, koma, lalu HMAC-SHA256 base64 dari id.timestamp.body).",
     "example": "Verifikasi di Node.js"
   },
   "detail": {
