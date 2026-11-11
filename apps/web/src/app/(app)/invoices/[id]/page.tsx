@@ -11,6 +11,7 @@ import { InvoiceStatusBadge } from "@/components/billing/status-badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 import { requireActor, runService } from "@/server/context";
+import { onlinePayments } from "@/server/payments";
 import { InvoiceActions } from "../_components/invoice-actions";
 import { InvoiceForm } from "../_components/invoice-form";
 
@@ -26,6 +27,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const t = await getTranslations("billing");
   const locale = await getLocale();
   const tm = await getTranslations("billing.paymentMethod");
+  const tp = await getTranslations("pay.staff");
   const tz = actor.organization.timezone;
   const data = await runService(async (ctx) => {
     const invoice = await invoices.getInvoice(ctx, id);
@@ -92,6 +94,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             contactId={invoice.contactId}
             today={data.today}
             timeZone={tz}
+            onlinePayments={onlinePayments() !== "unavailable"}
             contacts={data.contacts
               .filter((c): c is typeof c & { email: string } => Boolean(c.email))
               .map((c) => ({ id: c.id, name: c.name, email: c.email }))}
@@ -173,6 +176,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                           <span className="text-muted-foreground">
                             · {tm(p.method)}
                             {p.reference ? ` · ${p.reference}` : ""}
+                          </span>{" "}
+                          <span className="text-muted-foreground text-xs" data-testid="payment-provider">
+                            ·{" "}
+                            {p.provider === "stripe" || p.provider === "simulated"
+                              ? tp(`provider.${p.provider}`)
+                              : tp("provider.manual")}
+                            {p.provider === "stripe" && p.providerRef ? (
+                              <span className="font-mono"> · {p.providerRef}</span>
+                            ) : null}
                           </span>
                         </span>
                         <span className="text-muted-foreground text-xs">
@@ -203,6 +215,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <Item label={t("columns.issued")}>{dayText(invoice.issueDate, locale)}</Item>
                 <Item label={t("columns.due")}>{dayText(invoice.dueDate, locale)}</Item>
                 <Item label={t("invoice.sentAt")}>{formatDateTime(invoice.sentAt, tz)}</Item>
+                {invoice.viewedAt ? (
+                  <Item label={tp("viewed")}>{formatDateTime(invoice.viewedAt, tz, locale)}</Item>
+                ) : null}
                 {invoice.paidAt ? (
                   <Item label={t("invoice.paidAt")}>{formatDateTime(invoice.paidAt, tz)}</Item>
                 ) : null}

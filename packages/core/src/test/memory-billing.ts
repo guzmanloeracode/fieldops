@@ -12,6 +12,7 @@ import type {
   QuoteLineRecord,
   QuoteRecord,
   QuoteView,
+  StoredCheckout,
   UpdateGuard,
 } from "../services/billing-types";
 import type { Store } from "../services/types";
@@ -28,6 +29,8 @@ export interface MemoryBilling {
   payments: (PaymentRecord & { recordedByUserId: string | null })[];
   reminders: { invoiceId: string; stage: number; sentAt: Date }[];
   outbox: OutboxEmail[];
+  /** Checkout sessions by invoice id (FIN-05). */
+  checkouts?: Map<string, StoredCheckout>;
 }
 
 /** Local date of an instant in UTC (the memory store's organizations use UTC). */
@@ -49,6 +52,7 @@ export function memoryBilling(
     reminders: [],
     outbox: [],
   });
+  const checkouts = () => (m.checkouts ??= new Map());
   let tick = 0;
   const stamp = () => new Date(Date.now() + tick++);
 
@@ -323,6 +327,7 @@ export function memoryBilling(
         inv.amountPaidMinor += amountMinor;
         if (balanceOf(inv) === 0) Object.assign(inv, { status: "paid", paidAt });
         Object.assign(inv, { version: inv.version + 1, updatedAt: stamp() });
+        checkouts().delete(invoiceId);
         return inv;
       },
       async addPayment(input) {
@@ -344,6 +349,20 @@ export function memoryBilling(
         if (!p) return null;
         const { recordedByUserId: _r, ...record } = p;
         return record;
+      },
+
+      async getCheckout(invoiceId) {
+        return checkouts().get(invoiceId) ?? null;
+      },
+      async saveCheckout(invoiceId, checkout) {
+        const inv = m.invoices.find((x) => x.id === invoiceId);
+        if (!inv || (inv.status !== "sent" && inv.status !== "overdue")) return false;
+        checkouts().set(invoiceId, { ...checkout });
+        return true;
+      },
+      async markViewed(kind, id, at) {
+        const doc = (kind === "quote" ? m.quotes : m.invoices).find((x) => x.id === id);
+        if (doc && !doc.viewedAt) doc.viewedAt = at;
       },
 
       async markOverdue(today) {

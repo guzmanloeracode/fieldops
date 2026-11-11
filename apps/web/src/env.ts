@@ -35,6 +35,15 @@ const schema = z.object({
   AI_USER_HOURLY_LIMIT: z.coerce.number().int().min(0).default(20),
   AI_VISITOR_DAILY_LIMIT: z.coerce.number().int().min(0).default(15),
   AI_DAILY_LIMIT: z.coerce.number().int().min(0).default(300),
+  /**
+   * Online invoice payments (FIN-05): Stripe Checkout when both keys are set (test mode keys in the demo). Without
+   * them the public demo, or PAYMENTS_PROVIDER=simulated, uses the simulated test checkout; otherwise customers
+   * pay by bank transfer and staff record payments.
+   */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  /** "simulated" turns the simulated checkout on outside the demo. */
+  PAYMENTS_PROVIDER: z.string().optional(),
   /** Google sign-in (AUTH-02). The button only shows when both are set. */
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

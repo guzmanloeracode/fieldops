@@ -68,6 +68,9 @@ importers:
       '@fieldops/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@fieldops/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -365,6 +368,25 @@ importers:
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0
+
+  packages/payments:
+    dependencies:
+      '@fieldops/core':
+        specifier: workspace:*
+        version: link:../core
+      '@fieldops/shared':
+        specifier: workspace:*
+        version: link:../shared
+      stripe:
+        specifier: 23.1.0
+        version: 23.1.0(@types/node@24.19.2)
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^5.1.0
+        version: 5.1.0(vitest@5.1.0)
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(@vitest/coverage-v8@5.1.0)(vite@8.3.7(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/shared:
     dependencies:
@@ -4967,6 +4989,15 @@ packages:
   strip-ansi@7.2.0:
     resolution: {integrity: sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==}
     engines: {node: '>=12'}
+
+  stripe@23.1.0:
+    resolution: {integrity: sha512-fVUfMSfTPoukfoV//MUKAx2+YxyKmYaYtnAL9VkfnHfaPNQylFdWZMD+zgUFerI8rjbaiER8Vzj2XEUQ2AhAsQ==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@types/node': '>=20'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   styled-jsx@5.1.6:
     resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
@@ -9621,6 +9652,10 @@ snapshots:
   strip-ansi@7.2.0:
     dependencies:
       ansi-regex: 6.6.0
+
+  stripe@23.1.0(@types/node@24.19.2):
+    optionalDependencies:
+      '@types/node': 24.19.2
 
   styled-jsx@5.1.6(@babel/core@7.29.13)(react@19.3.1):
     dependencies:

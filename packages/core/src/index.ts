@@ -60,3 +60,7 @@ export * as invoices from "./services/invoices";
 export * as revenue from "./services/revenue";
 export * as billingPass from "./services/billing-daily";
 export { customerLocale, dateText, moneyText, portalPath } from "./services/billing-common";
+// 0.4 pay: online payments (FIN-05) and quotes and invoices in the customer portal (POR-04)
+export * from "./services/payments-types";
+export * as payments from "./services/payments";
+export * as portalBilling from "./services/portal-billing";

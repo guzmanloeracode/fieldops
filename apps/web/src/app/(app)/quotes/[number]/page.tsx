@@ -28,6 +28,7 @@ export default async function QuotePage({ params }: { params: Promise<{ number: 
   const { number } = await params;
   const actor = await requireActor();
   const t = await getTranslations("billing");
+  const tp = await getTranslations("pay.staff");
   const locale = await getLocale();
   const tz = actor.organization.timezone;
   const data = await runService(async (ctx) => {
@@ -143,6 +144,9 @@ export default async function QuotePage({ params }: { params: Promise<{ number: 
                 <Item label={t("form.serviceType")}>{quote.serviceType?.name ?? "—"}</Item>
                 <Item label={t("form.validUntil")}>{dayText(quote.validUntil, locale)}</Item>
                 <Item label={t("quote.sentAt")}>{formatDateTime(quote.sentAt, tz)}</Item>
+                {quote.viewedAt ? (
+                  <Item label={tp("viewed")}>{formatDateTime(quote.viewedAt, tz, locale)}</Item>
+                ) : null}
                 {quote.decidedAt ? (
                   <Item label={t("quote.decidedAt")}>
                     {formatDateTime(quote.decidedAt, tz)}

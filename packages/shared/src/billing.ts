@@ -428,3 +428,17 @@ export const invoiceSchema = invoiceSummarySchema
   })
   .meta({ id: "Invoice" });
 export type InvoiceDto = z.infer<typeof invoiceSchema>;
+
+// ---------------------------------------------------------------- online payments (FIN-05)
+
+/** A checkout link that pays an invoice's balance; reused while it is open. */
+export const checkoutSessionSchema = z
+  .object({
+    id: z.string().meta({ description: "The provider's session id" }),
+    url: z.url().meta({ description: "Send the customer here to pay" }),
+    expires_at: ts,
+    provider: z.enum(["stripe", "simulated"]),
+    reused: z.boolean().meta({ description: "An open session was returned instead of a new one" }),
+  })
+  .meta({ id: "CheckoutSession" });
+export type CheckoutSessionDto = z.infer<typeof checkoutSessionSchema>;

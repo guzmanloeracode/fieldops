@@ -186,6 +186,8 @@ test.describe("billing pages as owner (FIN)", () => {
 });
 
 test.describe("customer portal", () => {
+  // Three pages that compile on first use under `next dev`; the home page also lists quotes and invoices.
+  test.slow();
   test("axe: portal home, request form and job", async ({ page }) => {
     await page.goto("/portal/acme-air/sign-in");
     await page.getByTestId("portal-demo-sign-in").click();
@@ -208,6 +210,39 @@ test.describe("service report for customers (POR-04)", () => {
     await expect(page.getByTestId("portal-report")).toBeVisible();
   });
   test("axe: an invalid report link", async ({ page }) => audit(page, "/share/reports/not.valid"));
+});
+
+test.describe("portal quotes, invoices and the test checkout (POR-04, FIN-05)", () => {
+  // Each test opens pages that compile on first use under `next dev`.
+  test.slow();
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/portal/acme-air/sign-in");
+    await page.getByTestId("portal-demo-sign-in").click();
+    await expect(page).toHaveURL(/\/portal\/acme-air$/);
+  });
+
+  test("axe: quotes and a quote", async ({ page }) => {
+    await audit(page, "/portal/acme-air/quotes");
+    const quote = await page.getByTestId("portal-quote").first().getAttribute("href");
+    await audit(page, quote!);
+  });
+
+  test("axe: invoices, an invoice and the test checkout", async ({ page }) => {
+    await audit(page, "/portal/acme-air/invoices");
+    const invoice = await page.getByTestId("portal-invoice").first().getAttribute("href");
+    await audit(page, invoice!);
+
+    const client = await api("owner");
+    const open = await json<{ data: { id: string }[] }>(
+      await client.get("/api/v1/invoices?limit=1&status=sent,overdue"),
+    );
+    const link = await json<{ url: string }>(
+      await client.post(`/api/v1/invoices/${open.data[0]!.id}/checkout`),
+    );
+    await client.dispose();
+    await audit(page, new URL(link.url).pathname);
+    await expect(page.getByTestId("test-checkout-pay")).toBeVisible();
+  });
 });
 
 test.describe("technician home", () => {

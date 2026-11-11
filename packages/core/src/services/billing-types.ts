@@ -218,6 +218,14 @@ export type InvoicePatch = Partial<
   Omit<InvoiceRecord, "id" | "customerId" | "currency" | "version" | "createdAt" | "updatedAt">
 >;
 
+/** An online checkout session stored on an issued invoice (FIN-05): reused until it expires. */
+export interface StoredCheckout {
+  /** The provider's session id ("cs_…" for Stripe, "sim_…" for the simulated checkout). */
+  sessionId: string;
+  url: string;
+  expiresAt: Date;
+}
+
 /** Optimistic and state guards for an update: it applies only if the row still matches. */
 export interface UpdateGuard<S> {
   expectedVersion?: number;
@@ -314,12 +322,21 @@ export interface BillingRepo {
   // ---- payments (FIN-05)
   /**
    * Adds an amount to an issued invoice's paid amount, only while the invoice is sent or overdue and the amount
-   * fits the balance (race-safe). Settling the total marks it paid at `paidAt`. Null when the guard fails.
+   * fits the balance (race-safe). Settling the total marks it paid at `paidAt`. The stored checkout session is
+   * dropped, since its amount no longer matches the balance. Null when the guard fails.
    */
   applyPaymentToInvoice(invoiceId: string, amountMinor: number, paidAt: Date): Promise<InvoiceRecord | null>;
   addPayment(data: NewPayment): Promise<PaymentRecord>;
   /** A payment confirmed by an online provider, by the provider's reference (idempotent webhooks). */
   findPayment(provider: string, providerRef: string): Promise<PaymentRecord | null>;
+
+  // ---- online payments and the customer portal (FIN-05, POR-04)
+  /** The invoice's stored checkout session, expired or not. */
+  getCheckout(invoiceId: string): Promise<StoredCheckout | null>;
+  /** Stores the checkout session of a sent or overdue invoice. False when the invoice isn't open any more. */
+  saveCheckout(invoiceId: string, checkout: StoredCheckout): Promise<boolean>;
+  /** Records when the customer first opened the document in the portal (no version change). */
+  markViewed(kind: "quote" | "invoice", id: string, at: Date): Promise<void>;
 
   // ---- overdue and reminders (FIN-06)
   /** Sent invoices due before `today` with a balance become overdue. Returns their ids. */

@@ -24,6 +24,7 @@
     "@fieldops/db": "workspace:*",
     "@fieldops/documents": "workspace:*",
     "@fieldops/email": "workspace:*",
+    "@fieldops/payments": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.5",
     "@scalar/nextjs-api-reference": "^0.12.16",

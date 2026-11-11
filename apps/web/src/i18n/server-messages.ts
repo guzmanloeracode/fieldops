@@ -156,6 +156,11 @@ const ID: Record<string, string> = {
   "Unknown catalog item": "Item katalog tidak dikenal",
   "Unknown customer": "Pelanggan tidak dikenal",
   "Use a different prefix for quotes and invoices": "Gunakan awalan yang berbeda untuk penawaran dan faktur",
+  // 0.4: online payments and the customer portal
+  "This invoice is already paid": "Faktur ini sudah lunas",
+  "Online payments aren't set up": "Pembayaran online belum disiapkan",
+  "This checkout has expired. Go back to the invoice to pay.":
+    "Sesi pembayaran ini sudah kedaluwarsa. Kembali ke faktur untuk membayar.",
   // 0.4: service reports
   "Describe the work performed before sending": "Jelaskan pekerjaan yang dilakukan sebelum mengirim",
   "Enter a valid email address": "Masukkan alamat email yang valid",
@@ -198,6 +203,15 @@ const ENTITY_ID: Record<string, string> = {
   "Maintenance plan": "Rencana perawatan",
   Quote: "Penawaran",
   "Service report": "Laporan servis",
+  Checkout: "Sesi pembayaran",
+};
+
+const INVOICE_STATUS_ID: Record<string, string> = {
+  draft: "draf",
+  sent: "terkirim",
+  paid: "lunas",
+  overdue: "terlambat",
+  void: "dibatalkan",
 };
 
 const STATUS_ID: Record<string, string> = {
@@ -225,6 +239,10 @@ const PATTERNS_ID: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^SKU (.+) is already used by (.+)$/, (m) => `SKU ${m[1]} sudah dipakai oleh ${m[2]}`],
   [/^At most the balance of (.+)$/, (m) => `Maksimal sebesar sisa tagihan ${m[1]}`],
   [/^At most (\d+) for this unit$/, (m) => `Maksimal ${m[1]} untuk satuan ini`],
+  [
+    /^A (\w+) invoice can't be paid online$/,
+    (m) => `Faktur ${INVOICE_STATUS_ID[m[1]!] ?? m[1]} tidak dapat dibayar online`,
+  ],
 ];
 
 /** A server message in the reader's language; English (and anything unknown) is returned as is. */

@@ -51,6 +51,9 @@ describe("translateServerMessage", () => {
       "Status pekerjaan tidak dapat diubah dari Baru menjadi Selesai",
     );
     expect(translateServerMessage("Add up to 3 photos", "id")).toBe("Tambahkan maksimal 3 foto");
+    expect(translateServerMessage("A void invoice can't be paid online", "id")).toBe(
+      "Faktur dibatalkan tidak dapat dibayar online",
+    );
   });
 
   it("leaves English and unknown messages as they are", () => {
