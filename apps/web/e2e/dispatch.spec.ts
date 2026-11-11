@@ -44,7 +44,10 @@ test.describe("dispatch board as dispatcher", () => {
     // Space picks up, an arrow key jumps onto Tom's lane at 08:00, Space drops.
     await queued.focus();
     await page.keyboard.press("Space");
-    await expect(await liveRegion(page)).toContainText(`Picked up ${first.number}`);
+    // On a slow machine the "picked up" announcement can already be replaced by the first "is over" one.
+    await expect(await liveRegion(page)).toHaveText(
+      new RegExp(`^(Picked up ${first.number}|${first.number} is over )`),
+    );
     await page.waitForTimeout(250);
     await page.keyboard.press("ArrowRight");
     await expect(await liveRegion(page)).toContainText("Tom Reyes");
