@@ -16,6 +16,7 @@
     "@fieldops/core": "workspace:*",
     "@fieldops/db": "workspace:*",
     "@fieldops/email": "workspace:*",
+    "@fieldops/relay": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "nodemailer": "^10.4.0",

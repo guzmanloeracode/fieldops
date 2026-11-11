@@ -65,7 +65,8 @@
     "member": "member",
     "invitation": "invitation",
     "organization": "organization settings",
-    "user": "user"
+    "user": "user",
+    "webhook_endpoint": "webhook endpoint"
   },
   "entityTypes": {
     "job": "Jobs",
@@ -85,7 +86,8 @@
     "member": "Members",
     "invitation": "Invitations",
     "organization": "Organization",
-    "user": "Sign-ins"
+    "user": "Sign-ins",
+    "webhook_endpoint": "Webhook endpoints"
   },
   "csv": {
     "time": "Time",

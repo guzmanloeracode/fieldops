@@ -1,4 +1,4 @@
-import { createDb, releaseStuckAiDrafts, runMigrations, schema } from "@fieldops/db";
+import { createDb, deleteOldOutboxEvents, releaseStuckAiDrafts, runMigrations, schema } from "@fieldops/db";
 import { deleteExpiredConversations } from "@fieldops/db";
 import { count } from "drizzle-orm";
 import { PgBoss } from "pg-boss";
@@ -11,6 +11,7 @@ import { log } from "./log";
 import { scheduleOps } from "./ops";
 import { runSlaMonitor } from "./sla";
 import { runBillingPasses } from "./billing";
+import { BATCH, publishPending, relay } from "./webhooks";
 
 const command = process.argv[2] ?? "run";
 
@@ -62,6 +63,8 @@ async function run() {
     );
     // Ask FieldOps conversations are kept 30 days after their last message (AI-02).
     await deleteExpiredConversations(db);
+    // Webhook events (PLT-03): sent ones as long as Relay keeps them (7 days), failed ones 30 days.
+    await deleteOldOutboxEvents(db);
     log.info("maintenance done");
   });
 
@@ -120,8 +123,24 @@ async function run() {
       await new Promise((r) => setTimeout(r, 3_000));
     }
   };
-  const looping = Promise.all([loop(), aiLoop()]);
-  log.info({ demo: env.demoMode, ai: intakeModel.provider }, "worker started");
+  // Webhook events (PLT-03): the integration outbox, posted to Relay. Without Relay there is nothing to post (no
+  // organization can turn webhooks on), so the loop doesn't run.
+  const relayLoop = async () => {
+    if (!relay) return;
+    while (!stopping) {
+      let sent = 0;
+      try {
+        sent = await publishPending(db, relay);
+        if (sent) log.info({ sent }, "webhook events sent");
+      } catch (err) {
+        log.error({ err }, "webhook outbox loop failed");
+      }
+      // A full batch means more are waiting: go again at once.
+      if (sent < BATCH) await new Promise((r) => setTimeout(r, 2_000));
+    }
+  };
+  const looping = Promise.all([loop(), aiLoop(), relayLoop()]);
+  log.info({ demo: env.demoMode, ai: intakeModel.provider, relay: Boolean(relay) }, "worker started");
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, "shutting down");
@@ -141,10 +160,25 @@ async function reset() {
   await pool.end();
 }
 
-const commands: Record<string, () => Promise<void>> = { run, migrate, reset };
+/**
+ * A fake Relay for the image E2E and local development (packages/relay): RELAY_PORT (default 8099) and
+ * RELAY_API_KEY. It runs until stopped.
+ */
+async function fakeRelay() {
+  const { startFakeRelay } = await import("@fieldops/relay");
+  const port = Number(process.env.RELAY_PORT ?? 8099);
+  const apiKey = process.env.RELAY_API_KEY ?? "rk_dev";
+  const server = await startFakeRelay({ port, apiKey, host: "0.0.0.0" });
+  log.info({ port }, "fake Relay listening");
+  const stop = () => void server.close().then(() => process.exit(0));
+  process.on("SIGTERM", stop);
+  process.on("SIGINT", stop);
+}
+
+const commands: Record<string, () => Promise<void>> = { run, migrate, reset, "fake-relay": fakeRelay };
 const fn = commands[command];
 if (!fn) {
-  log.error(`unknown command ${command}; use run | migrate | reset`);
+  log.error(`unknown command ${command}; use run | migrate | reset | fake-relay`);
   process.exit(1);
 }
 fn().catch((err) => {

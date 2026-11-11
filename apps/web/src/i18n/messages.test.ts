@@ -139,6 +139,16 @@ describe("message files", () => {
     });
   }
 
+  it("have no dots in their keys (next-intl reads a dot as nesting)", () => {
+    const dotted = (tree: Tree, prefix: string): string[] =>
+      Object.entries(tree).flatMap(([key, value]) => [
+        ...(key.includes(".") ? [`${prefix}.${key}`] : []),
+        ...(typeof value === "string" ? [] : dotted(value, `${prefix}.${key}`)),
+      ]);
+    for (const locale of LOCALES)
+      for (const ns of namespaces) expect(dotted(load(locale, ns), `${locale}/${ns}`)).toEqual([]);
+  });
+
   it("parse as ICU messages", () => {
     for (const locale of LOCALES)
       for (const ns of namespaces)

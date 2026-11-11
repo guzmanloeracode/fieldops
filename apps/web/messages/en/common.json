@@ -91,6 +91,7 @@
     "newJob": "New job",
     "jobs": "Jobs",
     "ai": "AI settings",
+    "webhooks": "Webhooks",
     "audit": "Audit log",
     "sla": "SLA policies",
     "demoOutbox": "Demo outbox",

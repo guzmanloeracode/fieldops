@@ -85,6 +85,8 @@ skeleton must not wrap the detail pages next to them.
   labels in English and Bahasa Indonesia (ADR 018).
 - **`packages/payments`**: the payment providers behind the core's port: Stripe Checkout and its webhook parser,
   and the simulated test checkout (ADR 021).
+- **`packages/relay`**: the Relay HTTP client behind the core's `EventRelay` port (outgoing webhooks, ADR 022),
+  and a fake Relay server for tests, local development and the image E2E.
 
 ## Worker
 
@@ -100,9 +102,31 @@ tenant's transaction and are idempotent, so a repeated or overlapping run change
 | daily, 03:30    | Clean-up: spent portal links and sessions, old rate-limit windows and notifications, conversations idle 30 days |
 | daily, 00:00    | Demo reset, only with `DEMO_MODE=true`                                                                          |
 
-Two loops poll between schedules: the email outbox, and AI drafting, which claims pending portal requests and
+Three loops poll between schedules: the email outbox; AI drafting, which claims pending portal requests and
 service reports (`FOR UPDATE SKIP LOCKED`, released after 10 minutes if a worker stops) and drafts them outside any
-transaction.
+transaction; and, when Relay is configured, the webhook outbox (below). The daily clean-up also deletes webhook
+events sent more than 7 days ago and failed ones after 30.
+
+## Outgoing webhooks
+
+Events leave through Relay (PLT-03, PRD §11.4, ADR 022):
+
+1. Triggers from migration 0005 write a thin event into `outbox_event` in the transaction of each change (jobs,
+   assignments, SLA alerts, quotes, invoices, expense decisions), only for organizations with
+   `webhooks_enabled_at` set and never in quiet transactions (seed, reset). The web role can read the outbox but
+   not write it.
+2. The worker's loop (`publishOutbox` in `packages/db/src/outbox.ts`) claims due rows with `FOR UPDATE SKIP
+LOCKED` and a 5-minute lease, posts each to Relay outside any transaction with the row ID as the
+   `Idempotency-Key`, and marks it `sent` with Relay's event ID. Failures back off (30 s doubling to an hour) and
+   become `failed` after 12 attempts.
+3. Relay routes the event to the organization's subscribed endpoints and delivers it signed, with retries.
+
+Endpoints, secrets and the delivery log live in Relay, not in FieldOps. The settings pages, their server actions
+and `/api/v1/webhook-*` call the `webhooks` service in `packages/core`, which talks to Relay between short tenant
+transactions (`relayRoute()` in `src/server/api/relay-route.ts` instead of `apiRoute()`, so no transaction waits
+on Relay; an `Idempotency-Key` is claimed and stored in separate transactions). The delivery log names each
+delivery's event type from the outbox (by Relay event ID) and asks Relay only for the few it doesn't have. The
+nightly demo reset retires the demo organizations' tenants first, because the reset gives organizations new IDs.
 
 ## Audit log and live updates
 

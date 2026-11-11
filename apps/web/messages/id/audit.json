@@ -65,7 +65,8 @@
     "member": "anggota",
     "invitation": "undangan",
     "organization": "pengaturan organisasi",
-    "user": "pengguna"
+    "user": "pengguna",
+    "webhook_endpoint": "endpoint webhook"
   },
   "entityTypes": {
     "job": "Pekerjaan",
@@ -85,7 +86,8 @@
     "member": "Anggota",
     "invitation": "Undangan",
     "organization": "Organisasi",
-    "user": "Aktivitas masuk"
+    "user": "Aktivitas masuk",
+    "webhook_endpoint": "Endpoint webhook"
   },
   "csv": {
     "time": "Waktu",

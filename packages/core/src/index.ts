@@ -67,5 +67,7 @@ export * from "./services/platform-types";
 export * from "./services/api-key-types";
 export * as apiKeys from "./services/api-keys";
 export * as mcpTools from "./services/mcp-tools";
+export * from "./services/webhook-types";
+export * as webhooks from "./services/webhooks";
 export * as payments from "./services/payments";
 export * as portalBilling from "./services/portal-billing";

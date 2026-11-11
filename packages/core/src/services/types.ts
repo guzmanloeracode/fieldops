@@ -1,3 +1,4 @@
+import type { WebhookRepo } from "./webhook-types";
 import type {
   Address,
   AttachmentKind,
@@ -480,6 +481,7 @@ export interface Store {
   assistant: AssistantRepo;
   // 0.5 platform
   apiKeys: ApiKeyRepo;
+  webhooks: WebhookRepo;
 }
 
 export interface FileStorage {

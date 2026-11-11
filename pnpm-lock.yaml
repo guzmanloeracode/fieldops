@@ -71,6 +71,9 @@ importers:
       '@fieldops/payments':
         specifier: workspace:*
         version: link:../../packages/payments
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../../packages/relay
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -210,6 +213,9 @@ importers:
       '@fieldops/email':
         specifier: workspace:*
         version: link:../../packages/email
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../../packages/relay
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -315,6 +321,9 @@ importers:
         specifier: ^14.0.3
         version: 14.0.3
     devDependencies:
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../relay
       '@testcontainers/postgresql':
         specifier: ^12.2.1
         version: 12.2.1(bare-buffer@3.7.1)
@@ -387,6 +396,25 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^5.1.0
         version: 5.1.0(vitest@5.1.0)
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(@vitest/coverage-v8@5.1.0)(vite@8.3.7(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/relay:
+    dependencies:
+      '@fieldops/core':
+        specifier: workspace:*
+        version: link:../core
+      '@fieldops/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^5.1.0
+        version: 5.1.0(vitest@5.1.0)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       vitest:
         specifier: ^5.1.0
         version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(@vitest/coverage-v8@5.1.0)(vite@8.3.7(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))

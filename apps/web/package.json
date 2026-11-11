@@ -25,6 +25,7 @@
     "@fieldops/documents": "workspace:*",
     "@fieldops/email": "workspace:*",
     "@fieldops/payments": "workspace:*",
+    "@fieldops/relay": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.5",
     "@modelcontextprotocol/sdk": "1.32.2",

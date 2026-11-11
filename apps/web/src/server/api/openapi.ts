@@ -65,6 +65,7 @@ import { RECURRENCES_TAG, recurrencePaths } from "./openapi-recurrences";
 import { reportPaths } from "./openapi-reports";
 import { billingPaths, billingTags } from "./openapi-billing";
 import { API_KEYS_TAG, apiKeyPaths, apiKeySecurityScheme, withRateLimits } from "./openapi-platform";
+import { WEBHOOKS_TAG, webhookEvents, webhookPaths } from "./openapi-webhooks";
 
 const DESCRIPTION = `
 The FieldOps REST API covers the same resources the web and mobile apps use. Every endpoint calls the same
@@ -221,6 +222,7 @@ export function openApiDocument() {
       { name: "AI", description: "AI drafts. A person confirms every change the AI suggests." },
       RECURRENCES_TAG,
       API_KEYS_TAG,
+      WEBHOOKS_TAG,
     ],
     components: {
       securitySchemes: {
@@ -766,7 +768,9 @@ export function openApiDocument() {
         ifMatchHeader,
         uuidParam,
       }),
+      ...webhookPaths({ op, json, body, errors, uuidParam, idempotencyHeader }),
     },
+    webhooks: webhookEvents(),
   });
   return withRateLimits(cached);
 }

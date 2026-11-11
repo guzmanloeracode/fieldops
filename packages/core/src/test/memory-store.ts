@@ -31,6 +31,7 @@ import { memoryReports } from "./memory-reports";
 import { memoryOps } from "./memory-ops";
 import { memoryAssistant } from "./memory-assistant";
 import { memoryPlatform, type MemoryPlatform } from "./memory-platform";
+import { memoryWebhooks, type MemoryWebhooks } from "./memory-webhooks";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -62,6 +63,8 @@ export interface MemoryData {
   automate?: MemoryAutomate;
   /** 0.5 API keys (memory-platform.ts). */
   platform?: MemoryPlatform;
+  /** 0.5 webhooks (memory-webhooks.ts). */
+  webhooks?: MemoryWebhooks;
 }
 
 export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; data: MemoryData } {
@@ -448,6 +451,8 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     ...memoryOps(data, uuid),
     ...memoryAssistant(data, uuid),
     ...memoryPlatform(data, uuid),
+    // 0.5
+    ...memoryWebhooks(data),
   };
   return { store, data };
 }

@@ -7,3 +7,15 @@ export { claimPendingAiDrafts, failAiDraft, releaseStuckAiDrafts } from "./ai-qu
 export { claimPendingReports, failReportDraft, releaseStuckReports } from "./repos/reports";
 export { deleteExpiredConversations } from "./repos/assistant";
 export { authenticateApiKey, hitRateWindow } from "./repos/api-keys";
+export {
+  claimOutboxEvents,
+  deleteOldOutboxEvents,
+  markOutboxFailed,
+  markOutboxSent,
+  organizationsWithWebhooks,
+  outboxBackoffSeconds,
+  publishOutbox,
+  type OutboxFailure,
+  OUTBOX_MAX_ATTEMPTS,
+  type ClaimedOutboxEvent,
+} from "./outbox";

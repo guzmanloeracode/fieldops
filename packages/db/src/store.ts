@@ -21,6 +21,7 @@ import { reportRepo } from "./repos/reports";
 import { digestRepo, recurrenceRepo } from "./repos/recurrences";
 import { assistantRepo } from "./repos/assistant";
 import { apiKeyRepo } from "./repos/api-keys";
+import { webhookRepo } from "./repos/webhooks";
 
 /** Builds the repositories for one organization on top of an open transaction. */
 export function createStore(tx: Tx, organizationId: string): Store {
@@ -58,6 +59,7 @@ export function createStore(tx: Tx, organizationId: string): Store {
     assistant: assistantRepo(tx, organizationId),
     // 0.5 platform
     apiKeys: apiKeyRepo(tx, organizationId),
+    webhooks: webhookRepo(tx, organizationId),
   };
 }
 
