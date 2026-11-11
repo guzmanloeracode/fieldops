@@ -25,50 +25,46 @@ Open the [live demo](https://fieldops.tinggalpake.com) and sign in with one clic
 A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that tenants never see each other's data;
 its people use the app in Bahasa Indonesia.
 
-## What's in release 0.4
+## What's in release 0.5
 
-![In the customer portal, a customer approves a quote and gets the number of the new job, then pays an invoice through the test checkout and sees it marked paid](docs/screenshots/release-0.4.gif)
+![In the demo, the owner adds a webhook endpoint, copies its signing secret, sends a test event and opens the delivered attempt with its 204 response](docs/screenshots/release-0.5.gif)
 
-- **Quotes and invoices:** quotes with a discount and a validity date that become jobs when approved; invoices
-  drafted from a completed job with its service, labor rounded to the quarter hour and approved parts at cost plus
-  markup; numbers per year with no gaps, payments recorded by hand, overdue reminders after 3, 7 and 14 days, and a
-  catalog of parts and fees.
-- **Online payments:** customers approve quotes and pay invoices in the customer portal, through Stripe Checkout
-  with a signed webhook; the public demo uses a simulated checkout labeled as a test until Stripe keys are set.
-- **Branded PDFs** for quotes, invoices and service reports, in English or Bahasa Indonesia.
-- **AI service reports:** completing a job drafts the customer's report from the checklist, readings, notes and
-  photos; someone reviews and sends it, and the customer opens the PDF from an email link or the portal.
-- **Ask FieldOps** (⌘J / Ctrl+J): questions about jobs, SLA risks, capacity, customers, approvals and revenue,
-  answered through read-only tools that only see what the asking user can see.
-- **Operations:** maintenance plans that create recurring jobs ahead of time, an SLA clock that pauses while a job
-  waits for the customer, a daily digest for owners, and revenue on the dashboard.
-- **Bahasa Indonesia:** the app, the customer portal, emails and PDFs in English or Indonesian, per member, per
-  customer and per browser for signed-out visitors, with Indonesian dates and 24-hour times. Sign in as Acme
-  Teknik's owner to see it.
+- **API keys:** create keys with a `read` or `write` scope and an optional expiry in Settings → API keys. A key acts
+  as the member who created it, only its hash is stored, and every change it makes shows up in the audit log.
+- **Rate limits:** 300 requests a minute per key and 600 per user, with standard `RateLimit-*` headers and `429`
+  with `Retry-After`.
+- **Signed webhooks:** jobs, SLA risks, quotes, invoices and expense decisions sent to your endpoints with
+  [Standard Webhooks](https://www.standardwebhooks.com/) signatures, delivered by
+  [Relay](https://github.com/guzmanloeracode/relay) with retries, a 7-day delivery log, test events, secret rotation
+  and redelivery. In the public demo, endpoints point at webhook.site or the demo's own test receiver.
+- **MCP server:** `/api/mcp` gives Claude and other MCP clients the seven read-only _Ask FieldOps_ tools with an API
+  key: `claude mcp add --transport http fieldops https://fieldops.tinggalpake.com/api/mcp --header "Authorization: Bearer fo_…"`.
 
-| A quote                                                                                                                | An invoice with a payment recorded                                                                      |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| ![An approved quote with its lines, tax, total and the job it created](docs/screenshots/quote.png)                     | ![An overdue invoice with a partial payment recorded and the balance due](docs/screenshots/invoice.png) |
-| **Paying an invoice in the customer portal**                                                                           | **A service report drafted by AI**                                                                      |
-| ![An invoice in the customer portal with the balance due and Pay now](docs/screenshots/portal-billing.png)             | ![A sent service report on a completed job, drafted by AI](docs/screenshots/service-report.png)         |
-| **Maintenance plans**                                                                                                  | **Ask FieldOps (Ctrl/⌘ J)**                                                                             |
-| ![A commercial customer's maintenance plans with their status and next visits](docs/screenshots/maintenance-plans.png) | ![The Ask FieldOps panel with its recent conversations](docs/screenshots/assistant.png)                 |
-| **Revenue on the dashboard**                                                                                           | **Bahasa Indonesia and rupiah (Acme Teknik)**                                                           |
-| ![Revenue invoiced, revenue collected and receivables on the owner's dashboard](docs/screenshots/dashboard.png)        | ![The invoice list in Bahasa Indonesia with amounts in rupiah](docs/screenshots/bahasa-indonesia.png)   |
-| **Customer portal**                                                                                                    | **A portal request with its AI draft**                                                                  |
-| ![Customer portal](docs/screenshots/portal.png)                                                                        | ![AI review of a portal request](docs/screenshots/ai-review.png)                                        |
-| **Notifications**                                                                                                      | **Audit log**                                                                                           |
-| ![Notifications](docs/screenshots/notifications.png)                                                                   | ![Audit log](docs/screenshots/audit-log.png)                                                            |
-| **SLA policies**                                                                                                       | **The board with the sidebar collapsed**                                                                |
-| ![SLA policies](docs/screenshots/sla-policies.png)                                                                     | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png)             |
+| A webhook endpoint and its delivery log                                                                                | API keys, the REST API and the MCP server                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| ![A webhook endpoint with a job.updated and a test event delivered with a 204 response](docs/screenshots/webhooks.png) | ![An API key with the read scope, the curl example and the MCP server URL](docs/screenshots/api-keys.png) |
+| **A quote**                                                                                                            | **An invoice with a payment recorded**                                                                    |
+| ![An approved quote with its lines, tax, total and the job it created](docs/screenshots/quote.png)                     | ![An overdue invoice with a partial payment recorded and the balance due](docs/screenshots/invoice.png)   |
+| **Paying an invoice in the customer portal**                                                                           | **A service report drafted by AI**                                                                        |
+| ![An invoice in the customer portal with the balance due and Pay now](docs/screenshots/portal-billing.png)             | ![A sent service report on a completed job, drafted by AI](docs/screenshots/service-report.png)           |
+| **Maintenance plans**                                                                                                  | **Ask FieldOps (Ctrl/⌘ J)**                                                                               |
+| ![A commercial customer's maintenance plans with their status and next visits](docs/screenshots/maintenance-plans.png) | ![The Ask FieldOps panel with its recent conversations](docs/screenshots/assistant.png)                   |
+| **Revenue on the dashboard**                                                                                           | **Bahasa Indonesia and rupiah (Acme Teknik)**                                                             |
+| ![Revenue invoiced, revenue collected and receivables on the owner's dashboard](docs/screenshots/dashboard.png)        | ![The invoice list in Bahasa Indonesia with amounts in rupiah](docs/screenshots/bahasa-indonesia.png)     |
+| **Customer portal**                                                                                                    | **A portal request with its AI draft**                                                                    |
+| ![Customer portal](docs/screenshots/portal.png)                                                                        | ![AI review of a portal request](docs/screenshots/ai-review.png)                                          |
+| **Notifications**                                                                                                      | **Audit log**                                                                                             |
+| ![Notifications](docs/screenshots/notifications.png)                                                                   | ![Audit log](docs/screenshots/audit-log.png)                                                              |
+| **SLA policies**                                                                                                       | **The board with the sidebar collapsed**                                                                  |
+| ![SLA policies](docs/screenshots/sla-policies.png)                                                                     | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png)               |
 
-Release 0.3 added the SLA engine, notifications with live updates, the customer portal, AI smart intake and an
+Release 0.4 added quotes and invoices with online payments, branded PDFs, AI service reports, the _Ask FieldOps_
+assistant, maintenance plans and Bahasa Indonesia; release 0.3 added the SLA engine, notifications with live updates, the customer portal, AI smart intake and an
 audit log written by the database; release 0.2 added the dispatch board with conflict checks, the technician
 workspace, parts approvals and the KPI dashboard; release 0.1 laid the base: accounts and roles, customers and
 sites, the job lifecycle, the REST API with OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHANGELOG.md).
 
-After 0.4 the [roadmap](#roadmap) adds a Go event-delivery service, API keys and webhooks, a marketing site and a
-mobile app.
+Next on the [roadmap](#roadmap): a marketing site and a mobile app for technicians.
 
 ## Engineering highlights
 
@@ -78,13 +74,20 @@ mobile app.
 - **One contract.** Zod schemas in `packages/shared` validate forms, server actions and API requests, type the
   code, and generate the OpenAPI document.
 - **Framework-free domain.** Permissions, the job lifecycle, money and numbering live in `packages/core` as plain
-  TypeScript behind repository interfaces: 744 unit tests, 99.9% line coverage.
-- **Real database tests.** 226 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
+  TypeScript behind repository interfaces: 772 unit tests, 99.9% line coverage.
+- **Real database tests.** 257 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
   pagination over 12 sort orders, concurrent numbering, the audit and live-event triggers, the SLA monitor and
   the seed itself.
 - **An audit log the app can't forge.** Database triggers write every change in the same transaction, with the
   actor, IP address and user agent; the app's database role can read the log but not write, edit or delete it.
   ([ADR 016](docs/adr/016-audit-log-triggers.md))
+- **Webhooks that match what committed.** The same kind of triggers write integration events into an outbox in the
+  transaction of the change; the worker posts them to [Relay](https://github.com/guzmanloeracode/relay) with the row
+  id as the idempotency key, so an event exists exactly when its change does and a crash never sends it twice.
+  ([ADR 022](docs/adr/022-webhooks-through-relay.md))
+- **Keys that can only narrow.** An API key acts as its member within that member's current role, and its scope can
+  only take away; keys can't create keys, and the MCP server reuses the assistant's read-only tools.
+  ([ADR 023](docs/adr/023-api-keys-and-rate-limits.md), [ADR 024](docs/adr/024-mcp-server.md))
 - **Live updates without another service.** PostgreSQL `LISTEN/NOTIFY` feeds server-sent events; a change is
   announced only when its transaction commits. ([ADR 011](docs/adr/011-sse.md))
 - **AI drafts, people decide.** Claude's output is constrained to a JSON schema and validated again on the server;

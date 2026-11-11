@@ -21,6 +21,8 @@
 - **API:** `/api-keys`, `/webhook-settings`, `/webhook-endpoints` and `/webhook-deliveries`; the OpenAPI document
   describes API key authentication, the rate-limit headers and every webhook event with a sample body.
 - **Audit log:** entries without a person read "System" again.
+- **Dispatch board:** picking up a job from the queue with the keyboard starts it at 08:00 on the first lane again;
+  it could start over a lane hidden under the queue and land at the wrong time.
 
 ## 0.4.1 (2026-11-11)
 
