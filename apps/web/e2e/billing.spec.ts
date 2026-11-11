@@ -215,8 +215,10 @@ test.describe.serial("billing", () => {
     await page.getByTestId("void-invoice").click();
     await page.getByLabel("Reason", { exact: true }).fill("Billed twice by mistake");
     await page.getByTestId("confirm-void").click();
+    // The dialog's textarea holds the same text until its closing animation ends.
+    await expect(page.getByRole("dialog")).toBeHidden();
     await expect(page.getByTestId("invoice-status")).toHaveText("Void");
-    await expect(page.getByText("Billed twice by mistake")).toBeVisible();
+    await expect(page.getByRole("definition").filter({ hasText: "Billed twice by mistake" })).toBeVisible();
     await context.close();
   });
 
