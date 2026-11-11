@@ -3,11 +3,11 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.9 · release 0.4.1 live |
+| **Status** | Draft 2.0 · release 0.4.1 and Relay 1.0 live |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 11 November 2026 |
-| **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
-| **Repositories** | `fieldops` (web + mobile), `relay` (backend service), `fieldops-site` (marketing site) |
+| **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted); Relay at `https://relay.tinggalpake.com` |
+| **Repositories** | `fieldops` (web + mobile), [`relay`](https://github.com/guzmanloeracode/relay) (backend service), `fieldops-site` (marketing site) |
 | **Implementation docs** | `docs/ARCHITECTURE.md`, `docs/RUNBOOK.md`, `docs/adr/` |
 
 ### Revision history
@@ -24,6 +24,7 @@
 | 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
 | 1.8 | 11 Nov 2026 | Release 0.4 built and live: billing, online payments, documents, the assistant, operations and Bahasa Indonesia. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, online payments, PDFs, reminders and totals (§8.8), quotes, invoices and reports in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings and the two languages (§8.12, §13), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–021 and the missing 016 in the ADR list (§14.5), new tables, endpoints and Stripe (§16.3, §17.2, §17.4), the 0.4 seed and demo payments (§19), the payment provider risk (§22) and Stripe test keys for the demo (§23). |
 | 1.9 | 11 Nov 2026 | Release 0.4.1: past *Ask FieldOps* conversations readable while AI is off (§9.3), next plan visits with their year (§8.3), KPI changes that round to zero read as the same (§8.10), and demo quotes whose title, service and parts match (§19). |
+| 2.0 | 11 Nov 2026 | Relay 1.0 built and live at `relay.tinggalpake.com`, repository `relay` public. Recorded the decisions made while building it in *As built (Relay 1.0)* notes: tenants, keys and scopes, routing at ingestion with a group commit, Standard Webhooks signatures, retries and automatic disabling, limits with parking lots, Expo push and email adapters, Redis Streams with PostgreSQL as the source of truth, and the k6 results against the targets (§11); its hosting (§15.2, §15.3) and load testing (§18.1); a dedicated-VM load test as an open question (§23). |
 
 ## Contents
 
@@ -808,6 +809,21 @@ sequenceDiagram
     R->>X: Signed webhook (retries with backoff)
 ```
 
+*As built (Relay 1.0, 11 November 2026):* live at `https://relay.tinggalpake.com` (landing page, API reference at `/docs`, `/openapi.yaml`), repository `relay`. REL-01–07 and REL-09 shipped; REL-08 (realtime, Could) did not. Decisions made while building it, recorded as ADRs in the `relay` repository:
+
+- **Tenants and keys (REL-01, REL-09; ADR 003):** a tenant is named by a slug its client chooses (for FieldOps, the organization ID), so the client never maps IDs. API keys (`rk_…`, 238 random bits, stored as SHA-256) are bound to one tenant or valid for every tenant, with the scopes `ingest`, `read`, `manage` and `admin` (tenants and keys, only on unbound keys). A key that can't see a tenant gets `404`. The first admin key comes from the command line (`relay keys create --admin`). FieldOps 0.5 will use one service key for all its organizations.
+- **Ingestion (REL-01):** the same API conventions as FieldOps: RFC 9457 errors with a stable `code`, cursor pagination with `next_cursor`, an `Idempotency-Key` that replays the original `202` for 24 hours and answers `422` when reused with another body (an expired key is released when it is used again). The event is committed before `202`; routing happens in the worker.
+- **Routing (REL-02):** each endpoint is one channel (webhook URL, email route with default recipients, or push route); subscriptions map exact types, prefixes (`job.*`) or `*` to an endpoint. An event can carry a `message` (title, body, link) for email and push, and `targets` (`users` for push, `emails` for email, `endpoints` to narrow the fan-out).
+- **Webhooks (REL-03; ADR 002):** Standard Webhooks signatures (`webhook-id` = the event ID, `webhook-timestamp`, `webhook-signature`), a 10-second timeout, no redirects, secrets encrypted at rest (AES-256-GCM) and rotated with a 24-hour overlap, and an SSRF guard that refuses private and reserved addresses when the endpoint is saved and again at every connection. 8 attempts within about 23 hours (waits of 75 s × 3ⁿ with up to 25% jitter, `Retry-After` honored). An endpoint is disabled after 24 hours of failures (at least 10 in a row) or at once on `410 Gone`; its pending deliveries go to the dead-letter queue, replayed one by one or in bulk as new deliveries.
+- **Delivery log (REL-04):** events with their deliveries, deliveries filtered by event, endpoint or status, and each attempt with status code, latency, error and the first kilobyte of the answer.
+- **Limits (REL-05; ADR 001):** token buckets per tenant for ingestion and deliveries, and concurrency slots per endpoint and per tenant, all in Redis Lua scripts. A delivery without a free slot is parked and woken when one frees up, so a slow endpoint holds only its own slots.
+- **Push (REL-06):** Expo Push API with receipt checks after 15 minutes; tokens Expo reports as `DeviceNotRegistered` are deleted. The public instance has no registered devices yet (FieldOps Mobile, release 1.0).
+- **Email (REL-07):** Resend or SMTP adapters, or a log-only mailer. The public instance uses the log-only mailer until a sending domain is set up (§23 #11).
+- **Queues (ADR 001):** Redis Streams with consumer groups carry only IDs; PostgreSQL is the source of truth. An attempt in progress is held by a Redis slot with a lease rather than a database write, so each attempt costs one `UPDATE`; the worker commits asynchronously (a lost write only repeats an attempt) while the API commits each event synchronously. A sweeper requeues unrouted events, overdue deliveries and entries of workers that died.
+- **Quality:** unit tests, integration tests on PostgreSQL 18 and Redis 8 in testcontainers (every response checked against the OpenAPI document), `-race`, an 80% coverage floor, golangci-lint and `sqlc diff`, all run by `scripts/verify.sh`; `deploy/release.sh` adds an image smoke test (`deploy/e2e.sh`) and automatic rollback, as for FieldOps (no hosted CI).
+- **Load test (§11.2):** k6 at a constant arrival rate for two minutes, with PostgreSQL, Redis, the API and the worker pinned together to two CPU cores of the shared server and production durability (every event on disk before its `202`). At **500 events a second** every event was accepted and delivered as a verified webhook, once, with nothing left queued when the load stopped (two runs: 495–499/s, 0 failures, 0 duplicates, about 165–170% of the two cores). **Throughput target met.** Ingest latency was p50 21–34 ms and p95 79–156 ms, but **p99 187–281 ms, so the p99 < 50 ms target is not met on this host** (p99 22.7 ms at 50 events a second): the tail comes from the run's first 25 seconds and from four processes sharing two cores that the server's other services also use. The first design reached only about 200 events a second; the load test led to routing at ingestion, the group commit, attempts held in Redis, fewer indexes and asynchronous worker commits (Relay's ADR 001). The report and raw results are in `relay/docs/LOADTEST.md`; a run on a dedicated 2-vCPU machine is open (§23 #15).
+- **Operations:** a separate Compose project `relay` (api, worker, postgres, redis; memory limits 128, 192, 384 and 128 MB), `deploy/release.sh` with an image smoke test and automatic rollback, `deploy/security.sh` (gitleaks, govulncheck), Prometheus metrics on an internal port and a Grafana dashboard behind the `observability` profile (not run in production yet). The public instance keeps 7 days of events and has no client tenants yet (only a disabled smoke-test tenant); FieldOps 0.5 creates them and sends its outbox events with one service key (§11.4).
+
 ---
 
 ## 12. FieldOps Site (marketing site)
@@ -875,7 +891,7 @@ flowchart TB
         WK[worker: Node<br/>job queue, SLA monitor, outbox, emails, demo reset]
         PG[(PostgreSQL)]
         RD[(Redis<br/>rate limits, cache, pub/sub)]
-        RL[Relay: Go<br/>from release 0.5]
+        RL[Relay: Go<br/>live; FieldOps events from 0.5]
     end
     R2[(Cloudflare R2<br/>files and backups)]
     AI[Claude API]
@@ -1017,12 +1033,14 @@ FieldOps runs on a self-managed Linux server, not on a serverless platform:
 | Host | Serves | From |
 |---|---|---|
 | `fieldops.tinggalpake.com` | FieldOps Web, portal, API and API docs. A project page is shown until 0.1 ships. | Now |
-| `relay.tinggalpake.com` | Relay API | Release 0.5 |
+| `relay.tinggalpake.com` | Relay API, its reference (`/docs`) and landing page | Relay 1.0 (live 11 Nov 2026) |
 | To be decided | FieldOps Site | Site release |
 
 DNS is managed in Cloudflare. Records are proxied for CDN, TLS at the edge and DDoS protection, with SSL mode *Full (strict)* and a valid certificate on the origin. Live updates send a heartbeat every 30 seconds so they stay under Cloudflare's idle timeout.
 
 *As built:* the `fieldops` A record is proxied. The zone's SSL mode stays *Full* for the other sites on it; a Cloudflare configuration rule sets *Full (strict)* for `fieldops.tinggalpake.com` only. The origin certificate is Let's Encrypt (certbot, nginx).
+
+*As built (Relay 1.0):* the `relay` A record is proxied the same way, with its own configuration rule for *Full (strict)* and a Let's Encrypt origin certificate. nginx proxies to the api container on `127.0.0.1:8098` (site config in `relay/deploy/proxy/`); Relay's `/metrics` port is never proxied.
 
 ### 15.3 Production stack (Docker Compose)
 
@@ -1033,7 +1051,7 @@ DNS is managed in Cloudflare. Records are proxied for CDN, TLS at the edge and D
 | `postgres` | Official PostgreSQL image | Named volume. Not exposed outside the Docker network. |
 | `redis` | Official Redis image | Password-protected and internal only. *As built (0.3): not added.* Live updates use PostgreSQL `LISTEN/NOTIFY` and rate limits a PostgreSQL table (ADR 011). Redis comes back with a second web replica or a measured need. |
 | `migrate` | Worker image, `migrate` command | One-shot container that runs the SQL migrations and sets the runtime role's password before `web` and `worker` start |
-| `relay`, `relay-worker` | From release 0.5 | See [§11](#11-relay-backend-service) |
+| `relay`, `relay-worker` | *As built (Relay 1.0):* `relay:<commit>`, one distroless image for `api`, `worker`, `migrate` and `keys create`, in its own Compose project `relay` with its own PostgreSQL 18 and Redis 8 | See [§11](#11-relay-backend-service). Secrets in `/etc/relay/relay.env`, release log `/var/log/relay-release.log`. |
 
 Only the reverse proxy listens on ports 80 and 443. Every other service is reachable only on the internal Docker network. The proxy setup follows whatever the server already uses (nginx, Caddy or Traefik), and the FieldOps site config lives in `infra/proxy/`.
 
@@ -1253,6 +1271,8 @@ Each delivery carries a `FieldOps-Signature: t=<unix>,v1=<hex HMAC-SHA256>` head
 
 **Coverage thresholds:** `packages/core` ≥ 90% of lines, the whole repository ≥ 70%.
 
+*Status at Relay 1.0:* the load test runs before Relay releases with `relay/loadtest/run.sh` (results in §11). Relay's own gates (`scripts/verify.sh`) run unit and testcontainers integration tests with `-race`, check every API response against its OpenAPI document, and require 80% statement coverage (81.8% for 1.0.0).
+
 *Status at 0.1:* `packages/core` has 258 unit tests at 100% line coverage (services run against an in-memory store). `packages/db` has 74 integration tests against PostgreSQL 18 in Testcontainers, including a guard that fails CI when a tenant table lacks row-level security.
 
 ### 18.2 Continuous integration
@@ -1348,7 +1368,7 @@ The plan builds the web product first, then the event delivery service (Relay), 
 | **0.3** Automate ✅ live 10 Nov 2026 | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes), SET-04, DEM-06 | 2 weeks |
 | **0.4** Get paid ✅ live 11 Nov 2026 (0.4.1 same day) | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
 | | **Core product complete** | | |
-| **Relay 1.0** | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
+| **Relay 1.0** ✅ live 11 Nov 2026, repository public | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
 | **0.5** Platform | Integrations | PLT-02–05, BIL-01–04, CUS-06, SCH-07, AI-04, AI-05, AUTH-07/08, SET-06; FieldOps events flow through Relay | 2 weeks |
 | **Site 1.0** | Marketing site | SITE-01–10 | 2 weeks |
 | **1.0** Mobile | Mobile | MOB-01–10, NOT-06 | 4 weeks |
@@ -1403,12 +1423,13 @@ The plan builds the web product first, then the event delivery service (Relay), 
 | 6 | License: MIT, or AGPL to discourage closed forks? | MIT |
 | 7 | WhatsApp Business integration, which is valuable in the Indonesian market? | Backlog |
 | 8 | Enable Cloudflare R2 on the account (dashboard only; it asks for a payment method even on the free tier). Needed for attachments and backups. | Uploads are off in the demo until enabled; the bucket `fieldops-demo` and its CORS rules are scripted and ready. |
-| 9 | GitHub account and visibility for the public repositories (E1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops. |
+| 9 | GitHub account and visibility for the public repositories (E1 requires them public). | **Decided 10 Nov 2026:** public under `guzmanloeracode` — github.com/guzmanloeracode/fieldops; github.com/guzmanloeracode/relay public since 11 Nov 2026. |
 | 10 | Deploy from GitHub Actions: create a non-root `deploy` user on the server and store its SSH key as a repository secret? | **Decided 10 Nov 2026: no hosted CI or Actions deploy.** Release gates run on the server (§15.4). |
 | 11 | Real email for non-demo sign-ups: Resend account and a sending domain (SPF/DKIM)? | Demo mode captures every email, so none is needed for the demo |
 | 12 | Anthropic API key with a spend limit for the live demo (AI-01) | AI shows as not configured and the manual forms work; the demo's portal requests carry seeded drafts |
 | 13 | Google OAuth client for sign-in (AUTH-02) | The *Continue with Google* button stays hidden |
 | 14 | Stripe test keys for the demo (FIN-05): a Stripe account in test mode, with `STRIPE_SECRET_KEY` and a webhook endpoint's `STRIPE_WEBHOOK_SECRET` | **Owner's decision 10 Nov 2026:** the demo runs the simulated checkout, labeled as a test, until the keys are provided |
+| 15 | Relay's p99 ingest target (< 50 ms) was measured on the shared server, where Relay's two pinned cores also run other services: rerun the load test on a dedicated 2-vCPU VM? | Results on the shared server are published as measured (§11); the throughput target is met there |
 
 ---
 
