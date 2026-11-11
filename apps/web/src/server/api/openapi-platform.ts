@@ -79,7 +79,11 @@ const header = (description: string, example: number) => ({
  * Every operation counts against a per-minute limit (PLT-04): each response carries the RateLimit headers, and any
  * operation can answer 429. Added to the generated document so no path can forget them.
  */
-export function withRateLimits<T>(document: T): T {
+const limited = new WeakSet<object>();
+
+export function withRateLimits<T extends object>(document: T): T {
+  if (limited.has(document)) return document;
+  limited.add(document);
   const doc = document as Doc;
   doc.components ??= {};
   doc.components.headers = {
