@@ -26,7 +26,7 @@ A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that t
 
 ## What's in release 0.3
 
-![A customer requests service in the portal; the dispatcher, on the board, gets a live notification, confirms the request and schedules it, and the customer sees the visit](docs/screenshots/release-0.3.gif)
+![In the customer portal, a customer approves a quote and gets the number of the new job, then pays an invoice through the test checkout and sees it marked paid](docs/screenshots/release-0.4.gif)
 
 - **SLA engine:** response and resolution targets per priority, in calendar time or business hours. Every job
   carries its deadlines; a monitor raises at-risk and breached alerts once, and badges show them everywhere.
@@ -42,13 +42,21 @@ A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that t
 - **Also:** CSV export of every dashboard report, sign in with Google, a "Try these 5 things" card for demo
   visitors, and (0.3.1) a sidebar that collapses to icons with Ctrl/⌘ B.
 
-| Customer portal                                      | A portal request with its AI draft                                                          |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| ![Customer portal](docs/screenshots/portal.png)      | ![AI review of a portal request](docs/screenshots/ai-review.png)                            |
-| **Notifications**                                    | **Audit log**                                                                               |
-| ![Notifications](docs/screenshots/notifications.png) | ![Audit log](docs/screenshots/audit-log.png)                                                |
-| **SLA policies**                                     | **The board with the sidebar collapsed**                                                    |
-| ![SLA policies](docs/screenshots/sla-policies.png)   | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png) |
+| A quote                                                                                                                | An invoice with a payment recorded                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| ![An approved quote with its lines, tax, total and the job it created](docs/screenshots/quote.png)                     | ![An overdue invoice with a partial payment recorded and the balance due](docs/screenshots/invoice.png) |
+| **Paying an invoice in the customer portal**                                                                           | **A service report drafted by AI**                                                                      |
+| ![An invoice in the customer portal with the balance due and Pay now](docs/screenshots/portal-billing.png)             | ![A sent service report on a completed job, drafted by AI](docs/screenshots/service-report.png)         |
+| **Maintenance plans**                                                                                                  | **Ask FieldOps (Ctrl/⌘ J)**                                                                             |
+| ![A commercial customer's maintenance plans with their status and next visits](docs/screenshots/maintenance-plans.png) | ![The Ask FieldOps panel with its recent conversations](docs/screenshots/assistant.png)                 |
+| **Revenue on the dashboard**                                                                                           | **Bahasa Indonesia and rupiah (Acme Teknik)**                                                           |
+| ![Revenue invoiced, revenue collected and receivables on the owner's dashboard](docs/screenshots/dashboard.png)        | ![The invoice list in Bahasa Indonesia with amounts in rupiah](docs/screenshots/bahasa-indonesia.png)   |
+| **Customer portal**                                                                                                    | **A portal request with its AI draft**                                                                  |
+| ![Customer portal](docs/screenshots/portal.png)                                                                        | ![AI review of a portal request](docs/screenshots/ai-review.png)                                        |
+| **Notifications**                                                                                                      | **Audit log**                                                                                           |
+| ![Notifications](docs/screenshots/notifications.png)                                                                   | ![Audit log](docs/screenshots/audit-log.png)                                                            |
+| **SLA policies**                                                                                                       | **The board with the sidebar collapsed**                                                                |
+| ![SLA policies](docs/screenshots/sla-policies.png)                                                                     | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png)             |
 
 Release 0.2 added the dispatch board with conflict checks, the technician workspace, parts approvals and the KPI
 dashboard; release 0.1 laid the base: accounts and roles, customers and sites, the job lifecycle, the REST API with
