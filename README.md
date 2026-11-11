@@ -15,54 +15,19 @@ the technician does the work on site, and the business sees every job from reque
 
 Open the [live demo](https://fieldops.tinggalpake.com) and sign in with one click as:
 
-| Role                 | What to try                                                                                                           |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Owner** (Olivia)   | The KPI dashboard and its CSV exports, SLA policies, the audit log, approving a large part request, switching company |
-| **Dispatcher** (Dan) | The board (open it in two windows: changes appear live), a portal request waiting for review, the bell                |
-| **Technician** (Tom) | _My day_ on a phone-sized screen: En route → Start, the checklist, a part request, the signature, the bell            |
-| **Customer** (Jamie) | The [customer portal](https://fieldops.tinggalpake.com/portal/acme-air): request service with photos, track the job   |
+| Role                 | What to try                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Owner** (Olivia)   | Revenue on the dashboard and its CSV exports, billing settings and the catalog, SLA policies, the audit log              |
+| **Dispatcher** (Dan) | The board (open it in two windows: changes appear live), quotes and invoices, maintenance plans on a customer            |
+| **Technician** (Tom) | _My day_ on a phone-sized screen: En route → Start, the checklist, a part request, the signature, the report             |
+| **Customer** (Jamie) | The [customer portal](https://fieldops.tinggalpake.com/portal/acme-air): approve a quote, pay an invoice (test checkout) |
 
-A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that tenants never see each other's data.
+A second fictional company, _Acme Teknik Nusantara_ (Jakarta, IDR), shows that tenants never see each other's data;
+its people use the app in Bahasa Indonesia.
 
-## What's in release 0.3
+## What's in release 0.4
 
 ![In the customer portal, a customer approves a quote and gets the number of the new job, then pays an invoice through the test checkout and sees it marked paid](docs/screenshots/release-0.4.gif)
-
-- **SLA engine:** response and resolution targets per priority, in calendar time or business hours. Every job
-  carries its deadlines; a monitor raises at-risk and breached alerts once, and badges show them everywhere.
-- **Notifications and live updates:** a bell with in-app notifications, emails and per-user settings; the board,
-  the _Today_ view and the bell update within seconds of someone else's change.
-- **Customer portal:** customers sign in with an email link, request service with photos and preferred times,
-  and follow their jobs.
-- **AI smart intake:** paste a customer's message (English or Bahasa Indonesia), add photos, get a draft job with
-  low-confidence fields highlighted. Portal requests are drafted in the background for a dispatcher to review.
-  On the public demo, live AI drafting is switched on once an API key is configured; the seeded portal requests
-  already carry drafts.
-- **Audit log:** every change with who, when, before and after, written by the database itself.
-- **Also:** CSV export of every dashboard report, sign in with Google, a "Try these 5 things" card for demo
-  visitors, and (0.3.1) a sidebar that collapses to icons with Ctrl/⌘ B.
-
-| A quote                                                                                                                | An invoice with a payment recorded                                                                      |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| ![An approved quote with its lines, tax, total and the job it created](docs/screenshots/quote.png)                     | ![An overdue invoice with a partial payment recorded and the balance due](docs/screenshots/invoice.png) |
-| **Paying an invoice in the customer portal**                                                                           | **A service report drafted by AI**                                                                      |
-| ![An invoice in the customer portal with the balance due and Pay now](docs/screenshots/portal-billing.png)             | ![A sent service report on a completed job, drafted by AI](docs/screenshots/service-report.png)         |
-| **Maintenance plans**                                                                                                  | **Ask FieldOps (Ctrl/⌘ J)**                                                                             |
-| ![A commercial customer's maintenance plans with their status and next visits](docs/screenshots/maintenance-plans.png) | ![The Ask FieldOps panel with its recent conversations](docs/screenshots/assistant.png)                 |
-| **Revenue on the dashboard**                                                                                           | **Bahasa Indonesia and rupiah (Acme Teknik)**                                                           |
-| ![Revenue invoiced, revenue collected and receivables on the owner's dashboard](docs/screenshots/dashboard.png)        | ![The invoice list in Bahasa Indonesia with amounts in rupiah](docs/screenshots/bahasa-indonesia.png)   |
-| **Customer portal**                                                                                                    | **A portal request with its AI draft**                                                                  |
-| ![Customer portal](docs/screenshots/portal.png)                                                                        | ![AI review of a portal request](docs/screenshots/ai-review.png)                                        |
-| **Notifications**                                                                                                      | **Audit log**                                                                                           |
-| ![Notifications](docs/screenshots/notifications.png)                                                                   | ![Audit log](docs/screenshots/audit-log.png)                                                            |
-| **SLA policies**                                                                                                       | **The board with the sidebar collapsed**                                                                |
-| ![SLA policies](docs/screenshots/sla-policies.png)                                                                     | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png)             |
-
-Release 0.2 added the dispatch board with conflict checks, the technician workspace, parts approvals and the KPI
-dashboard; release 0.1 laid the base: accounts and roles, customers and sites, the job lifecycle, the REST API with
-OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHANGELOG.md).
-
-## Coming in release 0.4
 
 - **Quotes and invoices:** quotes with a discount and a validity date that become jobs when approved; invoices
   drafted from a completed job with its service, labor rounded to the quarter hour and approved parts at cost plus
@@ -81,6 +46,27 @@ OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHA
   customer and per browser for signed-out visitors, with Indonesian dates and 24-hour times. Sign in as Acme
   Teknik's owner to see it.
 
+| A quote                                                                                                                | An invoice with a payment recorded                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| ![An approved quote with its lines, tax, total and the job it created](docs/screenshots/quote.png)                     | ![An overdue invoice with a partial payment recorded and the balance due](docs/screenshots/invoice.png) |
+| **Paying an invoice in the customer portal**                                                                           | **A service report drafted by AI**                                                                      |
+| ![An invoice in the customer portal with the balance due and Pay now](docs/screenshots/portal-billing.png)             | ![A sent service report on a completed job, drafted by AI](docs/screenshots/service-report.png)         |
+| **Maintenance plans**                                                                                                  | **Ask FieldOps (Ctrl/⌘ J)**                                                                             |
+| ![A commercial customer's maintenance plans with their status and next visits](docs/screenshots/maintenance-plans.png) | ![The Ask FieldOps panel with its recent conversations](docs/screenshots/assistant.png)                 |
+| **Revenue on the dashboard**                                                                                           | **Bahasa Indonesia and rupiah (Acme Teknik)**                                                           |
+| ![Revenue invoiced, revenue collected and receivables on the owner's dashboard](docs/screenshots/dashboard.png)        | ![The invoice list in Bahasa Indonesia with amounts in rupiah](docs/screenshots/bahasa-indonesia.png)   |
+| **Customer portal**                                                                                                    | **A portal request with its AI draft**                                                                  |
+| ![Customer portal](docs/screenshots/portal.png)                                                                        | ![AI review of a portal request](docs/screenshots/ai-review.png)                                        |
+| **Notifications**                                                                                                      | **Audit log**                                                                                           |
+| ![Notifications](docs/screenshots/notifications.png)                                                                   | ![Audit log](docs/screenshots/audit-log.png)                                                            |
+| **SLA policies**                                                                                                       | **The board with the sidebar collapsed**                                                                |
+| ![SLA policies](docs/screenshots/sla-policies.png)                                                                     | ![Dispatch board with the sidebar collapsed to icons](docs/screenshots/board-collapsed.png)             |
+
+Release 0.3 added the SLA engine, notifications with live updates, the customer portal, AI smart intake and an
+audit log written by the database; release 0.2 added the dispatch board with conflict checks, the technician
+workspace, parts approvals and the KPI dashboard; release 0.1 laid the base: accounts and roles, customers and
+sites, the job lifecycle, the REST API with OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHANGELOG.md).
+
 After 0.4 the [roadmap](#roadmap) adds a Go event-delivery service, API keys and webhooks, a marketing site and a
 mobile app.
 
@@ -92,8 +78,8 @@ mobile app.
 - **One contract.** Zod schemas in `packages/shared` validate forms, server actions and API requests, type the
   code, and generate the OpenAPI document.
 - **Framework-free domain.** Permissions, the job lifecycle, money and numbering live in `packages/core` as plain
-  TypeScript behind repository interfaces: 490 unit tests, 100% line coverage.
-- **Real database tests.** 159 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
+  TypeScript behind repository interfaces: 744 unit tests, 99.9% line coverage.
+- **Real database tests.** 226 integration tests run against PostgreSQL 18 in Testcontainers: RLS, keyset
   pagination over 12 sort orders, concurrent numbering, the audit and live-event triggers, the SLA monitor and
   the seed itself.
 - **An audit log the app can't forge.** Database triggers write every change in the same transaction, with the
@@ -209,7 +195,7 @@ docs/              PRD, architecture, runbook, ADRs
 | 0.1 Core     | Accounts, customers, jobs, REST API, demo                                  | ✅ live |
 | 0.2 Dispatch | Drag-and-drop board, technician day view, checklists, approvals, dashboard | ✅ live |
 | 0.3 Automate | SLA engine, notifications, audit log, customer portal, AI job intake       | ✅ live |
-| 0.4 Get paid | Quotes, invoices, payments, AI reports and assistant, maintenance plans    | next    |
+| 0.4 Get paid | Quotes, invoices, payments, AI reports and assistant, maintenance plans    | ✅ live |
 | Relay 1.0    | Event delivery service in Go                                               |         |
 | 0.5 Platform | API keys, signed webhooks, SaaS plans, MCP server                          |         |
 | Site 1.0     | Marketing site with GSAP                                                   |         |
