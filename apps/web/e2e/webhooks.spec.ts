@@ -41,8 +41,8 @@ test.describe("webhooks (PLT-03)", () => {
     let endpointId = "";
     try {
       await page.goto("/settings/webhooks");
-      await expect(page.getByRole("heading", { name: "Webhooks" }).first()).toBeVisible();
       const toggle = page.getByRole("switch", { name: "Send events" });
+      await expect(toggle).toBeVisible();
       if ((await toggle.getAttribute("aria-checked")) !== "true") {
         await toggle.click();
         await expect(page.getByText("Webhooks are on")).toBeVisible();
