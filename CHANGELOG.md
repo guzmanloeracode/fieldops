@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.4.0 — Get paid (2026-11-10)
+## 0.4.0 — Get paid (2026-11-11)
 
 - **Quotes** (`/quotes`): lines for services, labor, parts and fees with a tax rate each, a discount and a validity
   date. A quote is emailed to the customer's contact, revised back to draft while it is sent or expired, and
-  duplicated once it is approved or declined. Staff record the customer's decision; an approval creates a New job
-  with the quote's lines in its description, and office roles are notified. Sent quotes expire after their date.
+  duplicated once it is approved or declined. The customer decides in the portal, or staff record their decision;
+  an approval creates a New job with the quote's lines in its description, and office roles are notified. Sent quotes expire after their date.
 - **Invoices** (`/invoices`): drafted from a completed job with the service (or the approved quote's lines), one
   labor line per technician for recorded work rounded up to the quarter hour, and the approved parts and expenses
   not billed yet, at cost plus markup. Issuing gives the next number of the year with no gaps, the issue and due
@@ -13,6 +13,14 @@
   invoice paid once they cover it; unpaid invoices turn overdue after their due date, and drafts and invoices
   without payments can be voided with a reason. A part is billed on one invoice only, even when two invoices race
   for it.
+- **Online payments:** customers pay an invoice's balance through Stripe Checkout, and a signed webhook records the
+  payment once, however often it arrives, then notifies the owners and sends a receipt. Staff can copy a payment
+  link to send. Stripe turns on with `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`; until then the public demo
+  uses a simulated checkout clearly labeled as a test, and without either the portal shows the bank transfer
+  instructions (ADR 021).
+- **Quotes and invoices in the customer portal:** a _Waiting for you_ block on the home page, lists and pages with
+  the lines, totals and PDFs, _Approve_ or _Decline_ with a reason (an approval creates the job), and _Pay now_.
+  Customers only see what was sent to them; staff see when they first opened it.
 - **Overdue reminders** 3, 7 and 14 days after the due date, each sent once per invoice, with the payment
   instructions.
 - **Catalog and billing settings:** parts and fees with SKUs, prices and costs (`/settings/catalog`); payment terms,
@@ -50,7 +58,7 @@
   have their own. Emails go out in the recipient's language, Indonesian dates are day-first with 24-hour times
   (14.30), and _Ask FieldOps_ answers in the language of the question. The REST API and CSV exports stay in
   English.
-- **API:** quotes, invoices, payments, the catalog, service reports with their PDFs, maintenance plans and the
+- **API:** quotes, invoices, payments and payment links, the catalog, service reports with their PDFs, maintenance plans and the
   assistant (server-sent events over POST) with its conversations, all in the OpenAPI document. Jobs gained
   `sla_paused_at`, `recurrence_id` and `occurrence_date`; service types gained `tax_rate_bps`; customers gained
   `locale`.
@@ -61,8 +69,6 @@
   Bahasa Indonesia, except one technician who uses English.
 - Fixes: `POST /jobs` no longer accepts the sources `quote` and `recurring`; only an approved quote or a
   maintenance plan creates those jobs.
-
-<!-- PENDING (pay slice): online payments (FIN-05) and quotes and invoices in the customer portal (POR-04). -->
 
 ## 0.3.1 — Sidebar and demo requests (2026-11-10)
 

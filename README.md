@@ -60,6 +60,8 @@ OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHA
   drafted from a completed job with its service, labor rounded to the quarter hour and approved parts at cost plus
   markup; numbers per year with no gaps, payments recorded by hand, overdue reminders after 3, 7 and 14 days, and a
   catalog of parts and fees.
+- **Online payments:** customers approve quotes and pay invoices in the customer portal, through Stripe Checkout
+  with a signed webhook; the public demo uses a simulated checkout labeled as a test until Stripe keys are set.
 - **Branded PDFs** for quotes, invoices and service reports, in English or Bahasa Indonesia.
 - **AI service reports:** completing a job drafts the customer's report from the checklist, readings, notes and
   photos; someone reviews and sends it, and the customer opens the PDF from an email link or the portal.
@@ -70,8 +72,6 @@ OpenAPI 3.1, and the deterministic demo. The full list is in the [changelog](CHA
 - **Bahasa Indonesia:** the app, the customer portal, emails and PDFs in English or Indonesian, per member, per
   customer and per browser for signed-out visitors, with Indonesian dates and 24-hour times. Sign in as Acme
   Teknik's owner to see it.
-
-<!-- PENDING (pay slice): online payments; quotes and invoices in the customer portal. -->
 
 After 0.4 the [roadmap](#roadmap) adds a Go event-delivery service, API keys and webhooks, a marketing site and a
 mobile app.
@@ -144,8 +144,8 @@ More in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the [ADRs](docs/adr).
 
 TypeScript (strict) · Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · shadcn/ui (Radix) · TanStack Table ·
 Better Auth · PostgreSQL 18 · Drizzle ORM · Zod 4 · zod-openapi + Scalar · pg-boss · Claude API (Anthropic SDK) ·
-server-sent events · MapLibre GL · React Email · React PDF · Vitest · Testcontainers · Playwright + axe-core ·
-pnpm + Turborepo · Docker Compose
+server-sent events · MapLibre GL · React Email · React PDF · Stripe · Vitest · Testcontainers ·
+Playwright + axe-core · pnpm + Turborepo · Docker Compose
 
 ## Run it locally
 
@@ -188,6 +188,7 @@ packages/db        Drizzle schema, migrations, RLS policies, repositories, seed
 packages/shared    Zod schemas and types shared by web, worker, API and mobile
 packages/email     React Email templates
 packages/documents PDF quotes, invoices and service reports (React PDF)
+packages/payments  Online payments: Stripe Checkout and the simulated test checkout
 packages/ai        AI models for intake, the assistant and service reports, prompts and evaluation sets
 infra/             Dockerfiles, Compose files, nginx site config, release script
 docs/              PRD, architecture, runbook, ADRs
