@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1 (2026-11-11)
+
+- **Ask FieldOps:** past conversations open and stay readable while AI is off or out of quota; only asking a new
+  question waits until it's back.
+- **Maintenance plans:** the next visits show their year (a yearly plan's dates were ambiguous), and a plan that
+  hasn't created a job yet no longer says "No jobs yet" next to its next visit.
+- **Dashboard:** a change that rounds to 0% or 0 points reads "Same as the previous period" instead of "Down 0%".
+- **Layout:** quote and invoice titles keep their width and the actions wrap below them when there are many; filters
+  and search boxes fit their Indonesian labels.
+- **Demo data:** each open quote's title, service and parts belong together, and quotes made from a job only carry
+  parts and fees that fit its service.
+
 ## 0.4.0 — Get paid (2026-11-11)
 
 - **Quotes** (`/quotes`): lines for services, labor, parts and fees with a tax rate each, a discount and a validity

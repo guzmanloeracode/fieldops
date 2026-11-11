@@ -41,13 +41,20 @@ export async function KpiTiles({ tiles }: { tiles: KpiTile[] }) {
         let delta: { text: string; direction: "up" | "down" | "same"; good: boolean | null } | null = null;
         if (value !== null && previous !== null) {
           const diff = value - previous;
-          const direction = Math.abs(diff) < 1e-9 ? "same" : diff > 0 ? "up" : "down";
+          // Compare what the tile shows: a change that rounds to 0% or 0 pts is "the same", not "Down 0%".
+          const shown =
+            tile.kind === "rate"
+              ? Math.round(diff * 100)
+              : previous === 0
+                ? diff
+                : Math.round((diff / previous) * 100);
+          const direction = Math.abs(shown) < 1e-9 ? "same" : diff > 0 ? "up" : "down";
           const amount =
             tile.kind === "rate"
-              ? t("points", { value: Math.abs(Math.round(diff * 100)) })
+              ? t("points", { value: Math.abs(shown) })
               : previous === 0
                 ? show(Math.abs(diff), tile.kind, locale, tile.display)
-                : `${Math.abs(Math.round((diff / previous) * 100))}%`;
+                : `${Math.abs(shown)}%`;
           delta = {
             text: direction === "same" ? t("same") : t(direction, { value: amount }),
             direction,

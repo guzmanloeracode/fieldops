@@ -91,7 +91,7 @@ export function JobFilters({
   return (
     <div className="mb-4 space-y-3" aria-busy={pending}>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full sm:w-80">
           <Search
             className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2"
             aria-hidden
@@ -128,7 +128,7 @@ export function JobFilters({
             value={params.get("technician") ?? "all"}
             onValueChange={(v) => update({ technician: v === "all" ? null : v })}
           >
-            <SelectTrigger className="w-44" aria-label={t("col.technician")}>
+            <SelectTrigger className="w-fit min-w-44" aria-label={t("col.technician")}>
               <SelectValue placeholder={t("col.technician")} />
             </SelectTrigger>
             <SelectContent>
@@ -145,7 +145,7 @@ export function JobFilters({
           value={params.get("service_type") ?? "all"}
           onValueChange={(v) => update({ service_type: v === "all" ? null : v })}
         >
-          <SelectTrigger className="w-44" aria-label={t("col.serviceType")}>
+          <SelectTrigger className="w-fit min-w-44" aria-label={t("col.serviceType")}>
             <SelectValue placeholder={t("col.serviceType")} />
           </SelectTrigger>
           <SelectContent>

@@ -120,7 +120,9 @@ export async function MaintenancePlans({
                       {t("plans.suggested", { name: p.leadMember.name })}
                     </li>
                   ) : null}
-                  <li>{t("plans.jobs", { count: p.jobCount })}</li>
+                  {/* A plan doesn't backfill visits before it was added, so a count of zero says nothing "Next visits"
+                      doesn't already show. */}
+                  {p.jobCount ? <li>{t("plans.jobs", { count: p.jobCount })}</li> : null}
                 </ul>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm">
@@ -129,8 +131,8 @@ export async function MaintenancePlans({
                       <span data-testid="plan-next">
                         {p.upcoming.map((d, i) => (
                           <span key={d}>
-                            {i ? ", " : ""}
-                            <time dateTime={d}>{formatDay(d, "short", locale)}</time>
+                            {i ? " · " : ""}
+                            <time dateTime={d}>{formatDay(d, "long", locale)}</time>
                           </span>
                         ))}
                       </span>

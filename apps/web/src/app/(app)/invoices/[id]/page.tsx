@@ -51,8 +51,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         >
           <ArrowLeft className="size-4" /> {t("invoices.title")}
         </Link>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-2">
+        {/* The title keeps at least 28rem; when the actions don't fit beside it they wrap below. */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-[1_1_28rem] space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span data-testid="invoice-status">
                 <InvoiceStatusBadge status={invoice.status} label={t(`invoiceStatus.${invoice.status}`)} />

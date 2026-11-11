@@ -412,33 +412,40 @@ export function AssistantPanel() {
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex-1 overflow-y-auto px-4 py-3" data-testid="assistant-messages">
               {unavailable !== undefined ? (
-                <p className="bg-muted rounded-md p-3 text-sm" data-testid="assistant-unavailable">
+                <p
+                  className={cn("bg-muted rounded-md p-3 text-sm", messages.length > 0 && "mb-4")}
+                  data-testid="assistant-unavailable"
+                >
                   {unavailable === "disabled"
                     ? t("error.disabled")
                     : unavailable === "quota"
                       ? t("error.quota")
                       : t("error.notConfigured")}
                 </p>
-              ) : messages.length === 0 ? (
-                <div className="space-y-3">
-                  <p className="text-muted-foreground text-sm">{t("intro")}</p>
-                  <h3 className="text-sm font-semibold">{t("starters.title")}</h3>
-                  <ul className="space-y-2">
-                    {ASSISTANT_STARTERS.map((key) => (
-                      <li key={key}>
-                        <Button
-                          variant="outline"
-                          className="h-auto w-full justify-start py-2 text-left whitespace-normal"
-                          onClick={() => void ask(t(`starters.${key}`))}
-                          disabled={busy || !status}
-                          data-testid="assistant-starter"
-                        >
-                          {t(`starters.${key}`)}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              ) : null}
+              {/* Past conversations stay readable while AI is off or out of quota; only asking is blocked. */}
+              {messages.length === 0 ? (
+                unavailable !== undefined ? null : (
+                  <div className="space-y-3">
+                    <p className="text-muted-foreground text-sm">{t("intro")}</p>
+                    <h3 className="text-sm font-semibold">{t("starters.title")}</h3>
+                    <ul className="space-y-2">
+                      {ASSISTANT_STARTERS.map((key) => (
+                        <li key={key}>
+                          <Button
+                            variant="outline"
+                            className="h-auto w-full justify-start py-2 text-left whitespace-normal"
+                            onClick={() => void ask(t(`starters.${key}`))}
+                            disabled={busy || !status}
+                            data-testid="assistant-starter"
+                          >
+                            {t(`starters.${key}`)}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
               ) : (
                 <ol className="space-y-4" aria-label={t("conversation")}>
                   {messages.map((m) =>

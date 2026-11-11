@@ -64,7 +64,7 @@ export function RangeFilters({
             update({ range: v, from: null, to: null });
           }}
         >
-          <SelectTrigger id="dash-range" className="w-40">
+          <SelectTrigger id="dash-range" className="w-fit min-w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -125,7 +125,7 @@ export function RangeFilters({
           value={technician ?? "all"}
           onValueChange={(v) => update({ technician: v === "all" ? null : v })}
         >
-          <SelectTrigger id="dash-tech" className="w-44">
+          <SelectTrigger id="dash-tech" className="w-fit min-w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -146,7 +146,7 @@ export function RangeFilters({
           value={serviceType ?? "all"}
           onValueChange={(v) => update({ service_type: v === "all" ? null : v })}
         >
-          <SelectTrigger id="dash-type" className="w-44">
+          <SelectTrigger id="dash-type" className="w-fit min-w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

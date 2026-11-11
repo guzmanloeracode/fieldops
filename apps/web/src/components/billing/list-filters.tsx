@@ -56,7 +56,7 @@ export function ListFilters({
 
   return (
     <div className="mb-4 flex flex-wrap items-end gap-3" aria-busy={pending} data-testid="list-filters">
-      <div className="relative w-full space-y-1 sm:w-64">
+      <div className="relative w-full space-y-1 sm:w-80">
         <Label htmlFor="billing-search" className="sr-only">
           {t("search")}
         </Label>

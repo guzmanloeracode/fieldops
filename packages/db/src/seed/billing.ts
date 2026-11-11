@@ -94,16 +94,77 @@ const CATALOG: Record<"acme-air" | "acme-teknik", CatalogSpec[]> = {
   ],
 };
 
+/** Parts that go with each service type, so a quote's parts match its service. */
+const SERVICE_PARTS: Record<"acme-air" | "acme-teknik", Record<string, string[]>> = {
+  "acme-air": {
+    "AC tune-up": ["Air filter 16×25×1 (MERV 11)", "Run capacitor 45/5 µF"],
+    "AC repair": ["Run capacitor 45/5 µF", "Contactor 30A 2-pole", "Condenser fan motor 1/4 HP"],
+    "AC installation": ["Programmable thermostat", "Condensate pump with safety switch"],
+    "Refrigerant recharge": ["Refrigerant R-410A"],
+    "Duct cleaning": ["UV air purifier lamp", "Air filter 16×25×1 (MERV 11)"],
+    "Filter replacement": ["Air filter 16×25×1 (MERV 11)"],
+  },
+  "acme-teknik": {
+    "Cuci AC": ["Freon R32"],
+    "Perbaikan AC": ["Kapasitor AC 35 µF", "Sensor thermistor", "Pompa drainase mini"],
+    "Pasang AC baru": ["Pipa tembaga 1/4 + 3/8", "Kabel NYM 3×2,5 mm²", "Bracket outdoor"],
+    "Isi freon": ["Freon R32"],
+    "Bongkar pasang AC": ["Pipa tembaga 1/4 + 3/8", "Kabel NYM 3×2,5 mm²"],
+  },
+};
+
+/** Fees a quote can carry: the trip charge anywhere, disposal of the old unit only with an installation. */
+const QUOTE_FEES: Record<"acme-air" | "acme-teknik", { trip: string; disposal: string; install: string[] }> =
+  {
+    "acme-air": { trip: "Trip charge", disposal: "Old equipment disposal", install: ["AC installation"] },
+    "acme-teknik": {
+      trip: "Biaya transport",
+      disposal: "Biaya bongkar unit lama",
+      install: ["Pasang AC baru", "Bongkar pasang AC"],
+    },
+  };
+
+interface QuoteIdea {
+  title: string;
+  service: string;
+  quantity?: number;
+  parts: readonly (readonly [string, number])[];
+}
+
 const TEXT = {
   "acme-air": {
     labor: (name: string) => `Labor: ${name}`,
-    quoteTitles: [
-      "Replace the condenser fan motor",
-      "Install a ductless mini-split in the home office",
-      "Seasonal maintenance for three units",
-      "Upgrade to a programmable thermostat",
-      "Duct cleaning and UV lamp",
-      "Condensate pump replacement",
+    quoteIdeas: [
+      {
+        title: "Replace the condenser fan motor",
+        service: "AC repair",
+        parts: [
+          ["Condenser fan motor 1/4 HP", 1],
+          ["Run capacitor 45/5 µF", 1],
+        ],
+      },
+      {
+        title: "Install a ductless mini-split in the home office",
+        service: "AC installation",
+        parts: [["Condensate pump with safety switch", 1]],
+      },
+      {
+        title: "Seasonal maintenance for three units",
+        service: "AC tune-up",
+        quantity: 3,
+        parts: [["Air filter 16×25×1 (MERV 11)", 3]],
+      },
+      {
+        title: "Upgrade to a programmable thermostat",
+        service: "AC repair",
+        parts: [["Programmable thermostat", 1]],
+      },
+      { title: "Duct cleaning and UV lamp", service: "Duct cleaning", parts: [["UV air purifier lamp", 1]] },
+      {
+        title: "Condensate pump replacement",
+        service: "AC repair",
+        parts: [["Condensate pump with safety switch", 1]],
+      },
     ],
     quoteNotes: "Prices include parts and labor. The quote is valid until the date above.",
     declines: [
@@ -117,13 +178,28 @@ const TEXT = {
   },
   "acme-teknik": {
     labor: (name: string) => `Jasa teknisi: ${name}`,
-    quoteTitles: [
-      "Pasang AC split 1 PK baru",
-      "Ganti kompresor AC kamar",
-      "Cuci AC 4 unit dan isi freon",
-      "Pindah unit AC ke lantai 2",
-      "Perawatan rutin AC kantor",
-      "Ganti pompa drainase",
+    quoteIdeas: [
+      {
+        title: "Pasang AC split 1 PK baru",
+        service: "Pasang AC baru",
+        parts: [
+          ["Pipa tembaga 1/4 + 3/8", 4],
+          ["Kabel NYM 3×2,5 mm²", 6],
+          ["Bracket outdoor", 1],
+        ],
+      },
+      { title: "Ganti kapasitor AC kamar", service: "Perbaikan AC", parts: [["Kapasitor AC 35 µF", 1]] },
+      { title: "Cuci AC 4 unit dan isi freon", service: "Cuci AC", quantity: 4, parts: [["Freon R32", 2]] },
+      {
+        title: "Pindah unit AC ke lantai 2",
+        service: "Bongkar pasang AC",
+        parts: [
+          ["Pipa tembaga 1/4 + 3/8", 5],
+          ["Kabel NYM 3×2,5 mm²", 8],
+        ],
+      },
+      { title: "Perawatan rutin AC kantor", service: "Perawatan gedung", parts: [] },
+      { title: "Ganti pompa drainase", service: "Perbaikan AC", parts: [["Pompa drainase mini", 1]] },
     ],
     quoteNotes: "Harga sudah termasuk material dan jasa. Penawaran berlaku sampai tanggal di atas.",
     declines: [
@@ -276,14 +352,29 @@ export async function seedBilling(ctx: SeedContext): Promise<void> {
   const quoteByJob = new Map<string, string>();
   const jobUpdates: { id: string; quoteId: string; number: string }[] = [];
 
-  function quoteLinesFor(stId: string | null): Line[] {
+  const partByName = new Map(parts.map((p) => [p.name, p]));
+  const feeByName = new Map(fees.map((c) => [c.name, c]));
+  const partLine = (p: (typeof parts)[number], quantity: number): Line => ({
+    kind: "part",
+    description: p.name,
+    quantity,
+    unit: p.unit,
+    unitPriceMinor: p.unitPriceMinor,
+    taxRateBps: taxRate,
+    catalogItemId: p.id,
+    serviceTypeId: null,
+  });
+  const bulk = (unit: string) => unit === "lb" || unit === "kg" || unit === "m";
+
+  /** The service, parts that fit it (or the idea's own parts) and sometimes a fee that fits too. */
+  function quoteLinesFor(stId: string | null, idea?: QuoteIdea): Line[] {
     const st = stId ? serviceType.get(stId) : undefined;
     const lines: Line[] = [];
     if (st) {
       lines.push({
         kind: "service",
         description: st.name,
-        quantity: 1,
+        quantity: idea?.quantity ?? 1,
         unit: null,
         unitPriceMinor: st.defaultPriceMinor,
         taxRateBps: taxRate,
@@ -291,20 +382,21 @@ export async function seedBilling(ctx: SeedContext): Promise<void> {
         serviceTypeId: st.id,
       });
     }
-    for (const p of f.helpers.arrayElements(parts, f.number.int({ min: st ? 0 : 1, max: 2 }))) {
-      lines.push({
-        kind: "part",
-        description: p.name,
-        quantity: p.unit === "lb" || p.unit === "kg" || p.unit === "m" ? f.number.int({ min: 2, max: 6 }) : 1,
-        unit: p.unit,
-        unitPriceMinor: p.unitPriceMinor,
-        taxRateBps: taxRate,
-        catalogItemId: p.id,
-        serviceTypeId: null,
-      });
+    if (idea) {
+      for (const [name, quantity] of idea.parts) lines.push(partLine(partByName.get(name)!, quantity));
+    } else {
+      const fitting = (st ? (SERVICE_PARTS[key][st.name] ?? []) : []).map((n) => partByName.get(n)!);
+      for (const p of f.helpers.arrayElements(
+        fitting,
+        f.number.int({ min: 0, max: Math.min(2, fitting.length) }),
+      )) {
+        lines.push(partLine(p, bulk(p.unit) ? f.number.int({ min: 2, max: 6 }) : 1));
+      }
     }
     if (chance(0.3)) {
-      const fee = f.helpers.arrayElement(fees);
+      const pool = [QUOTE_FEES[key].trip];
+      if (st && QUOTE_FEES[key].install.includes(st.name)) pool.push(QUOTE_FEES[key].disposal);
+      const fee = feeByName.get(f.helpers.arrayElement(pool))!;
       lines.push({
         kind: "fee",
         description: fee.name,
@@ -329,9 +421,10 @@ export async function seedBilling(ctx: SeedContext): Promise<void> {
     createdAt: Date;
     decidedAt?: Date;
     jobId?: string;
+    idea?: QuoteIdea;
   }) {
     const id = uuidv7();
-    const lines = quoteLinesFor(q.serviceTypeId);
+    const lines = quoteLinesFor(q.serviceTypeId, q.idea);
     const discount = chance(0.2) ? { type: "percent" as const, value: 500 } : { type: null, value: 0 };
     const totals = computeTotals(lines, discount);
     const created = localDay(q.createdAt, tz);
@@ -435,7 +528,8 @@ export async function seedBilling(ctx: SeedContext): Promise<void> {
     const demo = i === 2 && demoCustomerId;
     const customer = demo ? demoCustomerId : f.helpers.arrayElement(withSites).id;
     const siteId = ctx.sites.find((x) => x.customerId === customer)!.id;
-    const st = f.helpers.arrayElement(ctx.serviceTypes);
+    const idea = f.helpers.arrayElement<QuoteIdea>(text.quoteIdeas);
+    const st = ctx.serviceTypes.find((x) => x.name === idea.service)!;
     const createdAt = new Date(
       now.getTime() -
         f.number.int({ min: p.ageDays[0] * 24 * 60, max: p.ageDays[1] * 24 * 60 + 600 }) * MINUTE,
@@ -444,7 +538,8 @@ export async function seedBilling(ctx: SeedContext): Promise<void> {
       customerId: customer,
       siteId,
       serviceTypeId: st.id,
-      title: f.helpers.arrayElement(text.quoteTitles),
+      title: idea.title,
+      idea,
       status: p.status,
       createdAt,
       decidedAt:
