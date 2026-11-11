@@ -39,6 +39,20 @@ $C run --rm worker node dist/index.js reset     # reset the demo now
 curl -s http://127.0.0.1:8097/api/health
 ```
 
+## API keys and rate limits
+
+A leaked key: an owner or admin revokes it in Settings → API keys (or `DELETE /api/v1/api-keys/{id}` with a
+session); it stops working on the next request. To revoke one by hand, or every key of a member:
+
+```bash
+$C exec postgres psql -U fieldops fieldops -c "update api_key set revoked_at = now() where prefix = 'fo_xxxx' and revoked_at is null"
+```
+
+Find which key made a change in Settings → Audit log (the user agent starts with `API key fo_xxxx…`) or in the web
+logs (`apiKeyId`). Limits are per minute: `API_KEY_RATE_LIMIT` (default 300) and `API_USER_RATE_LIMIT` (600) in
+`/etc/fieldops/fieldops.env`, 0 turns one off; restart `web` after a change. Old windows are deleted by the
+worker's daily clean-up with the other rate-limit rows.
+
 ## Backups and restore
 
 Planned: nightly `pg_dump` to Cloudflare R2, kept 14 days, restore tested every quarter. Blocked until R2 is

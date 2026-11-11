@@ -31,6 +31,30 @@ nginx on the host terminates TLS (Let's Encrypt, Cloudflare in front with Full (
 idempotency keys, ETags and problem details. `POST /api/v1/ai/assistant` is the exception: it streams, so it opens
 its own short transactions (see [Ask FieldOps](#ask-fieldops)).
 
+## API keys, rate limits and MCP
+
+`authenticate()` in `src/server/api/handler.ts` is the one entrance for every `/api/v1` route and the MCP server
+(ADR 023):
+
+1. `Authorization: Bearer fo_…` is an API key. Its SHA-256 goes to `api_key_authenticate()`, a `SECURITY DEFINER`
+   function that returns the key's organization, member, user and scopes (revoked and expired keys return
+   nothing) and records the last use at most once a minute. The key then resolves to its member exactly like a
+   session, so the role, row-level security and the audit log apply unchanged. The request method decides the
+   scope (`read` for GET and HEAD, `write` otherwise); `/api-keys` refuses keys (`403 session_required`).
+2. Otherwise the session cookie or a bearer session token, as before.
+3. The request counts in a one-minute `rate_limit` window (`api:key:<id>` or `api:user:<id>`, per IP address too
+   for the shared demo accounts) with one upsert outside the tenant transaction. Every response carries
+   `RateLimit-*` headers; over the limit, `429` with `Retry-After`. AI routes show the tighter of this and their own
+   limits.
+
+`runService()` and `apiRoute()` mark changes made with a key in the audit log's user agent
+(`API key fo_xxxx… · <client>`, `auditMetaFor` in `src/server/request-meta.ts`).
+
+`POST /api/mcp` is a stateless Streamable HTTP MCP server (ADR 024, `@modelcontextprotocol/sdk`): a key with the
+`read` scope, a new server and transport per request, JSON answers, `405` for GET and DELETE. Its tools are the
+Ask FieldOps tools offered to the key's role (`packages/core/src/services/mcp-tools.ts`), each call in its own
+tenant transaction as the key's member; no model of ours runs, so no AI quota is spent.
+
 A few routes act for no signed-in user. They take the organization from something they verify first and then run
 in that tenant's transaction like any request: the Stripe webhook (`/api/webhooks/stripe`, a signed event), the
 simulated checkout (`/checkout/<token>`) and service report links (`/share/reports/<token>`), both HMAC-signed
