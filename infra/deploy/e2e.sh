@@ -40,4 +40,4 @@ docker run -d --name "$NAME-web" --network "$NAME" --memory 512m -p "127.0.0.1:$
 for i in $(seq 1 60); do curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1 && break; [ "$i" = 60 ] && { echo "web did not start"; exit 1; }; sleep 1; done
 
 cd "$ROOT/apps/web"
-PLAYWRIGHT_BASE_URL="http://localhost:$PORT" DEMO_PASSWORD="$PASSWORD" pnpm exec playwright test --workers=1 --reporter=line
+PLAYWRIGHT_BASE_URL="http://localhost:$PORT" DEMO_PASSWORD="$PASSWORD" pnpm exec playwright test --workers=1 --reporter=line "$@"

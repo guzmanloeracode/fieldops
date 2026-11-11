@@ -296,9 +296,16 @@ export function DispatchBoard(props: BoardProps & { members: AssignMember[] }) {
     if (args.pointerCoordinates) return pointerWithin({ ...args, droppableContainers: allowed });
     const x = args.collisionRect.left + 8;
     const y = args.collisionRect.top + 8;
+    // Lanes are wider than the board's scroll area, so their rects reach under the queue: a job picked up from the
+    // queue with the keyboard must not start "over" a lane it only overlaps where the lane is scrolled out of view.
+    const area = document
+      .querySelector('[data-testid="board-day"], [data-testid="board-week"]')
+      ?.getBoundingClientRect();
+    const inArea = !area || (x >= area.left && x <= area.right && y >= area.top && y <= area.bottom);
     return allowed
       .filter((c) => {
         const r = args.droppableRects.get(c.id);
+        if ((c.data.current as DropData | undefined)?.type !== "queue" && !inArea) return false;
         return r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
       })
       .map((c) => ({ id: c.id, data: { droppableContainer: c, value: 0 } }));
