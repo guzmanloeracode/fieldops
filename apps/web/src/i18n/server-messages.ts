@@ -188,6 +188,8 @@ const ID: Record<string, string> = {
   "Turn on webhooks first": "Nyalakan webhook terlebih dahulu",
   "An organization can have at most 10 endpoints": "Satu organisasi paling banyak memiliki 10 endpoint",
   "Turn the endpoint on first": "Nyalakan endpoint terlebih dahulu",
+  "In the public demo, endpoints can only point at https://webhook.site or the demo's test receiver":
+    "Di demo publik, endpoint hanya boleh mengarah ke https://webhook.site atau penerima uji demo",
   "Only deliveries that ran out of attempts can be redelivered":
     "Hanya pengiriman yang sudah kehabisan percobaan yang dapat dikirim ulang",
   "This delivery was already redelivered": "Pengiriman ini sudah dikirim ulang",

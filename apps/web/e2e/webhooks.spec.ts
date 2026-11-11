@@ -19,8 +19,10 @@ interface Delivery {
   replay_of: string | null;
 }
 
+// The E2E runs the public demo, where endpoints may only point at webhook.site or the demo's test receiver; a
+// unique path keeps each test's endpoint apart (the fake Relay never calls it).
 const host = () =>
-  `hooks-${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.example.com`;
+  `webhook.site/hooks-${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 
 async function turnOn(client: APIRequestContext) {
   const res = await client.put("/api/v1/webhook-settings", { data: { enabled: true } });
@@ -160,6 +162,14 @@ test.describe("webhooks (PLT-03)", () => {
         data: { url: "http://hooks.example.com/x", event_types: ["*"] },
       });
       expect(http.status()).toBe(422);
+      // The public demo doesn't send events to just anyone.
+      const elsewhere = await owner.post("/api/v1/webhook-endpoints", {
+        data: { url: "https://hooks.example.com/x", event_types: ["*"] },
+      });
+      expect(elsewhere.status()).toBe(422);
+      expect(await elsewhere.text()).toContain("webhook.site");
+      const sink = await owner.post("/api/demo/webhook-sink", { data: { type: "webhook.test" } });
+      expect(sink.status()).toBe(204);
       const none = await owner.post("/api/v1/webhook-endpoints", {
         data: { url: `https://${host()}/x`, event_types: [] },
       });

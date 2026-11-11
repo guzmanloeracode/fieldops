@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
 import { requireActor } from "@/server/context";
-import { webhookDeps } from "@/server/relay";
+import { demoSinkUrl, webhookDeps } from "@/server/relay";
 import { EndpointDialog } from "../_components/endpoint-dialog";
 import { EventCatalog, VerifyCard } from "../_components/docs";
 import { EndpointStatusBadge } from "../_components/status";
@@ -87,7 +87,11 @@ export default async function WebhooksPage() {
                     : t("endpoints.description", { max: MAX_WEBHOOK_ENDPOINTS_PER_ORG })}
                 </p>
               </div>
-              <EndpointDialog disabled={!canAdd} disabledHint={t("endpoints.addDisabled")} />
+              <EndpointDialog
+                disabled={!canAdd}
+                disabledHint={t("endpoints.addDisabled")}
+                note={demoSinkUrl ? t("form.demoNote", { sink: demoSinkUrl }) : undefined}
+              />
             </div>
             {endpoints.length === 0 ? (
               <EmptyState

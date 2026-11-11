@@ -133,6 +133,38 @@ describe("endpoints", () => {
     expect(await webhooks.listEndpoints(deps())).toHaveLength(MAX_WEBHOOK_ENDPOINTS_PER_ORG);
   });
 
+  it("keeps the public demo's endpoints on webhook.site or its own test receiver", async () => {
+    const { deps } = setup();
+    const sink = "https://demo.example.com/api/demo/webhook-sink";
+    const demo = (): WebhookDeps => ({ ...deps(), demoSinkUrl: sink });
+    await turnOn(demo());
+    for (const url of [
+      "https://hooks.example.com/x",
+      "https://webhook.site.example.com/x",
+      "https://webhook.site:8443/x",
+      "https://demo.example.com/api/v1/jobs",
+      "https://demo.example.com/api/demo/webhook-sink/more",
+    ]) {
+      await expect(webhooks.createEndpoint(demo(), { url, event_types: ["*"] })).rejects.toMatchObject({
+        code: "validation",
+        fields: [{ path: "url", message: webhooks.DEMO_URL_MESSAGE }],
+      });
+    }
+    const site = await webhooks.createEndpoint(demo(), {
+      url: "https://webhook.site/0b6c1c1e-demo",
+      event_types: ["*"],
+    });
+    await webhooks.createEndpoint(demo(), { url: `${sink}?from=fieldops`, event_types: ["*"] });
+    await expect(
+      webhooks.updateEndpoint(demo(), site.id, { url: "https://hooks.example.com/x" }),
+    ).rejects.toMatchObject({ code: "validation" });
+    expect(await webhooks.updateEndpoint(demo(), site.id, { description: "Inspector" })).toMatchObject({
+      url: "https://webhook.site/0b6c1c1e-demo",
+    });
+    // Outside the demo any public https URL is fine.
+    await webhooks.createEndpoint(deps(), { url: "https://hooks.example.com/x", event_types: ["*"] });
+  });
+
   it("updates, rotates and deletes, each audited", async () => {
     const { deps, audit } = setup();
     await turnOn(deps());

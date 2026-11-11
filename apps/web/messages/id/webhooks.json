@@ -46,6 +46,7 @@
     "editTitle": "Ubah endpoint",
     "url": "URL endpoint",
     "urlHint": "URL https pada host publik. FieldOps mengirim JSON ke URL ini.",
+    "demoNote": "Di demo publik, endpoint hanya boleh mengarah ke https://webhook.site (buka untuk mendapatkan URL Anda sendiri) atau penerima uji demo, {sink}, yang menjawab 204 dan tidak menyimpan apa pun.",
     "urlPlaceholder": "https://contoh.com/hooks/fieldops",
     "description": "Deskripsi",
     "descriptionPlaceholder": "Apa yang menerima peristiwa ini (opsional)",

@@ -22,7 +22,7 @@ import { EndpointDialog } from "./endpoint-dialog";
 import { SecretDialog } from "./secret-dialog";
 
 /** The endpoint page's actions: test, edit, turn off or on, rotate the secret, delete. */
-export function EndpointActions({ endpoint }: { endpoint: WebhookEndpointRepr }) {
+export function EndpointActions({ endpoint, note }: { endpoint: WebhookEndpointRepr; note?: string }) {
   const t = useTranslations("webhooks");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -48,7 +48,7 @@ export function EndpointActions({ endpoint }: { endpoint: WebhookEndpointRepr })
       >
         <Send /> {t("detail.sendTest")}
       </Button>
-      <EndpointDialog endpoint={endpoint} />
+      <EndpointDialog endpoint={endpoint} note={note} />
       <Button
         size="sm"
         variant="outline"

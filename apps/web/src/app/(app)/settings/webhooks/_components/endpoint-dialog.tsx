@@ -31,10 +31,13 @@ export function EndpointDialog({
   endpoint,
   disabled,
   disabledHint,
+  note,
 }: {
   endpoint?: WebhookEndpointRepr;
   disabled?: boolean;
   disabledHint?: string;
+  /** Shown under the description, e.g. where the public demo lets endpoints point. */
+  note?: string;
 }) {
   const t = useTranslations("webhooks");
   const router = useRouter();
@@ -125,6 +128,7 @@ export function EndpointDialog({
             <DialogHeader>
               <DialogTitle>{endpoint ? t("form.editTitle") : t("form.createTitle")}</DialogTitle>
               <DialogDescription>{t("form.urlHint")}</DialogDescription>
+              {note ? <p className="text-muted-foreground text-sm">{note}</p> : null}
             </DialogHeader>
             <div className="space-y-2">
               <Label htmlFor={urlId}>{t("form.url")}</Label>

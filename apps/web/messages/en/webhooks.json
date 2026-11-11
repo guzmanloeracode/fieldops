@@ -46,6 +46,7 @@
     "editTitle": "Edit endpoint",
     "url": "Endpoint URL",
     "urlHint": "An https URL on a public host. FieldOps posts JSON to it.",
+    "demoNote": "In the public demo, endpoints can only point at https://webhook.site (open it for a URL of your own) or the demo's test receiver, {sink}, which answers 204 and keeps nothing.",
     "urlPlaceholder": "https://example.com/hooks/fieldops",
     "description": "Description",
     "descriptionPlaceholder": "What receives these events (optional)",

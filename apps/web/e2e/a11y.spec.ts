@@ -117,7 +117,7 @@ test.describe("app pages as owner", () => {
     await json(await client.put("/api/v1/webhook-settings", { data: { enabled: true } }));
     const ep = await json<{ id: string }>(
       await client.post("/api/v1/webhook-endpoints", {
-        data: { url: `https://a11y-${Date.now()}.example.com/fail`, event_types: ["job.created"] },
+        data: { url: `https://webhook.site/a11y-${Date.now()}/fail`, event_types: ["job.created"] },
       }),
     );
     try {

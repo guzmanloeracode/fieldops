@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0 — Platform (2026-11-11)
+
+- **API keys** (Settings → API keys, owners and admins): a name, a `read` or `write` scope and an optional expiry
+  of 30, 90 or 365 days. The key is shown once, with a copy button and a `curl` example; only its hash is stored. A
+  key acts as the member who created it, within that member's current role, and every change it makes shows the key
+  in the audit log. Revoking takes effect on the next request. Keys can't create or revoke keys.
+- **Rate limits:** 300 requests a minute per API key and 600 per user, with `RateLimit-Limit`,
+  `RateLimit-Remaining` and `RateLimit-Reset` on every response and `429` with `Retry-After` past the limit.
+- **Webhooks** (Settings → Webhooks): turn them on, add up to 10 https endpoints for all events or a chosen set,
+  and receive signed deliveries ([Standard Webhooks](https://www.standardwebhooks.com/) headers) for jobs (created,
+  updated, status changed, assigned, completed), SLA risks and breaches, quotes (sent, approved, declined),
+  invoices (sent, paid) and expense decisions. Each endpoint has a test event, secret rotation with a 24-hour
+  overlap, and a 7-day delivery log with every attempt's response; failed deliveries can be sent again. Events are
+  written in the same transaction as the change and delivered by [Relay](https://github.com/guzmanloeracode/relay).
+  In the public demo, endpoints point at webhook.site or the demo's own test receiver.
+- **MCP server** at `/api/mcp`: the seven read-only _Ask FieldOps_ tools (jobs, SLA risks, workload, customer
+  history, approvals and, for owners and admins, revenue) for Claude and other MCP clients, with an API key. Settings
+  → API keys shows the setup.
+- **API:** `/api-keys`, `/webhook-settings`, `/webhook-endpoints` and `/webhook-deliveries`; the OpenAPI document
+  describes API key authentication, the rate-limit headers and every webhook event with a sample body.
+- **Audit log:** entries without a person read "System" again.
+
 ## 0.4.1 (2026-11-11)
 
 - **Ask FieldOps:** past conversations open and stay readable while AI is off or out of quota; only asking a new

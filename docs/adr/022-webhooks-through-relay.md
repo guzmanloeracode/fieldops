@@ -51,6 +51,11 @@ every service remembering to write them, and where endpoints and their history l
   Relay's API the client uses, in memory. It doesn't call endpoints: deliveries succeed at once, except to URLs
   whose path contains `/fail` (dead after one 500) or `/retry` (waiting after a 503). The image E2E runs it as a
   sidecar (`node dist/index.js fake-relay`).
+- **The public demo only sends to webhook.site or itself.** Anyone can sign in to the demo as an owner, so with
+  `DEMO_MODE` endpoints may only point at `https://webhook.site/…` (made for inspecting webhooks) or the demo's
+  own test receiver, `/api/demo/webhook-sink`, which answers 204 and keeps nothing. Visitors still see real
+  signed deliveries and their log, and the demo can't be used to send requests, with a day of retries, to anyone
+  else. Self-hosted installations have no such limit.
 
 **Consequences.** Webhooks work for every change without touching the services, and turning them off costs one
 indexed lookup per change. FieldOps depends on Relay being up for its webhook settings and log: when Relay can't

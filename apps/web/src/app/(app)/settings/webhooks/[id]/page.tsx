@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requireActor } from "@/server/context";
-import { webhookDeps } from "@/server/relay";
+import { demoSinkUrl, webhookDeps } from "@/server/relay";
 import { DeliveryDetails, RedeliverButton } from "../_components/delivery-actions";
 import { EndpointActions } from "../_components/endpoint-actions";
 import { disabledReasonText, DeliveryStatusBadge, EndpointStatusBadge } from "../_components/status";
@@ -126,7 +126,10 @@ export default async function WebhookEndpointPage({
               </ul>
             )}
           </div>
-          <EndpointActions endpoint={endpoint} />
+          <EndpointActions
+            endpoint={endpoint}
+            note={demoSinkUrl ? t("form.demoNote", { sink: demoSinkUrl }) : undefined}
+          />
         </CardContent>
       </Card>
 

@@ -27,6 +27,36 @@ export interface WebhookDeps {
   /** Null when RELAY_URL and RELAY_API_KEY aren't set. */
   relay: EventRelay | null;
   now?: Date;
+  /**
+   * The public demo's test receiver (`/api/demo/webhook-sink` on the app's URL). When set, endpoints may only point
+   * at it or at webhook.site, so visitors can't turn the demo into a way of sending requests to anyone else.
+   */
+  demoSinkUrl?: string | null;
+}
+
+/** Where the public demo lets endpoints point besides its own test receiver: a service made for inspecting them. */
+export const DEMO_WEBHOOK_HOST = "webhook.site";
+export const DEMO_URL_MESSAGE =
+  "In the public demo, endpoints can only point at https://webhook.site or the demo's test receiver";
+
+/** Whether the public demo accepts an endpoint URL: webhook.site, or exactly its own test receiver. */
+export function demoUrlAllowed(url: string, sinkUrl: string): boolean {
+  let u: URL;
+  let sink: URL;
+  try {
+    u = new URL(url);
+    sink = new URL(sinkUrl);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" || u.username || u.password || u.port) return false;
+  if (u.hostname === DEMO_WEBHOOK_HOST) return true;
+  return u.origin === sink.origin && u.pathname === sink.pathname;
+}
+
+function assertDemoUrl(d: WebhookDeps, url: string | undefined) {
+  if (!d.demoSinkUrl || url === undefined || demoUrlAllowed(url, d.demoSinkUrl)) return;
+  throw new ValidationError(DEMO_URL_MESSAGE, [{ path: "url", message: DEMO_URL_MESSAGE }]);
 }
 
 /** Event types looked up in Relay per page when the outbox no longer has them (test events, older events). */
@@ -122,6 +152,7 @@ function audit(
 export async function createEndpoint(d: WebhookDeps, raw: unknown): Promise<WebhookEndpointWithSecret> {
   assertCan(d.actor, "webhooks.manage");
   const input = parseInput(webhookEndpointCreateSchema, raw);
+  assertDemoUrl(d, input.url);
   const relay = requireRelay(d.relay);
   const state = await d.run((ctx) => ctx.store.webhooks.state());
   if (!state.enabledAt) throw new ConflictError("Turn on webhooks first");
@@ -146,6 +177,7 @@ export async function createEndpoint(d: WebhookDeps, raw: unknown): Promise<Webh
 export async function updateEndpoint(d: WebhookDeps, id: string, raw: unknown): Promise<WebhookEndpointRepr> {
   assertCan(d.actor, "webhooks.manage");
   const input = parseInput(webhookEndpointUpdateSchema, raw);
+  assertDemoUrl(d, input.url);
   const relay = requireRelay(d.relay);
   const updated = await call("Webhook endpoint", () =>
     relay.updateEndpoint(d.actor.organizationId, id, input),

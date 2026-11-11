@@ -12,7 +12,13 @@ export const relay =
     ? createRelayClient({ url: env.RELAY_URL, apiKey: env.RELAY_API_KEY })
     : null;
 
+/** The public demo's test receiver (app/api/demo/webhook-sink): answers 204 and keeps nothing. */
+export const DEMO_WEBHOOK_SINK_PATH = "/api/demo/webhook-sink";
+
+/** Where demo endpoints may point besides webhook.site; null outside the demo. */
+export const demoSinkUrl = env.DEMO_MODE ? new URL(DEMO_WEBHOOK_SINK_PATH, env.APP_URL).href : null;
+
 /** The webhooks service's dependencies for a member: Relay calls between short tenant transactions. */
 export function webhookDeps(actor: ResolvedActor): webhooks.WebhookDeps {
-  return { actor, run: (fn) => runService(fn, actor), relay };
+  return { actor, run: (fn) => runService(fn, actor), relay, demoSinkUrl };
 }
