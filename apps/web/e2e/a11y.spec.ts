@@ -186,6 +186,8 @@ test.describe("billing pages as owner (FIN)", () => {
 });
 
 test.describe("customer portal", () => {
+  // Three pages that compile on first use under `next dev`; the home page also lists quotes and invoices.
+  test.slow();
   test("axe: portal home, request form and job", async ({ page }) => {
     await page.goto("/portal/acme-air/sign-in");
     await page.getByTestId("portal-demo-sign-in").click();
