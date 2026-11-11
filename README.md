@@ -196,7 +196,7 @@ docs/              PRD, architecture, runbook, ADRs
 | 0.2 Dispatch | Drag-and-drop board, technician day view, checklists, approvals, dashboard | ✅ live |
 | 0.3 Automate | SLA engine, notifications, audit log, customer portal, AI job intake       | ✅ live |
 | 0.4 Get paid | Quotes, invoices, payments, AI reports and assistant, maintenance plans    | ✅ live |
-| Relay 1.0    | Event delivery service in Go                                               |         |
+| Relay 1.0    | [Event delivery service in Go](https://github.com/guzmanloeracode/relay)  | ✅ live |
 | 0.5 Platform | API keys, signed webhooks, SaaS plans, MCP server                          |         |
 | Site 1.0     | Marketing site with GSAP                                                   |         |
 | 1.0 Mobile   | Expo app for technicians                                                   |         |
