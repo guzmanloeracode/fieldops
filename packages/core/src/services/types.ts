@@ -32,6 +32,7 @@ import type { BillingRepo } from "./billing-types";
 import type { ReportRepo } from "./report-types";
 import type { DigestRepo, RecurrenceRepo } from "./recurrence-types";
 import type { AssistantRepo } from "./assistant-types";
+import type { ApiKeyRepo } from "./api-key-types";
 
 // Records are what repositories return. They use camelCase and real Date objects; the API layer maps
 // them to the snake_case representations in @fieldops/shared.
@@ -477,6 +478,8 @@ export interface Store {
   recurrences: RecurrenceRepo;
   digest: DigestRepo;
   assistant: AssistantRepo;
+  // 0.5 platform
+  apiKeys: ApiKeyRepo;
 }
 
 export interface FileStorage {

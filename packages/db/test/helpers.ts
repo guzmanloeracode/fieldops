@@ -334,6 +334,16 @@ export async function createOrgWithData(db: Database, label: string) {
   await db
     .insert(s.dailyDigest)
     .values({ organizationId: orgId, userId: users.owner, digestDate: "2026-11-10" });
+  // 0.5 platform. The token hash is unique across organizations, so it carries the organization id.
+  await db.insert(s.apiKey).values({
+    organizationId: orgId,
+    memberId: members.owner,
+    name: "Integration",
+    prefix: "fo_test",
+    tokenHash: `test-${orgId}`,
+    scopes: ["read"],
+  });
+  await db.insert(s.outboxEvent).values({ organizationId: orgId, type: "job.created", payload: { job: {} } });
   return { orgId, users, members, ids };
 }
 

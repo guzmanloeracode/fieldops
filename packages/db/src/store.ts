@@ -20,6 +20,7 @@ import { billingRepo } from "./repos/billing";
 import { reportRepo } from "./repos/reports";
 import { digestRepo, recurrenceRepo } from "./repos/recurrences";
 import { assistantRepo } from "./repos/assistant";
+import { apiKeyRepo } from "./repos/api-keys";
 
 /** Builds the repositories for one organization on top of an open transaction. */
 export function createStore(tx: Tx, organizationId: string): Store {
@@ -55,6 +56,8 @@ export function createStore(tx: Tx, organizationId: string): Store {
     recurrences: recurrenceRepo(tx, organizationId),
     digest: digestRepo(tx, organizationId),
     assistant: assistantRepo(tx, organizationId),
+    // 0.5 platform
+    apiKeys: apiKeyRepo(tx, organizationId),
   };
 }
 

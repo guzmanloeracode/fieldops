@@ -30,6 +30,7 @@ import { memoryBilling } from "./memory-billing";
 import { memoryReports } from "./memory-reports";
 import { memoryOps } from "./memory-ops";
 import { memoryAssistant } from "./memory-assistant";
+import { memoryPlatform, type MemoryPlatform } from "./memory-platform";
 
 // An in-memory Store for unit-testing services without a database. It mirrors the repository contracts
 // closely enough for the services' rules; SQL behaviour is covered by packages/db integration tests.
@@ -59,6 +60,8 @@ export interface MemoryData {
   timeOff?: TimeOffRecord[];
   /** 0.3 repositories (memory-automate.ts). */
   automate?: MemoryAutomate;
+  /** 0.5 API keys (memory-platform.ts). */
+  platform?: MemoryPlatform;
 }
 
 export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; data: MemoryData } {
@@ -444,6 +447,7 @@ export function createMemoryStore(seed?: Partial<MemoryData>): { store: Store; d
     ...memoryReports(data, uuid),
     ...memoryOps(data, uuid),
     ...memoryAssistant(data, uuid),
+    ...memoryPlatform(data, uuid),
   };
   return { store, data };
 }
