@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Product** | FieldOps (working title): field service management for small service businesses |
-| **Status** | Draft 1.8 · release 0.4 live |
+| **Status** | Draft 1.9 · release 0.4.1 live |
 | **Owner** | Ahmad Izzat Maulana |
 | **Last updated** | 11 November 2026 |
 | **Live demo** | `https://fieldops.tinggalpake.com` (self-hosted) |
@@ -23,6 +23,7 @@
 | 1.6 | 10 Nov 2026 | Release 0.3 built and live. Recorded the decisions made while building it in *As built (0.3)* notes: Google sign-in (§8.1), the live board (§8.4), SLA time basis, the monitor and notification rules (§8.7), the portal sign-in and requests (§8.9), real SLA figures and CSV export (§8.10), the audit log written by database triggers (§8.11, ADR 016), SLA and AI settings (§8.12), AI rate limits (§8.14), AI intake (§9.2), live updates through PostgreSQL instead of Redis (§14.3, §15.3, ADR 011), new tables and endpoints (§16.3, §17.2) and the 0.3 seed (§19). |
 | 1.7 | 10 Nov 2026 | Release 0.3.1: collapsible desktop sidebar (§13 *As built (0.3.1)*) and demo data where each job's description matches its title and portal requests arrive without a service type (§19 *As built (0.3.1)*). |
 | 1.8 | 11 Nov 2026 | Release 0.4 built and live: billing, online payments, documents, the assistant, operations and Bahasa Indonesia. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, online payments, PDFs, reminders and totals (§8.8), quotes, invoices and reports in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings and the two languages (§8.12, §13), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–021 and the missing 016 in the ADR list (§14.5), new tables, endpoints and Stripe (§16.3, §17.2, §17.4), the 0.4 seed and demo payments (§19), the payment provider risk (§22) and Stripe test keys for the demo (§23). |
+| 1.9 | 11 Nov 2026 | Release 0.4.1: past *Ask FieldOps* conversations readable while AI is off (§9.3), next plan visits with their year (§8.3), KPI changes that round to zero read as the same (§8.10), and demo quotes whose title, service and parts match (§19). |
 
 ## Contents
 
@@ -385,6 +386,8 @@ stateDiagram-v2
 - **SLA:** a generated job's clock starts at local midnight of its visit date (or when it is created, if later), so a job made weeks ahead isn't late before its visit.
 - **Changes:** a plan that starts in the past, a changed rule and a resume continue from today after the dates that already have jobs, so no backlog of past visits is created. Other changes apply to jobs generated from then on. Deleting a plan keeps its jobs. The jobs list and the job page show a badge with the plan's visit date.
 
+*As built (0.4.1):* the plan card lists the next visits with their year, and shows how many jobs the plan created only once it has created one: a plan doesn't backfill visits from before it was added, and *Next visits* already says when the first job comes.
+
 ### 8.4 Scheduling and dispatch (SCH)
 
 | ID | Requirement | Pri | Rel |
@@ -547,6 +550,8 @@ Phone-first web screens until the native app ships ([§10](#10-fieldops-mobile))
 
 *As built (0.4), revenue (DSH-01, DSH-02):* owners and admins (`dashboard.financial`) see a revenue section on the overview; dispatchers don't. It shows revenue invoiced (invoices issued in the period, void ones excluded), revenue collected (payments received in the period), receivables at the end of the period and their overdue part, each against the previous period, and a trend of invoiced and collected amounts. Receivables are computed as of the end of each period, counting only payments made by then, so the previous period's figure is what was open at that time. Technician and service-type filters don't apply to money. The figures and the trend download as CSV (`report=revenue_kpis`, `report=revenue`).
 
+*As built (0.4.1):* a KPI change that rounds to 0% or 0 points reads *Same as the previous period* rather than *Down 0%*.
+
 ### 8.11 Audit (AUD)
 
 | ID | Requirement | Pri | Rel |
@@ -670,6 +675,8 @@ A chat panel (⌘J) that answers questions about the organization's own data.
 - **API and storage:** `POST /api/v1/ai/assistant` streams server-sent events over POST (`conversation`, `text`, `tool_started`, `tool_finished`, `done`, `error`); limits, a disabled AI and validation errors are problem responses before the stream starts. A question carries the conversation's last 20 messages. Conversations (`GET /ai/conversations`, `GET/DELETE /ai/conversations/{id}`) are private to their user and deleted by the worker 30 days after their last message. Refused or failed answers aren't saved.
 - **Limits:** a question counts against the monthly AI quota and the same per-user, per-visitor and global rate limits as intake.
 - **Evaluations:** the 25 questions are in `packages/ai/evals/assistant.jsonl`. `pnpm eval:assistant` checks the tools chosen and the numbers and records in each answer, with expected values computed from the seeded database when the run starts; it needs an API key, or runs the free fixture baseline. It hasn't been run against Claude yet.
+
+*As built (0.4.1):* while AI is off or out of quota, the panel still opens past conversations and shows them below the reason; only asking a new question is disabled.
 
 ### 9.4 AI-03 Service report writer (S, 0.4)
 
@@ -1326,6 +1333,8 @@ Sample photos are license-free (CC0). Every person, company and address is ficti
 - **Languages:** Acme Teknik's customer language is Bahasa Indonesia and its people use the app in Indonesian, except the technician Fajar Nugroho, who uses English; Acme Air is English throughout.
 - **Demo payments:** the demo pays through the simulated checkout (FIN-05) rather than Stripe's test mode (DEM-05) until Stripe test keys are provided ([§23](#23-open-questions)). Each demo portal customer has an unpaid invoice to try it on.
 
+*As built (0.4.1):* open quotes come from ideas whose title, service and parts belong together, and quotes made from a job carry only parts that fit its service and fees that fit the work (the disposal fee only with an installation).
+
 ---
 
 ## 20. Release plan
@@ -1337,7 +1346,7 @@ The plan builds the web product first, then the event delivery service (Relay), 
 | **0.1** Core ✅ live 10 Nov 2026, repository public | Public launch | Monorepo, CI, Docker images, deploy pipeline. AUTH-01/03/04/05/09, CUS-01/02/04/05, JOB-01–03/05–07, SET-01/02, FIN-01 (minimal), PLT-01 (jobs, customers), DEM-01–05. README with screenshots. **The repository goes public.** | 2 weeks |
 | **0.2** Dispatch ✅ live 10 Nov 2026 | Daily operations | SCH-01–05, TEC-01–05, EXP-01–03, JOB-04/08–11, CUS-03, DSH-01–04/06, AUTH-06 | 2 weeks |
 | **0.3** Automate ✅ live 10 Nov 2026 | SLA and AI | SLA-01–03, NOT-01–03/05, AUD-01–03, AI-01, POR-01–03, AUTH-02, SCH-06, DSH-05, PLT-04 (AI routes), SET-04, DEM-06 | 2 weeks |
-| **0.4** Get paid ✅ live 11 Nov 2026 | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
+| **0.4** Get paid ✅ live 11 Nov 2026 (0.4.1 same day) | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
 | | **Core product complete** | | |
 | **Relay 1.0** | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
 | **0.5** Platform | Integrations | PLT-02–05, BIL-01–04, CUS-06, SCH-07, AI-04, AI-05, AUTH-07/08, SET-06; FieldOps events flow through Relay | 2 weeks |
