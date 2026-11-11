@@ -45,7 +45,7 @@ const SEED = 20261110;
 /** Removes all data. Used by the nightly demo reset before seeding again (DEM-04). */
 export async function wipeAll(db: Database) {
   await db.execute(sql`truncate table
-    "daily_digest", "assistant_message", "assistant_conversation", "invoice_reminder", "payment", "invoice_line",
+    "outbox_event", "api_key", "daily_digest", "assistant_message", "assistant_conversation", "invoice_reminder", "payment", "invoice_line",
     "invoice", "quote_line", "quote", "catalog_item", "service_report", "job_recurrence",
     "audit_log", "notification", "notification_preference", "sla_alert", "ai_interaction", "portal_token",
     "portal_session", "rate_limit", "sla_policy",

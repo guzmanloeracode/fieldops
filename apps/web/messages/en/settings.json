@@ -10,7 +10,9 @@
     "demoOutbox": "Demo outbox",
     "sla": "SLA policies",
     "ai": "AI",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "apiKeys": "API keys",
+    "webhooks": "Webhooks"
   },
   "organization": {
     "title": "Organization",

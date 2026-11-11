@@ -23,6 +23,8 @@ import reports from "../../messages/en/reports.json";
 import recurrences from "../../messages/en/recurrences.json";
 import assistant from "../../messages/en/assistant.json";
 import pay from "../../messages/en/pay.json";
+import apiKeys from "../../messages/en/apiKeys.json";
+import webhooks from "../../messages/en/webhooks.json";
 import authId from "../../messages/id/auth.json";
 import commonId from "../../messages/id/common.json";
 import customersId from "../../messages/id/customers.json";
@@ -45,6 +47,8 @@ import reportsId from "../../messages/id/reports.json";
 import recurrencesId from "../../messages/id/recurrences.json";
 import assistantId from "../../messages/id/assistant.json";
 import payId from "../../messages/id/pay.json";
+import apiKeysId from "../../messages/id/apiKeys.json";
+import webhooksId from "../../messages/id/webhooks.json";
 
 // One file per namespace and language. English is complete; Bahasa Indonesia (SET-05, 0.4) is laid over it, so a
 // key that isn't translated yet shows in English rather than as its raw key.
@@ -71,6 +75,8 @@ const en = {
   recurrences,
   assistant,
   pay,
+  apiKeys,
+  webhooks,
 };
 const id = {
   auth: authId,
@@ -95,6 +101,8 @@ const id = {
   recurrences: recurrencesId,
   assistant: assistantId,
   pay: payId,
+  apiKeys: apiKeysId,
+  webhooks: webhooksId,
 };
 
 const messages: Record<Locale, typeof en> = { en, id: mergeMessages(en, id) };

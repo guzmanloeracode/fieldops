@@ -21,6 +21,8 @@ export default async function SettingsLayout({ children }: { children: React.Rea
     { href: "/settings/operations", label: te("tab") },
     { href: "/settings/sla", label: t("tabs.sla") },
     { href: "/settings/ai", label: t("tabs.ai") },
+    { href: "/settings/api-keys", label: t("tabs.apiKeys") },
+    { href: "/settings/webhooks", label: t("tabs.webhooks") },
     { href: "/settings/audit", label: t("tabs.audit") },
     ...(env.DEMO_MODE ? [{ href: "/settings/demo-outbox", label: t("tabs.demoOutbox") }] : []),
   ];

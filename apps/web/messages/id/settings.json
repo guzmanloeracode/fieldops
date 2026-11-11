@@ -10,7 +10,9 @@
     "demoOutbox": "Kotak keluar demo",
     "sla": "Kebijakan SLA",
     "ai": "AI",
-    "audit": "Log audit"
+    "audit": "Log audit",
+    "apiKeys": "Kunci API",
+    "webhooks": "Webhook"
   },
   "organization": {
     "title": "Organisasi",
