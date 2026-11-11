@@ -1,6 +1,6 @@
-import { ai, RateLimitedError, type RateLimitStatus } from "@fieldops/core";
+import { ai, RateLimitedError } from "@fieldops/core";
 import type { AiIntakeResponse } from "@fieldops/shared";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { authenticate, problemResponse, rateLimitHeaders, tighterLimit } from "@/server/api/handler";
 import { ApiProblem, internalProblem, problemFromError } from "@/server/api/problem";
 import { aiGuard, intakeModel, txRunner } from "@/server/ai";
 import { logger } from "@/server/logger";
@@ -10,15 +10,7 @@ import { metaFromHeaders } from "@/server/request-meta";
 // request, and a model call must not keep a database connection busy. The service runs one short transaction
 // before the call (permissions, quota, rate limits) and one after (validation, logging).
 
-/** IETF RateLimit header fields: the tightest limit that applies, and seconds until its window resets. */
-function rateLimitHeaders(s: RateLimitStatus | null, now = Date.now()): Record<string, string> {
-  if (!s) return {};
-  return {
-    "RateLimit-Limit": String(s.limit),
-    "RateLimit-Remaining": String(Math.max(0, s.remaining)),
-    "RateLimit-Reset": String(Math.max(0, Math.ceil((s.resetAt.getTime() - now) / 1000))),
-  };
-}
+// The response carries the tighter of the AI limit and the API's per-minute limit (PLT-04).
 
 export async function POST(req: Request): Promise<Response> {
   const incoming = req.headers.get("x-request-id");
@@ -54,7 +46,7 @@ export async function POST(req: Request): Promise<Response> {
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store",
         "X-Request-Id": requestId,
-        ...rateLimitHeaders(result.rateLimit),
+        ...rateLimitHeaders(tighterLimit(result.rateLimit, actor.rateLimit)),
       },
     });
   } catch (err) {

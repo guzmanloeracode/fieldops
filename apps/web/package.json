@@ -27,6 +27,7 @@
     "@fieldops/payments": "workspace:*",
     "@fieldops/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.5",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "@scalar/nextjs-api-reference": "^0.12.16",
     "@tanstack/react-table": "^8.21.3",
     "better-auth": "^1.7.19",

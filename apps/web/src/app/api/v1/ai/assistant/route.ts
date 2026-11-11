@@ -1,6 +1,6 @@
-import { assistant, RateLimitedError, type RateLimitStatus } from "@fieldops/core";
+import { assistant, RateLimitedError } from "@fieldops/core";
 import type { AssistantStreamEvent } from "@fieldops/shared";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { authenticate, problemResponse, rateLimitHeaders, tighterLimit } from "@/server/api/handler";
 import { resolveLocale } from "@/server/locale";
 import { ApiProblem, internalProblem, problemFromError } from "@/server/api/problem";
 import { aiGuard, assistantModel, txRunner } from "@/server/ai";
@@ -14,15 +14,6 @@ export const dynamic = "force-dynamic";
 // Not wrapped in apiRoute(): that holds one transaction for the whole request. Here the checks and the question are
 // one short transaction before the stream opens (so limits and errors are ordinary problem responses), each tool
 // call opens its own while the model streams, and the answer is saved in a last one.
-
-function rateLimitHeaders(s: RateLimitStatus | null, now = Date.now()): Record<string, string> {
-  if (!s) return {};
-  return {
-    "RateLimit-Limit": String(s.limit),
-    "RateLimit-Remaining": String(Math.max(0, s.remaining)),
-    "RateLimit-Reset": String(Math.max(0, Math.ceil((s.resetAt.getTime() - now) / 1000))),
-  };
-}
 
 export async function POST(req: Request): Promise<Response> {
   const incoming = req.headers.get("x-request-id");
@@ -123,7 +114,7 @@ export async function POST(req: Request): Promise<Response> {
       "Cache-Control": "no-store, no-transform",
       "X-Accel-Buffering": "no",
       "X-Request-Id": requestId,
-      ...rateLimitHeaders(session.rateLimit),
+      ...rateLimitHeaders(tighterLimit(session.rateLimit, actor.rateLimit)),
     },
   });
 }

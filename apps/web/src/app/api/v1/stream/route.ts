@@ -1,5 +1,5 @@
 import { can } from "@fieldops/core";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { authenticate, problemResponse, rateLimitHeaders } from "@/server/api/handler";
 import { problemFromError } from "@/server/api/problem";
 import { liveHub, type LiveEvent } from "@/server/live";
 import { logger } from "@/server/logger";
@@ -69,6 +69,7 @@ export async function GET(req: Request): Promise<Response> {
       "X-Accel-Buffering": "no",
       Connection: "keep-alive",
       "X-Request-Id": requestId,
+      ...rateLimitHeaders(actor.rateLimit),
     },
   });
 }

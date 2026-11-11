@@ -1,5 +1,5 @@
 import { reports } from "@fieldops/core";
-import { authenticate, problemResponse } from "@/server/api/handler";
+import { authenticate, problemResponse, rateLimitHeaders } from "@/server/api/handler";
 import { internalProblem, problemFromError } from "@/server/api/problem";
 import { runWithTx } from "@/server/reports/service";
 import { pdfResponse, renderReportPdf, reportFileName } from "@/server/reports/document";
@@ -17,7 +17,9 @@ export async function GET(req: Request, route: { params: Promise<{ id: string }>
     const { id } = await route.params;
     const data = await runWithTx((ctx) => reports.reportDocument(ctx, id), actor);
     const bytes = await renderReportPdf(data);
-    return pdfResponse(bytes, reportFileName(data), url.searchParams.get("download") === "1");
+    const res = pdfResponse(bytes, reportFileName(data), url.searchParams.get("download") === "1");
+    for (const [k, v] of Object.entries(rateLimitHeaders(actor.rateLimit))) res.headers.set(k, v);
+    return res;
   } catch (err) {
     const problem = problemFromError(err, url.pathname);
     if (problem) return problemResponse(problem.body, requestId, problem.headers);

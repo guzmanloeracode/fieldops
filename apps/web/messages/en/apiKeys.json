@@ -1,3 +1,80 @@
 {
-  "title": "API keys"
+  "title": "API keys",
+  "pageTitle": "API keys",
+  "description": "Keys let other systems use the FieldOps API and MCP server for this organization. A key acts as the member who created it, limited to its scopes.",
+  "demoNote": "In the public demo, keys are deleted with the nightly reset.",
+  "new": "New API key",
+  "empty": "No API keys yet",
+  "emptyHint": "Create a key to connect an integration, a script or an MCP client.",
+  "listLabel": "API keys",
+  "createdBy": "Acts as {name}",
+  "createdAt": "Created {date}",
+  "lastUsed": "Last used {date}",
+  "neverUsed": "Never used",
+  "expires": "Expires {date}",
+  "expired": "Expired {date}",
+  "noExpiry": "Doesn't expire",
+  "revokedAt": "Revoked {date}",
+  "state": {
+    "active": "Active",
+    "expired": "Expired",
+    "revoked": "Revoked"
+  },
+  "scope": {
+    "read": "Read",
+    "write": "Read and write"
+  },
+  "create": {
+    "title": "New API key",
+    "description": "The key acts as you, within your role, and only with the scope you choose.",
+    "name": "Name",
+    "namePlaceholder": "e.g. Accounting sync",
+    "nameHint": "So you can tell keys apart later.",
+    "scope": "Scope",
+    "scopeRead": "Read only",
+    "scopeReadHint": "GET requests and the MCP server.",
+    "scopeWrite": "Read and write",
+    "scopeWriteHint": "Also creates, changes and deletes records.",
+    "expiry": "Expires",
+    "never": "Never",
+    "days": "In {count} days",
+    "submit": "Create key",
+    "cancel": "Cancel",
+    "nameRequired": "Give the key a name"
+  },
+  "created": {
+    "title": "Copy your new key",
+    "description": "This is the only time the key is shown. Store it somewhere safe, such as a password manager or your integration's secrets.",
+    "keyLabel": "API key",
+    "copy": "Copy",
+    "copied": "Copied to the clipboard",
+    "copyFailed": "Couldn't copy. Select the key and copy it by hand.",
+    "tryIt": "Try it",
+    "done": "Done"
+  },
+  "revoke": {
+    "button": "Revoke",
+    "label": "Revoke {name}",
+    "title": "Revoke “{name}”?",
+    "description": "Requests with this key stop working at once. This can't be undone; create a new key if you need one again.",
+    "confirm": "Revoke key",
+    "cancel": "Cancel",
+    "done": "Key revoked"
+  },
+  "rest": {
+    "title": "REST API",
+    "description": "Send the key as a bearer token. Every endpoint is described in the API reference.",
+    "reference": "Open the API reference",
+    "limits": "Each key can make {perKey} requests a minute. Every response carries RateLimit-Limit, RateLimit-Remaining and RateLimit-Reset headers; past the limit the API answers 429 with Retry-After.",
+    "limitsOff": "Requests with a key aren't rate-limited on this server."
+  },
+  "mcp": {
+    "title": "Connect an MCP client",
+    "description": "Ask Claude or another MCP client about your jobs, SLA risks, technicians' workload and customers. The tools are read-only and use a key with the Read scope.",
+    "url": "Server URL",
+    "cli": "Claude Code",
+    "json": "Clients configured with JSON",
+    "tools": "Tools: search jobs, get a job, SLA risks, technician workload, customer history, pending approvals and, for owners and admins, revenue.",
+    "replace": "Replace fo_… with your key."
+  }
 }
