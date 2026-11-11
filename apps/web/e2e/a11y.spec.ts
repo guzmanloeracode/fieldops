@@ -56,6 +56,7 @@ test.describe("pages in Bahasa Indonesia", () => {
       "/quotes",
       "/invoices",
       "/settings/catalog",
+      "/settings/api-keys",
     ]) {
       test(`axe (id): ${path}`, async ({ page }) => audit(page, path));
     }
@@ -93,6 +94,7 @@ test.describe("app pages as owner", () => {
     "/settings/sla",
     "/settings/demo-outbox",
     "/settings/audit",
+    "/settings/api-keys",
     "/approvals",
     "/schedule",
     "/schedule?view=week",
