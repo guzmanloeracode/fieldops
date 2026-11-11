@@ -1,3 +1,174 @@
 {
-  "title": "Webhooks"
+  "title": "Webhooks",
+  "description": "Send FieldOps events to your own systems as signed HTTPS requests. Relay delivers them, retries failures for about a day and keeps a 7-day log.",
+  "notConfigured": {
+    "title": "Webhooks aren't set up on this server",
+    "body": "An administrator needs to connect Relay (RELAY_URL and RELAY_API_KEY) before webhooks can be turned on."
+  },
+  "unavailable": {
+    "title": "Relay can't be reached right now",
+    "body": "Endpoints and deliveries will show again once it answers. Events that happen in the meantime are queued and sent later."
+  },
+  "toggle": {
+    "label": "Send events",
+    "on": "On since {date}. Every change below is published as an event.",
+    "off": "Off. Turn on to add endpoints; no events are recorded while it is off.",
+    "turnedOn": "Webhooks are on",
+    "turnedOff": "Webhooks are off. Endpoints stay, but get no new events."
+  },
+  "endpoints": {
+    "title": "Endpoints",
+    "description": "Up to {max} URLs. Each one receives the events it subscribes to.",
+    "add": "Add endpoint",
+    "addDisabled": "Turn on webhooks to add an endpoint",
+    "limit": "This organization has the maximum of {max} endpoints.",
+    "empty": "No endpoints yet",
+    "emptyHint": "Add the URL of the system that should receive events, such as your CRM or an automation tool.",
+    "columns": {
+      "url": "URL",
+      "events": "Events",
+      "status": "Status"
+    },
+    "allEvents": "All events",
+    "eventCount": "{count, plural, one {# event} other {# events}}",
+    "open": "Open {url}"
+  },
+  "status": {
+    "active": "Active",
+    "off": "Off",
+    "failing": "Failing",
+    "failingSince": "{count, plural, one {# failed attempt} other {# failed attempts}} in a row since {date}",
+    "offByYou": "Turned off by a person in your organization",
+    "offByRelay": "Turned off by Relay: {reason}"
+  },
+  "form": {
+    "createTitle": "Add a webhook endpoint",
+    "editTitle": "Edit endpoint",
+    "url": "Endpoint URL",
+    "urlHint": "An https URL on a public host. FieldOps posts JSON to it.",
+    "urlPlaceholder": "https://example.com/hooks/fieldops",
+    "description": "Description",
+    "descriptionPlaceholder": "What receives these events (optional)",
+    "events": "Events to send",
+    "allEvents": "All events, including ones added later",
+    "chooseEvents": "Only the events I choose",
+    "chooseAtLeastOne": "Choose at least one event",
+    "save": "Save",
+    "create": "Add endpoint",
+    "cancel": "Cancel",
+    "saved": "Endpoint saved"
+  },
+  "secret": {
+    "title": "Signing secret",
+    "createdTitle": "Endpoint added",
+    "rotatedTitle": "New signing secret",
+    "body": "Use this secret to verify that requests come from FieldOps. It is shown only now: copy it into your receiver's settings.",
+    "rotatedBody": "For the next 24 hours each request is signed with both the old and the new secret, so you can switch without dropping requests.",
+    "copy": "Copy secret",
+    "copied": "Secret copied",
+    "copyFailed": "Couldn't copy. Select the secret and copy it by hand.",
+    "done": "I've stored it"
+  },
+  "groups": {
+    "job": "Jobs",
+    "sla": "SLA",
+    "quote": "Quotes",
+    "invoice": "Invoices",
+    "expense": "Parts and expenses"
+  },
+  "events": {
+    "job.created": "A job was created",
+    "job.updated": "A job's details changed (title, priority, customer, site, schedule…)",
+    "job.status_changed": "A job moved to another status",
+    "job.assigned": "A job's technicians were set",
+    "job.completed": "A job was completed",
+    "sla.at_risk": "A job used 75% of its response or resolution window",
+    "sla.breached": "A job missed its response or resolution target",
+    "quote.sent": "A quote was sent to the customer",
+    "quote.approved": "The customer approved a quote",
+    "quote.declined": "The customer declined a quote",
+    "invoice.sent": "An invoice was issued",
+    "invoice.paid": "An invoice was paid in full",
+    "expense.decided": "A part or expense request was approved or rejected",
+    "webhook.test": "A test event sent from this page"
+  },
+  "catalog": {
+    "title": "Events",
+    "description": "Every request carries the same envelope. Events are thin: they name the record and its key fields; fetch the rest from the API with an API key.",
+    "sample": "Sample payload for {type}"
+  },
+  "verify": {
+    "title": "Verifying requests",
+    "description": "Requests follow the Standard Webhooks format. Check the signature, reject timestamps more than 5 minutes off, answer 2xx within 10 seconds, and skip event IDs you've already processed: delivery is at least once.",
+    "headers": "Headers: webhook-id (the event ID), webhook-timestamp (Unix seconds) and webhook-signature (v1,<base64 HMAC-SHA256 of id.timestamp.body>).",
+    "example": "Verification in Node.js"
+  },
+  "detail": {
+    "back": "All endpoints",
+    "created": "Added {date}",
+    "sendTest": "Send test event",
+    "testSent": "Test event sent",
+    "edit": "Edit",
+    "turnOff": "Turn off",
+    "turnOn": "Turn on",
+    "turnedOff": "Endpoint turned off",
+    "turnedOn": "Endpoint turned on",
+    "rotate": "Rotate secret",
+    "rotateTitle": "Rotate the signing secret?",
+    "rotateBody": "You get a new secret. Requests are signed with both secrets for 24 hours, then only with the new one.",
+    "delete": "Delete",
+    "deleteTitle": "Delete this endpoint?",
+    "deleteBody": "It stops receiving events at once, and its delivery log is deleted. This can't be undone.",
+    "deleted": "Endpoint deleted",
+    "actions": "Endpoint actions",
+    "subscribed": "Subscribed to"
+  },
+  "deliveries": {
+    "title": "Deliveries",
+    "description": "The last 7 days, newest first.",
+    "filter": "Status",
+    "all": "All",
+    "empty": "No deliveries yet",
+    "emptyHint": "Send a test event, or change a job, to see a delivery here.",
+    "emptyFiltered": "No deliveries with this status",
+    "columns": {
+      "time": "Time",
+      "event": "Event",
+      "status": "Status",
+      "attempts": "Attempts",
+      "response": "Last response"
+    },
+    "unknownEvent": "Event older than 7 days",
+    "attempts": "{count} of {max}",
+    "details": "Details",
+    "detailsTitle": "Delivery {id}",
+    "eventId": "Event ID",
+    "nextAttempt": "Next attempt {date}",
+    "replayOf": "Redelivery of {id}",
+    "replayed": "Redelivered {date}",
+    "deadReason": "Stopped: {reason}",
+    "attemptLog": "Attempts",
+    "noAttempts": "No attempts yet",
+    "attempt": "Attempt {n}",
+    "latency": "{ms} ms",
+    "noResponse": "No response",
+    "response": "Response",
+    "redeliver": "Redeliver",
+    "redelivered": "Redelivery queued",
+    "older": "Older deliveries",
+    "newest": "Newest",
+    "loadFailed": "Couldn't load this delivery"
+  },
+  "deliveryStatus": {
+    "pending": "Pending",
+    "retrying": "Retrying",
+    "delivered": "Delivered",
+    "dead": "Failed"
+  },
+  "deadReasons": {
+    "max_attempts": "every attempt failed",
+    "endpoint_gone": "the endpoint answered 410 Gone",
+    "endpoint_disabled": "the endpoint was turned off",
+    "rejected": "the endpoint rejected it"
+  }
 }

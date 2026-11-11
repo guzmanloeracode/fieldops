@@ -131,6 +131,9 @@ export async function createEndpoint(d: WebhookDeps, raw: unknown): Promise<Webh
       limit: MAX_WEBHOOK_ENDPOINTS_PER_ORG,
     });
   }
+  // The tenant exists since webhooks were turned on; making sure costs one call and survives a Relay restored from
+  // an older backup.
+  await call("Organization", () => relay.ensureTenant(d.actor.organizationId, state.name));
   const created = await call("Webhook endpoint", () => relay.createEndpoint(d.actor.organizationId, input));
   await audit(d, "insert", created.endpoint.id, {
     url: created.endpoint.url,

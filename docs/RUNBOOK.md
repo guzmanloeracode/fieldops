@@ -61,6 +61,53 @@ containers) through signed `/api/files/…` URLs (ADR 015). The nightly reset em
 docker run --rm -v fieldops_files:/f alpine du -sh /f
 ```
 
+## Webhooks and Relay
+
+Outgoing webhooks (ADR 022) need two settings in `/etc/fieldops/fieldops.env`, read by `web` and `worker`:
+
+```bash
+RELAY_URL=https://relay.tinggalpake.com
+RELAY_API_KEY=rk_…   # one key for every organization
+```
+
+Create the key on the Relay host with the Relay CLI (it is shown once): a key not bound to a tenant, with the
+scopes FieldOps uses (`ingest` to post events, `read` for the delivery log, `manage` for endpoints and
+subscriptions, `admin` to create tenants):
+
+```bash
+cd /root/relay && docker compose -p relay --env-file /etc/relay/relay.env run --rm --no-deps migrate \
+  keys create --name fieldops --scopes ingest,read,manage,admin
+```
+
+Without the two settings the worker doesn't post events, no organization can turn webhooks on, and the settings
+page says webhooks aren't set up. Restart `web` and `worker` after changing them.
+
+Events waiting for Relay, and ones it refused:
+
+```bash
+$C exec postgres psql -U fieldops fieldops -c \
+  "select status, count(*), min(created_at) from outbox_event group by status"
+$C exec postgres psql -U fieldops fieldops -c \
+  "select id, organization_id, type, attempts, error from outbox_event where status = 'failed' order by created_at desc limit 20"
+```
+
+`pending` rows with a growing `attempts` mean Relay is down or refusing the key: check `curl -s
+https://relay.tinggalpake.com/healthz` and the worker log (`webhook event not sent`). Once Relay is back they go
+out on their own. `failed` rows gave up after 12 attempts (about six hours); after fixing the cause, send them
+again with `update outbox_event set status = 'pending', attempts = 0, next_attempt_at = now() where status =
+'failed';`. Each keeps its ID as the Idempotency-Key, so one Relay already accepted isn't duplicated (within
+Relay's 24-hour idempotency window).
+
+In development, run the fake Relay and point the web app and the worker at it:
+
+```bash
+pnpm --filter @fieldops/relay fake        # http://127.0.0.1:8099, key rk_dev
+RELAY_URL=http://127.0.0.1:8099 RELAY_API_KEY=rk_dev pnpm dev
+```
+
+The fake doesn't call endpoints: deliveries succeed at once, except to URLs whose path contains `/fail` (dead
+after one 500) or `/retry` (waiting after a 503). Its state is lost when it stops.
+
 ## Placeholder page
 
 `infra/placeholder/` holds the static project page that ran before release 0.1. It is no longer deployed.

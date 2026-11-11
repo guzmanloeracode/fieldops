@@ -71,6 +71,9 @@ importers:
       '@fieldops/payments':
         specifier: workspace:*
         version: link:../../packages/payments
+      '@fieldops/relay':
+        specifier: workspace:*
+        version: link:../../packages/relay
       '@fieldops/shared':
         specifier: workspace:*
         version: link:../../packages/shared

@@ -1,3 +1,174 @@
 {
-  "title": "Webhook"
+  "title": "Webhook",
+  "description": "Kirim peristiwa FieldOps ke sistem Anda sendiri sebagai permintaan HTTPS bertanda tangan. Relay mengantarkannya, mengulang yang gagal selama sekitar sehari, dan menyimpan log 7 hari.",
+  "notConfigured": {
+    "title": "Webhook belum disiapkan di server ini",
+    "body": "Administrator perlu menghubungkan Relay (RELAY_URL dan RELAY_API_KEY) sebelum webhook bisa dinyalakan."
+  },
+  "unavailable": {
+    "title": "Relay sedang tidak dapat dihubungi",
+    "body": "Endpoint dan pengiriman akan tampil lagi setelah Relay menjawab. Peristiwa yang terjadi sementara itu diantrekan dan dikirim nanti."
+  },
+  "toggle": {
+    "label": "Kirim peristiwa",
+    "on": "Nyala sejak {date}. Setiap perubahan di bawah diterbitkan sebagai peristiwa.",
+    "off": "Mati. Nyalakan untuk menambah endpoint; tidak ada peristiwa yang dicatat selama mati.",
+    "turnedOn": "Webhook menyala",
+    "turnedOff": "Webhook mati. Endpoint tetap ada, tetapi tidak menerima peristiwa baru."
+  },
+  "endpoints": {
+    "title": "Endpoint",
+    "description": "Hingga {max} URL. Masing-masing menerima peristiwa yang dilanggankannya.",
+    "add": "Tambah endpoint",
+    "addDisabled": "Nyalakan webhook untuk menambah endpoint",
+    "limit": "Organisasi ini sudah memiliki {max} endpoint, batas maksimalnya.",
+    "empty": "Belum ada endpoint",
+    "emptyHint": "Tambahkan URL sistem yang harus menerima peristiwa, seperti CRM atau alat otomasi Anda.",
+    "columns": {
+      "url": "URL",
+      "events": "Peristiwa",
+      "status": "Status"
+    },
+    "allEvents": "Semua peristiwa",
+    "eventCount": "{count} peristiwa",
+    "open": "Buka {url}"
+  },
+  "status": {
+    "active": "Aktif",
+    "off": "Mati",
+    "failing": "Gagal",
+    "failingSince": "{count} percobaan gagal berturut-turut sejak {date}",
+    "offByYou": "Dimatikan oleh seseorang di organisasi Anda",
+    "offByRelay": "Dimatikan oleh Relay: {reason}"
+  },
+  "form": {
+    "createTitle": "Tambah endpoint webhook",
+    "editTitle": "Ubah endpoint",
+    "url": "URL endpoint",
+    "urlHint": "URL https pada host publik. FieldOps mengirim JSON ke URL ini.",
+    "urlPlaceholder": "https://contoh.com/hooks/fieldops",
+    "description": "Deskripsi",
+    "descriptionPlaceholder": "Apa yang menerima peristiwa ini (opsional)",
+    "events": "Peristiwa yang dikirim",
+    "allEvents": "Semua peristiwa, termasuk yang ditambahkan nanti",
+    "chooseEvents": "Hanya peristiwa yang saya pilih",
+    "chooseAtLeastOne": "Pilih setidaknya satu peristiwa",
+    "save": "Simpan",
+    "create": "Tambah endpoint",
+    "cancel": "Batal",
+    "saved": "Endpoint disimpan"
+  },
+  "secret": {
+    "title": "Rahasia penandatanganan",
+    "createdTitle": "Endpoint ditambahkan",
+    "rotatedTitle": "Rahasia penandatanganan baru",
+    "body": "Gunakan rahasia ini untuk memastikan permintaan berasal dari FieldOps. Rahasia hanya ditampilkan sekarang: salin ke pengaturan penerima Anda.",
+    "rotatedBody": "Selama 24 jam ke depan, setiap permintaan ditandatangani dengan rahasia lama dan baru, sehingga Anda bisa beralih tanpa kehilangan permintaan.",
+    "copy": "Salin rahasia",
+    "copied": "Rahasia disalin",
+    "copyFailed": "Tidak dapat menyalin. Pilih rahasianya lalu salin secara manual.",
+    "done": "Sudah saya simpan"
+  },
+  "groups": {
+    "job": "Pekerjaan",
+    "sla": "SLA",
+    "quote": "Penawaran",
+    "invoice": "Faktur",
+    "expense": "Suku cadang dan biaya"
+  },
+  "events": {
+    "job.created": "Pekerjaan dibuat",
+    "job.updated": "Detail pekerjaan berubah (judul, prioritas, pelanggan, lokasi, jadwal…)",
+    "job.status_changed": "Status pekerjaan berubah",
+    "job.assigned": "Teknisi pekerjaan ditetapkan",
+    "job.completed": "Pekerjaan selesai",
+    "sla.at_risk": "Pekerjaan sudah memakai 75% batas waktu respons atau penyelesaiannya",
+    "sla.breached": "Pekerjaan melewati target respons atau penyelesaiannya",
+    "quote.sent": "Penawaran dikirim ke pelanggan",
+    "quote.approved": "Pelanggan menyetujui penawaran",
+    "quote.declined": "Pelanggan menolak penawaran",
+    "invoice.sent": "Faktur diterbitkan",
+    "invoice.paid": "Faktur lunas",
+    "expense.decided": "Pengajuan suku cadang atau biaya disetujui atau ditolak",
+    "webhook.test": "Peristiwa uji yang dikirim dari halaman ini"
+  },
+  "catalog": {
+    "title": "Peristiwa",
+    "description": "Setiap permintaan memakai amplop yang sama. Peristiwa bersifat ringkas: menyebut data dan kolom utamanya; ambil sisanya dari API dengan kunci API.",
+    "sample": "Contoh payload untuk {type}"
+  },
+  "verify": {
+    "title": "Memverifikasi permintaan",
+    "description": "Permintaan mengikuti format Standard Webhooks. Periksa tanda tangannya, tolak stempel waktu yang selisihnya lebih dari 5 menit, jawab 2xx dalam 10 detik, dan lewati ID peristiwa yang sudah diproses: pengiriman bisa terjadi lebih dari sekali.",
+    "headers": "Header: webhook-id (ID peristiwa), webhook-timestamp (detik Unix) dan webhook-signature (v1,<HMAC-SHA256 base64 dari id.timestamp.body>).",
+    "example": "Verifikasi di Node.js"
+  },
+  "detail": {
+    "back": "Semua endpoint",
+    "created": "Ditambahkan {date}",
+    "sendTest": "Kirim peristiwa uji",
+    "testSent": "Peristiwa uji dikirim",
+    "edit": "Ubah",
+    "turnOff": "Matikan",
+    "turnOn": "Nyalakan",
+    "turnedOff": "Endpoint dimatikan",
+    "turnedOn": "Endpoint dinyalakan",
+    "rotate": "Ganti rahasia",
+    "rotateTitle": "Ganti rahasia penandatanganan?",
+    "rotateBody": "Anda mendapat rahasia baru. Permintaan ditandatangani dengan kedua rahasia selama 24 jam, lalu hanya dengan yang baru.",
+    "delete": "Hapus",
+    "deleteTitle": "Hapus endpoint ini?",
+    "deleteBody": "Endpoint langsung berhenti menerima peristiwa, dan log pengirimannya dihapus. Tindakan ini tidak dapat dibatalkan.",
+    "deleted": "Endpoint dihapus",
+    "actions": "Tindakan endpoint",
+    "subscribed": "Berlangganan"
+  },
+  "deliveries": {
+    "title": "Pengiriman",
+    "description": "7 hari terakhir, terbaru di atas.",
+    "filter": "Status",
+    "all": "Semua",
+    "empty": "Belum ada pengiriman",
+    "emptyHint": "Kirim peristiwa uji, atau ubah sebuah pekerjaan, untuk melihat pengiriman di sini.",
+    "emptyFiltered": "Tidak ada pengiriman dengan status ini",
+    "columns": {
+      "time": "Waktu",
+      "event": "Peristiwa",
+      "status": "Status",
+      "attempts": "Percobaan",
+      "response": "Respons terakhir"
+    },
+    "unknownEvent": "Peristiwa lebih dari 7 hari",
+    "attempts": "{count} dari {max}",
+    "details": "Detail",
+    "detailsTitle": "Pengiriman {id}",
+    "eventId": "ID peristiwa",
+    "nextAttempt": "Percobaan berikutnya {date}",
+    "replayOf": "Pengiriman ulang dari {id}",
+    "replayed": "Dikirim ulang {date}",
+    "deadReason": "Dihentikan: {reason}",
+    "attemptLog": "Percobaan",
+    "noAttempts": "Belum ada percobaan",
+    "attempt": "Percobaan {n}",
+    "latency": "{ms} md",
+    "noResponse": "Tidak ada respons",
+    "response": "Respons",
+    "redeliver": "Kirim ulang",
+    "redelivered": "Pengiriman ulang diantrekan",
+    "older": "Pengiriman lebih lama",
+    "newest": "Terbaru",
+    "loadFailed": "Tidak dapat memuat pengiriman ini"
+  },
+  "deliveryStatus": {
+    "pending": "Menunggu",
+    "retrying": "Diulang",
+    "delivered": "Terkirim",
+    "dead": "Gagal"
+  },
+  "deadReasons": {
+    "max_attempts": "semua percobaan gagal",
+    "endpoint_gone": "endpoint menjawab 410 Gone",
+    "endpoint_disabled": "endpoint dimatikan",
+    "rejected": "endpoint menolaknya"
+  }
 }

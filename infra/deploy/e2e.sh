@@ -12,7 +12,9 @@ NAME="fieldops-e2e-$$"
 PASSWORD="demo-e2e-$(openssl rand -hex 6)"
 DB_URL="postgres://fieldops:fieldops@$NAME-db:5432/fieldops"
 
-cleanup() { docker rm -f "$NAME-web" "$NAME-db" >/dev/null 2>&1 || true; docker network rm "$NAME" >/dev/null 2>&1 || true; }
+RELAY_KEY="rk_e2e_$(openssl rand -hex 8)"
+
+cleanup() { docker rm -f "$NAME-web" "$NAME-db" "$NAME-relay" >/dev/null 2>&1 || true; docker network rm "$NAME" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 
 docker network create "$NAME" >/dev/null
@@ -25,8 +27,14 @@ docker run --rm --network "$NAME" -e MIGRATION_DATABASE_URL="$DB_URL" -e APP_DB_
 docker run --rm --network "$NAME" -e MIGRATION_DATABASE_URL="$DB_URL" -e DEMO_PASSWORD="$PASSWORD" \
   "fieldops-worker:$TAG" node dist/index.js reset >/dev/null
 
+# A fake Relay (packages/relay) for outgoing webhooks (PLT-03): it records deliveries without calling anyone. The
+# worker image reads MIGRATION_DATABASE_URL on start; the fake never connects to it.
+docker run -d --name "$NAME-relay" --network "$NAME" --memory 128m -e RELAY_PORT=8099 -e RELAY_API_KEY="$RELAY_KEY" \
+  -e MIGRATION_DATABASE_URL="$DB_URL" "fieldops-worker:$TAG" node dist/index.js fake-relay >/dev/null
+
 docker run -d --name "$NAME-web" --network "$NAME" --memory 512m -p "127.0.0.1:$PORT:3000" \
   -e APP_URL="http://localhost:$PORT" -e DEMO_MODE=true -e DEMO_PASSWORD="$PASSWORD" -e AI_PROVIDER=fixture \
+  -e RELAY_URL="http://$NAME-relay:8099" -e RELAY_API_KEY="$RELAY_KEY" \
   -e DATABASE_URL="postgres://fieldops_app:app-e2e@$NAME-db:5432/fieldops" \
   -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" "fieldops-web:$TAG" >/dev/null
 for i in $(seq 1 60); do curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1 && break; [ "$i" = 60 ] && { echo "web did not start"; exit 1; }; sleep 1; done

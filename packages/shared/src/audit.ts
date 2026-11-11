@@ -22,6 +22,8 @@ export const AUDIT_ENTITY_TYPES = [
   "invitation",
   "organization",
   "user",
+  // 0.5: webhook endpoints live in Relay; their changes are logged with audit_event().
+  "webhook_endpoint",
 ] as const;
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 

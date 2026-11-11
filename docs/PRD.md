@@ -612,6 +612,8 @@ Details are in [§17](#17-api-and-integrations).
 
 *As built (0.3), PLT-04 for AI:* fixed-window counters in a PostgreSQL table: 20 drafts per user per hour, 15 per visitor (IP address) per day in the demo, and 300 per day across all organizations (each set by an environment variable; 0 turns it off). `POST /api/v1/ai/intake` sends `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`, answers 429 with `Retry-After` when a limit is reached and 503 when AI isn't available.
 
+*As built (0.5), PLT-03 (ADR 022):* owners and admins turn webhooks on in **Settings → Webhooks** (the organization becomes a Relay tenant, named by its ID) and add up to 10 endpoints: an https URL on a public host, an optional description, and all events or a chosen set. The signing secret (`whsec_…`) is shown once, when the endpoint is added or its secret rotated (the old one keeps signing for 24 hours). Each endpoint has a page with its status (active, failing with the streak, or off and why), *Send test event* (a `webhook.test` event to that endpoint only), edit, turn off or on, rotate and delete, and its delivery log for the last 7 days: status (pending, retrying, delivered, failed), attempts, the last response code, and per attempt the code, latency, error and the first kilobyte of the answer. A failed delivery (out of attempts, or its endpoint turned off) can be redelivered once, with the same event ID. The page also documents verification and lists every event with a sample body. Relay holds endpoints, secrets and the log; FieldOps keeps only whether webhooks are on and its outbox, and audits endpoint changes. API: `GET/PUT /webhook-settings`, `GET/POST /webhook-endpoints`, `GET/PATCH/DELETE /webhook-endpoints/{id}`, `POST /webhook-endpoints/{id}/rotate-secret`, `POST /webhook-endpoints/{id}/test`, `GET /webhook-endpoints/{id}/deliveries`, `GET /webhook-deliveries/{id}`, `POST /webhook-deliveries/{id}/redeliver`; 503 when Relay isn't configured or can't be reached. Without `RELAY_URL` and `RELAY_API_KEY` the page says webhooks aren't set up.
+
 ---
 
 ## 9. AI features
@@ -824,6 +826,8 @@ sequenceDiagram
 - **Quality:** unit tests, integration tests on PostgreSQL 18 and Redis 8 in testcontainers (every response checked against the OpenAPI document), `-race`, an 80% coverage floor, golangci-lint and `sqlc diff`, all run by `scripts/verify.sh`; `deploy/release.sh` adds an image smoke test (`deploy/e2e.sh`) and automatic rollback, as for FieldOps (no hosted CI).
 - **Load test (§11.2):** k6 at a constant arrival rate for two minutes, with PostgreSQL, Redis, the API and the worker pinned together to two CPU cores of the shared server and production durability (every event on disk before its `202`). At **500 events a second** every event was accepted and delivered as a verified webhook, once, with nothing left queued when the load stopped (two runs: 495–499/s, 0 failures, 0 duplicates, about 165–170% of the two cores). **Throughput target met.** Ingest latency was p50 21–34 ms and p95 79–156 ms, but **p99 187–281 ms, so the p99 < 50 ms target is not met on this host** (p99 22.7 ms at 50 events a second): the tail comes from the run's first 25 seconds and from four processes sharing two cores that the server's other services also use. The first design reached only about 200 events a second; the load test led to routing at ingestion, the group commit, attempts held in Redis, fewer indexes and asynchronous worker commits (Relay's ADR 001). The report and raw results are in `relay/docs/LOADTEST.md`; a run on a dedicated 2-vCPU machine is open (§23 #15).
 - **Operations:** a separate Compose project `relay` (api, worker, postgres, redis; memory limits 128, 192, 384 and 128 MB), `deploy/release.sh` with an image smoke test and automatic rollback, `deploy/security.sh` (gitleaks, govulncheck), Prometheus metrics on an internal port and a Grafana dashboard behind the `observability` profile (not run in production yet). The public instance keeps 7 days of events and has no client tenants yet (only a disabled smoke-test tenant); FieldOps 0.5 creates them and sends its outbox events with one service key (§11.4).
+
+*As built (FieldOps 0.5, ADR 022):* the outbox is written by triggers (migration 0005) in the transaction of each change, only for organizations with webhooks on and never by the seed or the reset; the web role can read it but not write it. The worker claims due rows with `FOR UPDATE SKIP LOCKED` and a 5-minute lease, posts each to `POST /v1/events` outside any transaction with the row ID as the `Idempotency-Key` and the organization ID as the tenant, and stores Relay's event ID. Failures back off from 30 seconds, doubling up to an hour, and give up after 12 attempts (about six hours); a missing tenant is created and the post retried once. Sent rows are kept 7 days, failed ones 30. One unbound service key (`ingest`, `read`, `manage`, `admin`) serves every organization. The nightly demo reset first retires the demo organizations' tenants (endpoints deleted, tenant disabled), because the reset gives organizations new IDs. Tests and the image E2E use a fake Relay (`packages/relay`).
 
 ---
 
@@ -1237,6 +1241,20 @@ Every event uses the same envelope:
 ```
 
 Each delivery carries a `FieldOps-Signature: t=<unix>,v1=<hex HMAC-SHA256>` header. Receivers verify the signature and reject timestamps older than 5 minutes.
+
+*As built (0.5, ADR 022):* the events are `job.created`, `job.updated` (with `changed`, the fields that changed), `job.status_changed` (with `previous_status`), `job.assigned` (with `assignees`, the whole team), `job.completed`, `sla.at_risk` and `sla.breached` (with `clock` and `due_at`), `quote.sent`, `quote.approved` (the PRD's `quote.accepted`, renamed to match the quote status), `quote.declined` (added), `invoice.sent`, `invoice.paid` and `expense.decided`, plus `webhook.test` from *Send test event*. They are thin: the record's ID, number and key fields, and a receiver fetches the rest through the API. Relay delivers them, so the body is Relay's envelope, where `tenant` is the organization ID:
+
+```json
+{
+  "id": "evt_01jd8x4m2k7v9q3w5e6r7t8y9z",
+  "type": "job.completed",
+  "tenant": "01a1c8e0-4d23-7473-b18e-00646fb12f15",
+  "created_at": "2026-11-10T09:30:00Z",
+  "data": { "job": { "id": "…", "number": "JOB-000123", "status": "completed", "…": "…" } }
+}
+```
+
+and the signature uses the Standard Webhooks headers instead of `FieldOps-Signature`: `webhook-id` (the event ID, to deduplicate on), `webhook-timestamp` (Unix seconds) and `webhook-signature` (`v1,<base64 HMAC-SHA256>` of `id.timestamp.body` with the decoded secret; two signatures during a rotation). Every event and its payload is in the OpenAPI document's `webhooks` section.
 
 ### 17.4 Third-party services
 

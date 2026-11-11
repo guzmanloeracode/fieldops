@@ -181,6 +181,17 @@ const ID: Record<string, string> = {
   // 0.4: the assistant
   "Revenue is only for owners and admins": "Data pendapatan hanya untuk pemilik dan admin",
   "You don't approve parts and expenses": "Anda tidak menyetujui suku cadang dan biaya",
+  // 0.5: webhooks
+  "Webhooks aren't configured on this server": "Webhook belum disiapkan di server ini",
+  "Relay can't be reached right now. Try again in a minute.":
+    "Relay sedang tidak dapat dihubungi. Coba lagi sebentar lagi.",
+  "Turn on webhooks first": "Nyalakan webhook terlebih dahulu",
+  "An organization can have at most 10 endpoints": "Satu organisasi paling banyak memiliki 10 endpoint",
+  "Turn the endpoint on first": "Nyalakan endpoint terlebih dahulu",
+  "Only deliveries that ran out of attempts can be redelivered":
+    "Hanya pengiriman yang sudah kehabisan percobaan yang dapat dikirim ulang",
+  "This delivery was already redelivered": "Pengiriman ini sudah dikirim ulang",
+  "url must point to a public address": "URL harus mengarah ke alamat publik",
 };
 
 /** Names of records in "… not found". */
@@ -204,6 +215,8 @@ const ENTITY_ID: Record<string, string> = {
   Quote: "Penawaran",
   "Service report": "Laporan servis",
   Checkout: "Sesi pembayaran",
+  "Webhook endpoint": "Endpoint webhook",
+  "Webhook delivery": "Pengiriman webhook",
 };
 
 const INVOICE_STATUS_ID: Record<string, string> = {

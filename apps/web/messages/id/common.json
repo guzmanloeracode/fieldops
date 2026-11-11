@@ -91,6 +91,7 @@
     "newJob": "Pekerjaan baru",
     "jobs": "Pekerjaan",
     "ai": "Pengaturan AI",
+    "webhooks": "Webhook",
     "audit": "Log audit",
     "sla": "Kebijakan SLA",
     "demoOutbox": "Kotak keluar demo",

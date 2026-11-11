@@ -75,6 +75,8 @@ export function entityHref(e: AuditEntryRecord): string | null {
       return "/settings/sla";
     case "organization":
       return "/settings/organization";
+    case "webhook_endpoint":
+      return e.entityId ? `/settings/webhooks/${e.entityId}` : null;
     case "time_off":
       return "/schedule/team";
     default:

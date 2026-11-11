@@ -93,6 +93,7 @@ test.describe("app pages as owner", () => {
     "/settings/sla",
     "/settings/demo-outbox",
     "/settings/audit",
+    "/settings/webhooks",
     "/approvals",
     "/schedule",
     "/schedule?view=week",
@@ -108,6 +109,23 @@ test.describe("app pages as owner", () => {
     const job = await completedJobForJamie(`E2E a11y report ${Date.now()}`);
     await audit(page, `/jobs/${job.number}`);
     await expect(page.getByTestId("service-report")).toBeVisible();
+  });
+  test("axe: webhook endpoint with a failed delivery (PLT-03)", async ({ page }) => {
+    const client = await api("owner");
+    await json(await client.put("/api/v1/webhook-settings", { data: { enabled: true } }));
+    const ep = await json<{ id: string }>(
+      await client.post("/api/v1/webhook-endpoints", {
+        data: { url: `https://a11y-${Date.now()}.example.com/fail`, event_types: ["job.created"] },
+      }),
+    );
+    try {
+      await client.post(`/api/v1/webhook-endpoints/${ep.id}/test`);
+      await audit(page, `/settings/webhooks/${ep.id}`);
+      await expect(page.getByTestId("webhook-delivery").first()).toBeVisible();
+    } finally {
+      await client.delete(`/api/v1/webhook-endpoints/${ep.id}`);
+      await client.dispose();
+    }
   });
   test("axe: customer detail", async ({ page }) => audit(page, `/customers/${customerId}`));
   test("axe: equipment detail", async ({ page }) => {
