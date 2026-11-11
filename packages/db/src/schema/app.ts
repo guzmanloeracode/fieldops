@@ -547,4 +547,7 @@ export const TENANT_TABLES = [
   "assistant_conversation",
   "assistant_message",
   "daily_digest",
+  // 0.5 (schema/platform.ts)
+  "api_key",
+  "outbox_event",
 ] as const;

@@ -11,6 +11,7 @@ const MATRIX: Record<Action, Expect> = {
   "org.billing": { owner: true, admin: false, dispatcher: false, technician: false },
   "org.delete": { owner: true, admin: false, dispatcher: false, technician: false },
   "apiKeys.manage": { owner: true, admin: true, dispatcher: false, technician: false },
+  "webhooks.manage": { owner: true, admin: true, dispatcher: false, technician: false },
   "members.view": { owner: true, admin: true, dispatcher: true, technician: false },
   "members.invite": { owner: true, admin: true, dispatcher: false, technician: false },
   "members.update": { owner: true, admin: true, dispatcher: false, technician: false },

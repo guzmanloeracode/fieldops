@@ -14,3 +14,4 @@ export * from "./billing";
 export * from "./reports";
 export * from "./recurrences";
 export * from "./assistant";
+export * from "./platform";

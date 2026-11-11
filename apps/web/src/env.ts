@@ -44,6 +44,16 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   /** "simulated" turns the simulated checkout on outside the demo. */
   PAYMENTS_PROVIDER: z.string().optional(),
+  /**
+   * Outgoing webhooks (PLT-03) are delivered by Relay (§11.4) with one service key for every organization. Without
+   * both, the webhooks settings say they aren't configured. Development and the E2E suite point them at the fake
+   * Relay server in packages/relay.
+   */
+  RELAY_URL: z.string().optional(),
+  RELAY_API_KEY: z.string().optional(),
+  /** Requests per minute on /api/v1 (PLT-04). 0 turns a limit off. */
+  API_KEY_RATE_LIMIT: z.coerce.number().int().min(0).default(300),
+  API_USER_RATE_LIMIT: z.coerce.number().int().min(0).default(600),
   /** Google sign-in (AUTH-02). The button only shows when both are set. */
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),

@@ -36,6 +36,13 @@
       "when": 1794328173429,
       "tag": "0004_get_paid",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794396075329,
+      "tag": "0005_platform",
+      "breakpoints": true
     }
   ]
 }

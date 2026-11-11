@@ -48,6 +48,8 @@ export const organization = pgTable("organization", {
     .default(sql`'{}'::jsonb`),
   plan: text("plan").notNull().default("free"),
   isDemo: boolean("is_demo").notNull().default(false),
+  /** Outgoing webhooks are on (PLT-03): the organization is a Relay tenant and its changes fill outbox_event. */
+  webhooksEnabledAt: timestamp("webhooks_enabled_at", { withTimezone: true }),
   metadata: text("metadata"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

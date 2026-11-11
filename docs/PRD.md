@@ -25,6 +25,7 @@
 | 1.8 | 11 Nov 2026 | Release 0.4 built and live: billing, online payments, documents, the assistant, operations and Bahasa Indonesia. Recorded the decisions made while building it in *As built (0.4)* notes: maintenance plans (§8.3), parts billed once (§8.6), the SLA pause, the daily digest and the new notifications (§8.7), the catalog, quotes, invoices, online payments, PDFs, reminders and totals (§8.8), quotes, invoices and reports in the portal (§8.9), revenue on the dashboard (§8.10), catalog and billing settings and the two languages (§8.12, §13), *Ask FieldOps* (§9.3), the service report writer (§9.4), ADRs 017–021 and the missing 016 in the ADR list (§14.5), new tables, endpoints and Stripe (§16.3, §17.2, §17.4), the 0.4 seed and demo payments (§19), the payment provider risk (§22) and Stripe test keys for the demo (§23). |
 | 1.9 | 11 Nov 2026 | Release 0.4.1: past *Ask FieldOps* conversations readable while AI is off (§9.3), next plan visits with their year (§8.3), KPI changes that round to zero read as the same (§8.10), and demo quotes whose title, service and parts match (§19). |
 | 2.0 | 11 Nov 2026 | Relay 1.0 built and live at `relay.tinggalpake.com`, repository `relay` public. Recorded the decisions made while building it in *As built (Relay 1.0)* notes: tenants, keys and scopes, routing at ingestion with a group commit, Standard Webhooks signatures, retries and automatic disabling, limits with parking lots, Expo push and email adapters, Redis Streams with PostgreSQL as the source of truth, and the k6 results against the targets (§11); its hosting (§15.2, §15.3) and load testing (§18.1); a dedicated-VM load test as an open question (§23). |
+| 2.1 | 11 Nov 2026 | Release 0.5 narrowed to the platform: API keys, rate limits, webhooks through Relay and the MCP server (PLT-02–05, AI-05); the other 0.5 items moved to a backlog (§20). |
 
 ## Contents
 
@@ -1369,9 +1370,15 @@ The plan builds the web product first, then the event delivery service (Relay), 
 | **0.4** Get paid ✅ live 11 Nov 2026 (0.4.1 same day) | Money and AI depth | FIN-02–07, EXP-04, POR-04, AI-02, AI-03, JOB-13, SET-05, NOT-04, SLA-04 | 3 weeks |
 | | **Core product complete** | | |
 | **Relay 1.0** ✅ live 11 Nov 2026, repository public | Event delivery | REL-01–07 and REL-09, Compose stack, k6 report, deploy at `relay.tinggalpake.com` | 3 weeks |
-| **0.5** Platform | Integrations | PLT-02–05, BIL-01–04, CUS-06, SCH-07, AI-04, AI-05, AUTH-07/08, SET-06; FieldOps events flow through Relay | 2 weeks |
+| **0.5** Platform | Integrations | PLT-02–05, AI-05; FieldOps events flow through Relay. *Narrowed 11 Nov 2026:* BIL-01–04, CUS-06, SCH-07, AI-04, AUTH-07/08 and SET-06 moved to the backlog (below) | 1 week |
 | **Site 1.0** | Marketing site | SITE-01–10 | 2 weeks |
 | **1.0** Mobile | Mobile | MOB-01–10, NOT-06 | 4 weeks |
+
+**Backlog (moved out of 0.5 on 11 Nov 2026).** Release 0.5 keeps what makes FieldOps an integration platform and
+puts Relay to work: API keys, rate limits, webhooks through Relay and the MCP server. SaaS plans and their trial
+(BIL-01–04), CSV import and export (CUS-06), assignment suggestions (SCH-07), weekly AI insights (AI-04), two-factor
+authentication and the session list (AUTH-07/08) and the data export with organization deletion (SET-06) wait for
+a later release, picked by demand.
 
 **Definition of done for every release**
 - All Must items for the release are complete, with tests.

@@ -15,6 +15,7 @@ export type Action =
   | "org.billing"
   | "org.delete"
   | "apiKeys.manage"
+  | "webhooks.manage"
   | "members.view"
   | "members.invite"
   | "members.update"
@@ -78,6 +79,7 @@ const RULES: Record<Action, Rule> = {
   "org.billing": ["owner"],
   "org.delete": ["owner"],
   "apiKeys.manage": MANAGERS,
+  "webhooks.manage": MANAGERS,
   "members.view": OFFICE,
   "members.invite": MANAGERS,
   "members.update": MANAGERS,

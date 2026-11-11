@@ -28,6 +28,11 @@ export const env = {
   appDbPassword: process.env.APP_DB_PASSWORD,
   logLevel: process.env.LOG_LEVEL ?? "info",
   version: process.env.APP_VERSION ?? "dev",
+  /** Outgoing webhooks (PLT-03): outbox events are posted to Relay with one service key. */
+  relay: {
+    url: process.env.RELAY_URL || undefined,
+    apiKey: process.env.RELAY_API_KEY || undefined,
+  },
   /** AI drafts for portal requests (AI-01); without a key requests are marked "skipped". */
   ai: {
     apiKey: process.env.ANTHROPIC_API_KEY || undefined,
