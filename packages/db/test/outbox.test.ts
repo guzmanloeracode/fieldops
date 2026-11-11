@@ -49,6 +49,8 @@ async function events(org = a) {
     .from(s.outboxEvent)
     .where(eq(s.outboxEvent.organizationId, org.orgId))
     .orderBy(s.outboxEvent.id);
+  // Payloads are free-form JSON; the assertions read into them.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return rows as { type: string; payload: Record<string, any> }[];
 }
 
